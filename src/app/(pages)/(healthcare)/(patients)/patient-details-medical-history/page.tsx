@@ -1,0 +1,16 @@
+
+import PatientDetailsMedicalHistoryComponent from "@/components/patients/patientDetailsMedicalHistory";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title:
+    "Patient Details Medical History | Dreams EMR - Responsive Bootstrap 5 Medical Admin Template",
+};
+
+export default function PatientsDetailsMedicalHistoryPage() {
+  return (
+    <>
+      <PatientDetailsMedicalHistoryComponent />
+    </>
+  );
+}

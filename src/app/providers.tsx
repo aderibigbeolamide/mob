@@ -1,0 +1,52 @@
+"use client";
+
+import { StrictMode, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import ClientStoreProvider from "@/core/redux/clientStore";
+import ErrorBoundary from "@/core/common-components/common-error-boundary/ErrorBoundary";
+
+function GlobalTooltipInit() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    let bootstrap: typeof import("bootstrap");
+
+    (async () => {
+      // Import bootstrap with types
+      bootstrap = await import("bootstrap");
+
+      // Remove existing tooltips (avoid duplicates)
+      document.querySelectorAll(".tooltip").forEach((el) => el.remove());
+
+      // Initialize new tooltips
+      const tooltipTriggerList = Array.from(
+        document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      );
+      tooltipTriggerList.forEach((tooltipTriggerEl) => {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+    })();
+
+    // Cleanup tooltips when component unmounts or before next re-run
+    return () => {
+      document.querySelectorAll(".tooltip").forEach((el) => el.remove());
+    };
+  }, [pathname]);
+
+  return null;
+}
+
+export default function ClientProviders({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <StrictMode>
+      <ClientStoreProvider>
+        <GlobalTooltipInit />
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </ClientStoreProvider>
+    </StrictMode>
+  );
+}
