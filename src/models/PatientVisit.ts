@@ -6,7 +6,7 @@ export interface IPatientVisit extends Document {
   appointment?: mongoose.Types.ObjectId;
   branch: mongoose.Types.ObjectId;
   visitDate: Date;
-  currentStage: 'front_desk' | 'nurse' | 'doctor' | 'lab' | 'pharmacy' | 'billing' | 'completed';
+  currentStage: 'front_desk' | 'nurse' | 'doctor' | 'lab' | 'pharmacy' | 'billing' | 'returned_to_front_desk' | 'completed';
   status: 'in_progress' | 'completed' | 'cancelled';
   
   stages: {
@@ -69,6 +69,14 @@ export interface IPatientVisit extends Document {
       notes?: string;
       nextAction?: string;
     };
+    returnedToFrontDesk?: {
+      clockedInBy?: mongoose.Types.ObjectId;
+      clockedInAt?: Date;
+      clockedOutBy?: mongoose.Types.ObjectId;
+      clockedOutAt?: Date;
+      notes?: string;
+      nextAction?: string;
+    };
   };
   
   finalClockOut?: {
@@ -89,7 +97,7 @@ const PatientVisitSchema = new Schema<IPatientVisit>({
   visitDate: { type: Date, required: true, default: Date.now },
   currentStage: {
     type: String,
-    enum: ['front_desk', 'nurse', 'doctor', 'lab', 'pharmacy', 'billing', 'completed'],
+    enum: ['front_desk', 'nurse', 'doctor', 'lab', 'pharmacy', 'billing', 'returned_to_front_desk', 'completed'],
     default: 'front_desk'
   },
   status: {
@@ -150,6 +158,14 @@ const PatientVisitSchema = new Schema<IPatientVisit>({
       nextAction: { type: String }
     },
     billing: {
+      clockedInBy: { type: Schema.Types.ObjectId, ref: 'User' },
+      clockedInAt: { type: Date },
+      clockedOutBy: { type: Schema.Types.ObjectId, ref: 'User' },
+      clockedOutAt: { type: Date },
+      notes: { type: String },
+      nextAction: { type: String }
+    },
+    returnedToFrontDesk: {
       clockedInBy: { type: Schema.Types.ObjectId, ref: 'User' },
       clockedInAt: { type: Date },
       clockedOutBy: { type: Schema.Types.ObjectId, ref: 'User' },
