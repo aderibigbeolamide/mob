@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
     '*.replit.dev',
     '*.repl.co', 
     '*.replit.app',
+    'localhost',
+    '127.0.0.1'
   ],
 };
 
