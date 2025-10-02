@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 
 import Header from "@/core/common-components/header/header";
 import Sidebar from "@/core/common-components/sidebar/sidebar";
-import ThemeSettings from "@/core/common-components/theme-settings/themeSettings";
 
 import {
   resetMobileSidebar,
@@ -194,7 +193,6 @@ export default function PagesLayout({
         <Header />
         <Sidebar />
         {children}
-        {pathname !== "/layout-rtl" && <ThemeSettings />}
       </div>
       <div
         className={`sidebar-overlay${mobileSidebar ? " opened" : ""}`}

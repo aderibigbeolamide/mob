@@ -188,7 +188,7 @@ const Header = () => {
               {/* Logo Normal */}
               <span className="logo-light">
                 <span className="logo-lg">
-                  <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" />
+                  <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" width={120} height={40} />
                 </span>
               </span>
               {/* Logo Dark */}
@@ -197,6 +197,8 @@ const Header = () => {
                   <ImageWithBasePath
                     src="life-point-logo.png"
                     alt="Life Point Medical Centre"
+                    width={120}
+                    height={40}
                   />
                 </span>
               </span>
@@ -207,6 +209,8 @@ const Header = () => {
                   <ImageWithBasePath
                     src="life-point-logo.png"
                     alt="Life Point Medical Centre"
+                    width={40}
+                    height={40}
                   />
                 </span>
               </span>
@@ -583,9 +587,9 @@ const Header = () => {
             )}
             {/* User Dropdown */}
             <div className="dropdown profile-dropdown d-flex align-items-center justify-content-center">
-              <Link
-                href="#"
-                className="topbar-link dropdown-toggle drop-arrow-none position-relative"
+              <button
+                type="button"
+                className="topbar-link btn dropdown-toggle drop-arrow-none position-relative p-0 border-0 bg-transparent"
                 data-bs-toggle="dropdown"
                 data-bs-offset="0,22"
                 aria-haspopup="true"
@@ -601,7 +605,7 @@ const Header = () => {
                 <span className="online text-success">
                   <i className="ti ti-circle-filled d-flex bg-white rounded-circle border border-1 border-white" aria-hidden="true" />
                 </span>
-              </Link>
+              </button>
               <div className="dropdown-menu dropdown-menu-end dropdown-menu-md p-2">
                 <div className="d-flex align-items-center bg-light rounded-3 p-2 mb-2">
                   <ImageWithBasePath
