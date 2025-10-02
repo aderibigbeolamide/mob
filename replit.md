@@ -258,6 +258,7 @@ The project is configured for Autoscale deployment:
 - [x] Template cleanup (removed UI demos, documentation pages)
 - [x] Security hardening (workflow bypass protection, role validation)
 - [x] Environment configuration optimized
+- [x] Settings pages fixed (created general-settings, preferences-settings, appearance-settings, plans-billings-settings)
 
 ## Branding
 - **Hospital Name**: Life Point Medical Centre
