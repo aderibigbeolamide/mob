@@ -190,7 +190,7 @@ This project has been configured to run on Replit:
 2. **Environment Variables**: Created `.env.local` with:
    - `MONGODB_URI`: MongoDB connection string (set to local MongoDB, update for production)
    - `NEXTAUTH_SECRET`: Generated secret for session encryption
-   - `NEXTAUTH_URL`: Set to localhost:3000 (update for production)
+   - `NEXTAUTH_URL`: Set to http://localhost:5000 (for Replit development)
 
 3. **Development Server**: Configured to run on port 5000 with host 0.0.0.0 to work with Replit's proxy:
    ```bash
@@ -201,7 +201,9 @@ This project has been configured to run on Replit:
    - Build: `npm run build`
    - Run: `npm start`
 
-5. **Known Issues**:
+5. **Replit Proxy Configuration**: Next.js config updated with `allowedOrigins: ['*']` in experimental serverActions to work with Replit's iframe proxy.
+
+6. **Known Issues**:
    - React hydration warning in development (doesn't affect functionality)
    - Webpack warning with Turbopack (can be ignored or Turbopack config can be added)
 
