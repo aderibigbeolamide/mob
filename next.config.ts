@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
     config.experiments = { ...config.experiments, topLevelAwait: true };
     return config;
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['*'],
+    },
+  },
 };
 
 export default nextConfig;
