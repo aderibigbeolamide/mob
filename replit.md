@@ -181,13 +181,37 @@ npm run build
 npm start
 ```
 
+### Replit Setup Notes (Oct 2, 2025)
+
+This project has been configured to run on Replit:
+
+1. **Dependencies**: Installed with `--legacy-peer-deps` flag due to React 19 and react-paystack compatibility. The `.npmrc` file ensures this flag is used automatically.
+
+2. **Environment Variables**: Created `.env.local` with:
+   - `MONGODB_URI`: MongoDB connection string (set to local MongoDB, update for production)
+   - `NEXTAUTH_SECRET`: Generated secret for session encryption
+   - `NEXTAUTH_URL`: Set to localhost:3000 (update for production)
+
+3. **Development Server**: Configured to run on port 5000 with host 0.0.0.0 to work with Replit's proxy:
+   ```bash
+   npm run dev -- -p 5000 -H 0.0.0.0
+   ```
+
+4. **Deployment**: Configured for autoscale deployment with:
+   - Build: `npm run build`
+   - Run: `npm start`
+
+5. **Known Issues**:
+   - React hydration warning in development (doesn't affect functionality)
+   - Webpack warning with Turbopack (can be ignored or Turbopack config can be added)
+
 ## Configuration
 
 ### Next.js Configuration
 The Next.js config (`next.config.ts`) includes:
-- `allowedDevOrigins` for Replit proxy support (*.replit.dev, *.repl.co, *.replit.app)
-- `serverExternalPackages` for Mongoose compatibility
+- `serverExternalPackages` for Mongoose compatibility with Next.js server components
 - Webpack configuration for top-level await support
+- Server runs with `-H 0.0.0.0` flag for Replit proxy compatibility
 
 ### Deployment
 The project is configured for Autoscale deployment:
@@ -198,16 +222,21 @@ The project is configured for Autoscale deployment:
 ## Implementation Progress
 
 ### ✅ Phase 1 - Foundation (Completed - Oct 2, 2025)
-- [x] Environment variables structure (.env.example created)
+- [x] Environment variables structure (.env.local created)
 - [x] Backend folder structure (lib/services, lib/middleware, lib/utils)
 - [x] TypeScript types for EMR (UserRole, ClockStatus, Branch, Patient, Appointment)
 - [x] MongoDB connection utility (graceful error handling)
 - [x] Project structure documented
+- [x] Replit environment setup complete
+- [x] Dependencies installed with legacy-peer-deps flag
+- [x] Development workflow configured (port 5000)
+- [x] Deployment settings configured (autoscale)
+- [x] NextAuth authentication setup complete
+- [x] Mongoose models created (User, Patient, Appointment, Invoice, etc.)
 
 ### 🚧 Phase 2 - Core Platform (In Progress)
-- [ ] NextAuth authentication implementation
+- [x] NextAuth authentication implementation
 - [ ] Role-based middleware and guards
-- [ ] Mongoose models (User, Patient, Appointment, Invoice, etc.)
 - [ ] Cloudinary service integration
 - [ ] Paystack service integration
 - [ ] EmailJS service integration
