@@ -4,62 +4,190 @@ export interface IPatient extends Document {
   patientId: string;
   firstName: string;
   lastName: string;
-  email?: string;
-  phone: string;
+  middleName?: string;
   dateOfBirth: Date;
-  gender: 'male' | 'female' | 'other';
+  gender: 'Male' | 'Female' | 'Other';
   bloodGroup?: string;
+  phoneNumber: string;
+  email?: string;
   address: string;
   city: string;
   state: string;
+  country: string;
   emergencyContact: {
     name: string;
-    phone: string;
     relationship: string;
+    phoneNumber: string;
   };
+  allergies: string[];
+  chronicConditions: string[];
+  medications: string[];
   insurance?: {
     provider: string;
     policyNumber: string;
     validUntil?: Date;
   };
-  medicalHistory?: string;
-  allergies?: string[];
-  avatar?: string;
-  branch: mongoose.Types.ObjectId;
-  createdBy: mongoose.Types.ObjectId;
+  registeredBy: mongoose.Types.ObjectId;
+  branchId: mongoose.Types.ObjectId;
+  profileImage?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  getFullName(): string;
+  getAge(): number;
 }
 
 const PatientSchema = new Schema<IPatient>({
-  patientId: { type: String, required: true, unique: true },
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, lowercase: true },
-  phone: { type: String, required: true },
-  dateOfBirth: { type: Date, required: true },
-  gender: { type: String, enum: ['male', 'female', 'other'], required: true },
-  bloodGroup: { type: String },
-  address: { type: String, required: true },
-  city: { type: String, required: true },
-  state: { type: String, required: true },
+  patientId: { 
+    type: String, 
+    required: [true, 'Patient ID is required'],
+    unique: true,
+    uppercase: true,
+    trim: true
+  },
+  firstName: { 
+    type: String, 
+    required: [true, 'First name is required'],
+    trim: true
+  },
+  lastName: { 
+    type: String, 
+    required: [true, 'Last name is required'],
+    trim: true
+  },
+  middleName: { 
+    type: String,
+    trim: true
+  },
+  dateOfBirth: { 
+    type: Date, 
+    required: [true, 'Date of birth is required']
+  },
+  gender: { 
+    type: String, 
+    enum: ['Male', 'Female', 'Other'],
+    required: [true, 'Gender is required']
+  },
+  bloodGroup: { 
+    type: String,
+    enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+  },
+  phoneNumber: { 
+    type: String, 
+    required: [true, 'Phone number is required'],
+    trim: true
+  },
+  email: { 
+    type: String,
+    lowercase: true,
+    trim: true,
+    validate: {
+      validator: function(v: string) {
+        if (!v) return true;
+        return /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(v);
+      },
+      message: 'Please enter a valid email'
+    }
+  },
+  address: { 
+    type: String, 
+    required: [true, 'Address is required'],
+    trim: true
+  },
+  city: { 
+    type: String, 
+    required: [true, 'City is required'],
+    trim: true
+  },
+  state: { 
+    type: String, 
+    required: [true, 'State is required'],
+    trim: true
+  },
+  country: { 
+    type: String, 
+    required: [true, 'Country is required'],
+    default: 'Nigeria',
+    trim: true
+  },
   emergencyContact: {
-    name: { type: String, required: true },
-    phone: { type: String, required: true },
-    relationship: { type: String, required: true }
+    name: { 
+      type: String, 
+      required: [true, 'Emergency contact name is required'],
+      trim: true
+    },
+    relationship: { 
+      type: String, 
+      required: [true, 'Emergency contact relationship is required'],
+      trim: true
+    },
+    phoneNumber: { 
+      type: String, 
+      required: [true, 'Emergency contact phone is required'],
+      trim: true
+    }
+  },
+  allergies: {
+    type: [String],
+    default: []
+  },
+  chronicConditions: {
+    type: [String],
+    default: []
+  },
+  medications: {
+    type: [String],
+    default: []
   },
   insurance: {
     provider: { type: String },
     policyNumber: { type: String },
     validUntil: { type: Date }
   },
-  medicalHistory: { type: String },
-  allergies: [{ type: String }],
-  avatar: { type: String },
-  branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
-  createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  isActive: { type: Boolean, default: true },
+  registeredBy: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: [true, 'Registered by is required']
+  },
+  branchId: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'Branch', 
+    required: [true, 'Branch is required']
+  },
+  profileImage: { 
+    type: String,
+    trim: true
+  },
+  isActive: { 
+    type: Boolean, 
+    default: true 
+  }
 }, { timestamps: true });
+
+PatientSchema.methods.getFullName = function(): string {
+  return this.middleName 
+    ? `${this.firstName} ${this.middleName} ${this.lastName}`
+    : `${this.firstName} ${this.lastName}`;
+};
+
+PatientSchema.methods.getAge = function(): number {
+  const today = new Date();
+  const birthDate = new Date(this.dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
+
+PatientSchema.index({ patientId: 1 });
+PatientSchema.index({ branchId: 1 });
+PatientSchema.index({ firstName: 1, lastName: 1 });
+PatientSchema.index({ phoneNumber: 1 });
+PatientSchema.index({ email: 1 });
+PatientSchema.index({ isActive: 1 });
 
 export default mongoose.models.Patient || mongoose.model<IPatient>('Patient', PatientSchema);

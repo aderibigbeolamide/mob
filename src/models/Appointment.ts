@@ -1,16 +1,34 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+export enum AppointmentStatus {
+  SCHEDULED = 'SCHEDULED',
+  CONFIRMED = 'CONFIRMED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  NO_SHOW = 'NO_SHOW'
+}
+
+export enum AppointmentType {
+  CONSULTATION = 'CONSULTATION',
+  FOLLOW_UP = 'FOLLOW_UP',
+  EMERGENCY = 'EMERGENCY',
+  ROUTINE_CHECKUP = 'ROUTINE_CHECKUP',
+  VACCINATION = 'VACCINATION',
+  PROCEDURE = 'PROCEDURE'
+}
+
 export interface IAppointment extends Document {
   appointmentNumber: string;
-  patient: mongoose.Types.ObjectId;
-  doctor: mongoose.Types.ObjectId;
-  branch: mongoose.Types.ObjectId;
+  patientId: mongoose.Types.ObjectId;
+  doctorId: mongoose.Types.ObjectId;
+  branchId: mongoose.Types.ObjectId;
   appointmentDate: Date;
   appointmentTime: string;
   duration: number;
-  type: 'consultation' | 'follow_up' | 'emergency' | 'routine_checkup';
-  status: 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
-  reason: string;
+  status: AppointmentStatus;
+  type: AppointmentType;
+  reasonForVisit: string;
   notes?: string;
   createdBy: mongoose.Types.ObjectId;
   cancelledBy?: mongoose.Types.ObjectId;
@@ -20,28 +38,81 @@ export interface IAppointment extends Document {
 }
 
 const AppointmentSchema = new Schema<IAppointment>({
-  appointmentNumber: { type: String, required: true, unique: true },
-  patient: { type: Schema.Types.ObjectId, ref: 'Patient', required: true },
-  doctor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
-  appointmentDate: { type: Date, required: true },
-  appointmentTime: { type: String, required: true },
-  duration: { type: Number, default: 30 },
-  type: {
-    type: String,
-    enum: ['consultation', 'follow_up', 'emergency', 'routine_checkup'],
-    default: 'consultation'
+  appointmentNumber: { 
+    type: String, 
+    required: [true, 'Appointment number is required'],
+    unique: true,
+    uppercase: true,
+    trim: true
+  },
+  patientId: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'Patient', 
+    required: [true, 'Patient is required']
+  },
+  doctorId: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: [true, 'Doctor is required']
+  },
+  branchId: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'Branch', 
+    required: [true, 'Branch is required']
+  },
+  appointmentDate: { 
+    type: Date, 
+    required: [true, 'Appointment date is required']
+  },
+  appointmentTime: { 
+    type: String, 
+    required: [true, 'Appointment time is required']
+  },
+  duration: { 
+    type: Number, 
+    default: 30,
+    min: [15, 'Duration must be at least 15 minutes']
   },
   status: {
     type: String,
-    enum: ['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'],
-    default: 'scheduled'
+    enum: Object.values(AppointmentStatus),
+    default: AppointmentStatus.SCHEDULED
   },
-  reason: { type: String, required: true },
-  notes: { type: String },
-  createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  cancelledBy: { type: Schema.Types.ObjectId, ref: 'User' },
-  cancelReason: { type: String },
+  type: {
+    type: String,
+    enum: Object.values(AppointmentType),
+    default: AppointmentType.CONSULTATION
+  },
+  reasonForVisit: { 
+    type: String, 
+    required: [true, 'Reason for visit is required'],
+    trim: true
+  },
+  notes: { 
+    type: String,
+    trim: true
+  },
+  createdBy: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: [true, 'Created by is required']
+  },
+  cancelledBy: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'User'
+  },
+  cancelReason: { 
+    type: String,
+    trim: true
+  }
 }, { timestamps: true });
+
+AppointmentSchema.index({ appointmentNumber: 1 });
+AppointmentSchema.index({ patientId: 1 });
+AppointmentSchema.index({ doctorId: 1 });
+AppointmentSchema.index({ branchId: 1 });
+AppointmentSchema.index({ appointmentDate: 1 });
+AppointmentSchema.index({ status: 1 });
+AppointmentSchema.index({ appointmentDate: 1, doctorId: 1 });
 
 export default mongoose.models.Appointment || mongoose.model<IAppointment>('Appointment', AppointmentSchema);

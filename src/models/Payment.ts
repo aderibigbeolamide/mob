@@ -1,59 +1,107 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+export enum PaymentMethod {
+  CASH = 'CASH',
+  CARD = 'CARD',
+  INSURANCE = 'INSURANCE',
+  PAYSTACK = 'PAYSTACK',
+  BANK_TRANSFER = 'BANK_TRANSFER'
+}
+
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  SUCCESSFUL = 'SUCCESSFUL',
+  FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED'
+}
+
 export interface IPayment extends Document {
   paymentNumber: string;
-  billing: mongoose.Types.ObjectId;
-  patient: mongoose.Types.ObjectId;
-  branch: mongoose.Types.ObjectId;
+  invoiceId: mongoose.Types.ObjectId;
+  patientId: mongoose.Types.ObjectId;
+  branchId: mongoose.Types.ObjectId;
   amount: number;
-  paymentMethod: 'cash' | 'card' | 'bank_transfer' | 'insurance' | 'paystack';
-  paymentStatus: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
-  
+  paymentMethod: PaymentMethod;
+  paymentReference?: string;
   paystackReference?: string;
-  paystackStatus?: string;
-  paystackData?: any;
-  
-  transactionReference?: string;
-  receiptNumber?: string;
-  notes?: string;
-  
-  processedBy: mongoose.Types.ObjectId;
-  verifiedBy?: mongoose.Types.ObjectId;
-  
+  status: PaymentStatus;
+  receivedBy: mongoose.Types.ObjectId;
   paymentDate: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const PaymentSchema = new Schema<IPayment>({
-  paymentNumber: { type: String, required: true, unique: true },
-  billing: { type: Schema.Types.ObjectId, ref: 'Billing', required: true },
-  patient: { type: Schema.Types.ObjectId, ref: 'Patient', required: true },
-  branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
-  amount: { type: Number, required: true },
+  paymentNumber: { 
+    type: String, 
+    required: [true, 'Payment number is required'],
+    unique: true,
+    uppercase: true,
+    trim: true
+  },
+  invoiceId: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'Invoice', 
+    required: [true, 'Invoice is required']
+  },
+  patientId: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'Patient', 
+    required: [true, 'Patient is required']
+  },
+  branchId: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'Branch', 
+    required: [true, 'Branch is required']
+  },
+  amount: { 
+    type: Number, 
+    required: [true, 'Amount is required'],
+    min: [0, 'Amount cannot be negative']
+  },
   paymentMethod: {
     type: String,
-    enum: ['cash', 'card', 'bank_transfer', 'insurance', 'paystack'],
-    required: true
+    enum: Object.values(PaymentMethod),
+    required: [true, 'Payment method is required']
   },
-  paymentStatus: {
+  paymentReference: { 
     type: String,
-    enum: ['pending', 'processing', 'completed', 'failed', 'refunded'],
-    default: 'pending'
+    trim: true
   },
-  
-  paystackReference: { type: String },
-  paystackStatus: { type: String },
-  paystackData: { type: Schema.Types.Mixed },
-  
-  transactionReference: { type: String },
-  receiptNumber: { type: String },
-  notes: { type: String },
-  
-  processedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  verifiedBy: { type: Schema.Types.ObjectId, ref: 'User' },
-  
-  paymentDate: { type: Date, default: Date.now },
+  paystackReference: { 
+    type: String,
+    trim: true
+  },
+  status: {
+    type: String,
+    enum: Object.values(PaymentStatus),
+    default: PaymentStatus.PENDING
+  },
+  receivedBy: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: [true, 'Received by is required']
+  },
+  paymentDate: { 
+    type: Date, 
+    default: Date.now 
+  }
 }, { timestamps: true });
+
+PaymentSchema.pre('save', async function(next) {
+  if (!this.paymentNumber) {
+    const count = await mongoose.model('Payment').countDocuments();
+    const timestamp = Date.now().toString().slice(-6);
+    this.paymentNumber = `PAY-${timestamp}-${(count + 1).toString().padStart(4, '0')}`;
+  }
+  next();
+});
+
+PaymentSchema.index({ paymentNumber: 1 });
+PaymentSchema.index({ invoiceId: 1 });
+PaymentSchema.index({ patientId: 1 });
+PaymentSchema.index({ branchId: 1 });
+PaymentSchema.index({ status: 1 });
+PaymentSchema.index({ paymentDate: -1 });
 
 export default mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
