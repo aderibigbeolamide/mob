@@ -9,13 +9,13 @@ import ClientProviders from "./providers"; // 👈 our client wrapper
 import BootstrapJs from "@/core/common-components/bootstrap-js/bootstrapjs";
 
 export const metadata: Metadata = {
-  title: "Dashboard | Dreams EMR - Responsive Bootstrap 5 Medical Admin Template",
+  title: "Dashboard | Life Point Medical Centre - Electronic Medical Records System",
   description:
-    "DreamsEMR is a flexible, powerful, modern, and responsive Bootstrap 5 admin template with endless potential.",
+    "Life Point Medical Centre EMR is a modern, secure, and responsive electronic medical records management system.",
   icons: {
-    icon: "favicon.png",
-    shortcut: "favicon.png",
-    apple: "apple-icon.png",
+    icon: "life-point-logo.png",
+    shortcut: "life-point-logo.png",
+    apple: "life-point-logo.png",
   },
 };
 

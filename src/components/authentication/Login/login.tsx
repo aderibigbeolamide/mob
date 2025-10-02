@@ -82,9 +82,9 @@ const LoginComponent = () => {
                           <div className="mb-4">
                             <Link href={all_routes.dashboard} className="logo">
                               <ImageWithBasePath
-                                src="assets/img/logo-dark.svg"
+                                src="life-point-logo.png"
                                 className="img-fluid logo"
-                                alt="Logo"
+                                alt="Life Point Medical Centre"
                               />
                             </Link>
                           </div>

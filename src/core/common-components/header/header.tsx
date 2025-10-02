@@ -188,15 +188,15 @@ const Header = () => {
               {/* Logo Normal */}
               <span className="logo-light">
                 <span className="logo-lg">
-                  <ImageWithBasePath src="assets/img/logo.svg" alt="logo" />
+                  <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" />
                 </span>
               </span>
               {/* Logo Dark */}
               <span className="logo-dark">
                 <span className="logo-lg">
                   <ImageWithBasePath
-                    src="assets/img/logo-dark.svg"
-                    alt="dark logo"
+                    src="life-point-logo.png"
+                    alt="Life Point Medical Centre"
                   />
                 </span>
               </span>
@@ -205,8 +205,8 @@ const Header = () => {
               <span className="logo-small">
                 <span className="logo-lg">
                   <ImageWithBasePath
-                    src="assets/img/logo-small.svg"
-                    alt="small logo"
+                    src="life-point-logo.png"
+                    alt="Life Point Medical Centre"
                   />
                 </span>
               </span>
