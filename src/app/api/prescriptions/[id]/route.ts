@@ -1,0 +1,202 @@
+import { NextRequest, NextResponse } from 'next/server';
+import dbConnect from '@/lib/dbConnect';
+import Prescription from '@/models/Prescription';
+import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
+import mongoose from 'mongoose';
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return requireAuth(req, async (req: NextRequest, session: any) => {
+    try {
+      await dbConnect();
+
+      const { id } = params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return NextResponse.json(
+          { error: 'Invalid prescription ID' },
+          { status: 400 }
+        );
+      }
+
+      const prescription = await Prescription.findById(id)
+        .populate('patient', 'firstName lastName patientId phoneNumber email allergies')
+        .populate('doctor', 'firstName lastName')
+        .populate('branch', 'name address city state')
+        .populate('visit')
+        .populate('dispensedBy', 'firstName lastName')
+        .lean();
+
+      if (!prescription) {
+        return NextResponse.json(
+          { error: 'Prescription not found' },
+          { status: 404 }
+        );
+      }
+
+      const userRole = session.user.role as UserRole;
+      if (userRole !== UserRole.ADMIN) {
+        const userBranchId = session.user.branch?._id || session.user.branch;
+        const prescriptionBranchId = (prescription.branch as any)?._id || prescription.branch;
+
+        if (userBranchId.toString() !== prescriptionBranchId.toString()) {
+          return NextResponse.json(
+            { error: 'Forbidden. You do not have access to this prescription.' },
+            { status: 403 }
+          );
+        }
+      }
+
+      return NextResponse.json({ prescription });
+
+    } catch (error: any) {
+      console.error('Get prescription error:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch prescription', message: error.message },
+        { status: 500 }
+      );
+    }
+  });
+}
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return checkRole([UserRole.PHARMACY, UserRole.DOCTOR, UserRole.ADMIN])(
+    req,
+    async (req: NextRequest, session: any) => {
+      try {
+        await dbConnect();
+
+        const { id } = params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          return NextResponse.json(
+            { error: 'Invalid prescription ID' },
+            { status: 400 }
+          );
+        }
+
+        const existingPrescription = await Prescription.findById(id);
+
+        if (!existingPrescription) {
+          return NextResponse.json(
+            { error: 'Prescription not found' },
+            { status: 404 }
+          );
+        }
+
+        const body = await req.json();
+
+        const updateData: any = {};
+
+        const allowedFields = ['medications', 'diagnosis', 'notes', 'status'];
+
+        allowedFields.forEach(field => {
+          if (body[field] !== undefined) {
+            updateData[field] = body[field];
+          }
+        });
+
+        if (body.dispense && session.user.role === UserRole.PHARMACY) {
+          updateData.status = 'dispensed';
+          updateData.dispensedBy = session.user.id;
+          updateData.dispensedAt = new Date();
+        }
+
+        const updatedPrescription = await Prescription.findByIdAndUpdate(
+          id,
+          { $set: updateData },
+          { new: true, runValidators: true }
+        )
+          .populate('patient', 'firstName lastName patientId')
+          .populate('doctor', 'firstName lastName')
+          .populate('branch', 'name')
+          .populate('dispensedBy', 'firstName lastName');
+
+        return NextResponse.json({
+          message: 'Prescription updated successfully',
+          prescription: updatedPrescription
+        });
+
+      } catch (error: any) {
+        console.error('Update prescription error:', error);
+
+        if (error.name === 'ValidationError') {
+          const validationErrors = Object.keys(error.errors).map(
+            key => error.errors[key].message
+          );
+          return NextResponse.json(
+            { error: 'Validation error', details: validationErrors },
+            { status: 400 }
+          );
+        }
+
+        return NextResponse.json(
+          { error: 'Failed to update prescription', message: error.message },
+          { status: 500 }
+        );
+      }
+    }
+  );
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return checkRole([UserRole.DOCTOR, UserRole.ADMIN])(
+    req,
+    async (req: NextRequest, session: any) => {
+      try {
+        await dbConnect();
+
+        const { id } = params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          return NextResponse.json(
+            { error: 'Invalid prescription ID' },
+            { status: 400 }
+          );
+        }
+
+        const prescription = await Prescription.findById(id);
+
+        if (!prescription) {
+          return NextResponse.json(
+            { error: 'Prescription not found' },
+            { status: 404 }
+          );
+        }
+
+        if (prescription.status === 'dispensed') {
+          return NextResponse.json(
+            { error: 'Cannot cancel a dispensed prescription' },
+            { status: 400 }
+          );
+        }
+
+        await Prescription.findByIdAndUpdate(
+          id,
+          { $set: { status: 'cancelled' } },
+          { new: true }
+        );
+
+        return NextResponse.json({
+          message: 'Prescription cancelled successfully',
+          prescriptionNumber: prescription.prescriptionNumber
+        });
+
+      } catch (error: any) {
+        console.error('Cancel prescription error:', error);
+        return NextResponse.json(
+          { error: 'Failed to cancel prescription', message: error.message },
+          { status: 500 }
+        );
+      }
+    }
+  );
+}

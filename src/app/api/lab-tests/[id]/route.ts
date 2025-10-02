@@ -1,0 +1,212 @@
+import { NextRequest, NextResponse } from 'next/server';
+import dbConnect from '@/lib/dbConnect';
+import LabTest from '@/models/LabTest';
+import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
+import mongoose from 'mongoose';
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return requireAuth(req, async (req: NextRequest, session: any) => {
+    try {
+      await dbConnect();
+
+      const { id } = params;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return NextResponse.json(
+          { error: 'Invalid lab test ID' },
+          { status: 400 }
+        );
+      }
+
+      const labTest = await LabTest.findById(id)
+        .populate('patient', 'firstName lastName patientId phoneNumber email')
+        .populate('doctor', 'firstName lastName')
+        .populate('branch', 'name address city state')
+        .populate('visit')
+        .populate('requestedBy', 'firstName lastName')
+        .populate('result.performedBy', 'firstName lastName')
+        .lean();
+
+      if (!labTest) {
+        return NextResponse.json(
+          { error: 'Lab test not found' },
+          { status: 404 }
+        );
+      }
+
+      const userRole = session.user.role as UserRole;
+      if (userRole !== UserRole.ADMIN) {
+        const userBranchId = session.user.branch?._id || session.user.branch;
+        const testBranchId = (labTest.branch as any)?._id || labTest.branch;
+
+        if (userBranchId.toString() !== testBranchId.toString()) {
+          return NextResponse.json(
+            { error: 'Forbidden. You do not have access to this lab test.' },
+            { status: 403 }
+          );
+        }
+      }
+
+      return NextResponse.json({ labTest });
+
+    } catch (error: any) {
+      console.error('Get lab test error:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch lab test', message: error.message },
+        { status: 500 }
+      );
+    }
+  });
+}
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return checkRole([UserRole.LAB, UserRole.DOCTOR, UserRole.ADMIN])(
+    req,
+    async (req: NextRequest, session: any) => {
+      try {
+        await dbConnect();
+
+        const { id } = params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          return NextResponse.json(
+            { error: 'Invalid lab test ID' },
+            { status: 400 }
+          );
+        }
+
+        const existingLabTest = await LabTest.findById(id);
+
+        if (!existingLabTest) {
+          return NextResponse.json(
+            { error: 'Lab test not found' },
+            { status: 404 }
+          );
+        }
+
+        const body = await req.json();
+
+        const updateData: any = {};
+
+        const allowedFields = [
+          'testName',
+          'testCategory',
+          'description',
+          'priority',
+          'status'
+        ];
+
+        allowedFields.forEach(field => {
+          if (body[field] !== undefined) {
+            updateData[field] = body[field];
+          }
+        });
+
+        if (body.result) {
+          updateData.result = {
+            findings: body.result.findings,
+            normalRange: body.result.normalRange,
+            remarks: body.result.remarks,
+            attachments: body.result.attachments || [],
+            performedBy: session.user.id,
+            completedAt: new Date()
+          };
+
+          if (!updateData.status) {
+            updateData.status = 'completed';
+          }
+        }
+
+        const updatedLabTest = await LabTest.findByIdAndUpdate(
+          id,
+          { $set: updateData },
+          { new: true, runValidators: true }
+        )
+          .populate('patient', 'firstName lastName patientId')
+          .populate('doctor', 'firstName lastName')
+          .populate('branch', 'name')
+          .populate('requestedBy', 'firstName lastName')
+          .populate('result.performedBy', 'firstName lastName');
+
+        return NextResponse.json({
+          message: 'Lab test updated successfully',
+          labTest: updatedLabTest
+        });
+
+      } catch (error: any) {
+        console.error('Update lab test error:', error);
+
+        if (error.name === 'ValidationError') {
+          const validationErrors = Object.keys(error.errors).map(
+            key => error.errors[key].message
+          );
+          return NextResponse.json(
+            { error: 'Validation error', details: validationErrors },
+            { status: 400 }
+          );
+        }
+
+        return NextResponse.json(
+          { error: 'Failed to update lab test', message: error.message },
+          { status: 500 }
+        );
+      }
+    }
+  );
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return checkRole([UserRole.DOCTOR, UserRole.ADMIN])(
+    req,
+    async (req: NextRequest, session: any) => {
+      try {
+        await dbConnect();
+
+        const { id } = params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          return NextResponse.json(
+            { error: 'Invalid lab test ID' },
+            { status: 400 }
+          );
+        }
+
+        const labTest = await LabTest.findById(id);
+
+        if (!labTest) {
+          return NextResponse.json(
+            { error: 'Lab test not found' },
+            { status: 404 }
+          );
+        }
+
+        await LabTest.findByIdAndUpdate(
+          id,
+          { $set: { status: 'cancelled' } },
+          { new: true }
+        );
+
+        return NextResponse.json({
+          message: 'Lab test cancelled successfully',
+          testNumber: labTest.testNumber
+        });
+
+      } catch (error: any) {
+        console.error('Cancel lab test error:', error);
+        return NextResponse.json(
+          { error: 'Failed to cancel lab test', message: error.message },
+          { status: 500 }
+        );
+      }
+    }
+  );
+}

@@ -184,15 +184,15 @@ const Sidebar = () => {
           <div>
             {/* Logo Normal */}
             <Link href={route.dashboard} className="logo logo-normal">
-              <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" />
+              <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" width={150} height={50} />
             </Link>
             {/* Logo Small */}
             <Link href={route.dashboard} className="logo-small">
-              <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" />
+              <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" width={40} height={40} />
             </Link>
             {/* Logo Dark */}
             <Link href={route.dashboard} className="dark-logo">
-              <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" />
+              <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" width={150} height={50} />
             </Link>
           </div>
           <button

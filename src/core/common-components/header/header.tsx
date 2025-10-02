@@ -167,6 +167,19 @@ const Header = () => {
     }
   }, []);
 
+  // Initialize Bootstrap dropdowns
+  useEffect(() => {
+    // @ts-ignore
+    if (typeof window !== 'undefined' && window.bootstrap) {
+      const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+      // @ts-ignore
+      dropdownElementList.forEach(dropdownToggleEl => {
+        // @ts-ignore
+        new window.bootstrap.Dropdown(dropdownToggleEl);
+      });
+    }
+  }, []);
+
   return (
     <>
       {/* Topbar Start */}
@@ -188,7 +201,7 @@ const Header = () => {
               {/* Logo Normal */}
               <span className="logo-light">
                 <span className="logo-lg">
-                  <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" width={120} height={40} />
+                  <ImageWithBasePath src="life-point-logo.png" alt="Life Point Medical Centre" width={100} height={35} />
                 </span>
               </span>
               {/* Logo Dark */}
@@ -197,8 +210,8 @@ const Header = () => {
                   <ImageWithBasePath
                     src="life-point-logo.png"
                     alt="Life Point Medical Centre"
-                    width={120}
-                    height={40}
+                    width={100}
+                    height={35}
                   />
                 </span>
               </span>
@@ -209,8 +222,8 @@ const Header = () => {
                   <ImageWithBasePath
                     src="life-point-logo.png"
                     alt="Life Point Medical Centre"
-                    width={40}
-                    height={40}
+                    width={35}
+                    height={35}
                   />
                 </span>
               </span>
