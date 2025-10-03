@@ -6,14 +6,23 @@ export interface IPatient extends Document {
   lastName: string;
   middleName?: string;
   dateOfBirth: Date;
+  age?: number;
   gender: 'Male' | 'Female' | 'Other';
   bloodGroup?: string;
   phoneNumber: string;
   email?: string;
   address: string;
+  address2?: string;
   city: string;
   state: string;
   country: string;
+  zipCode?: string;
+  maritalStatus?: string;
+  patientType?: string;
+  companyName?: string;
+  referredBy?: string;
+  referredOn?: Date;
+  department?: string;
   emergencyContact: {
     name: string;
     relationship: string;
@@ -22,6 +31,8 @@ export interface IPatient extends Document {
   allergies: string[];
   chronicConditions: string[];
   medications: string[];
+  notes?: string;
+  chiefComplaint?: string;
   insurance?: {
     provider: string;
     policyNumber: string;
@@ -63,6 +74,11 @@ const PatientSchema = new Schema<IPatient>({
     type: Date, 
     required: [true, 'Date of birth is required']
   },
+  age: {
+    type: Number,
+    min: 0,
+    max: 150
+  },
   gender: { 
     type: String, 
     enum: ['Male', 'Female', 'Other'],
@@ -94,6 +110,10 @@ const PatientSchema = new Schema<IPatient>({
     required: [true, 'Address is required'],
     trim: true
   },
+  address2: { 
+    type: String,
+    trim: true
+  },
   city: { 
     type: String, 
     required: [true, 'City is required'],
@@ -108,6 +128,33 @@ const PatientSchema = new Schema<IPatient>({
     type: String, 
     required: [true, 'Country is required'],
     default: 'Nigeria',
+    trim: true
+  },
+  zipCode: { 
+    type: String,
+    trim: true
+  },
+  maritalStatus: { 
+    type: String,
+    trim: true
+  },
+  patientType: {
+    type: String,
+    trim: true
+  },
+  companyName: {
+    type: String,
+    trim: true
+  },
+  referredBy: {
+    type: String,
+    trim: true
+  },
+  referredOn: {
+    type: Date
+  },
+  department: {
+    type: String,
     trim: true
   },
   emergencyContact: {
@@ -138,6 +185,14 @@ const PatientSchema = new Schema<IPatient>({
   medications: {
     type: [String],
     default: []
+  },
+  notes: {
+    type: String,
+    trim: true
+  },
+  chiefComplaint: {
+    type: String,
+    trim: true
   },
   insurance: {
     provider: { type: String },

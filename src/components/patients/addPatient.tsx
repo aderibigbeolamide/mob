@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   BloodGroup,
   City,
@@ -19,7 +21,7 @@ import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonSelect from "@/core/common-components/common-select/commonSelect";
 import CommonDatePicker from "@/core/common-components/common-date-picker/commonDatePicker";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
-
+import { apiClient } from "@/lib/services/api-client";
 
 const stepKeys = [
   "v-pills-info",
@@ -29,53 +31,125 @@ const stepKeys = [
 ];
 
 const AddPatientComponent = () => {
-
+  const { data: session } = useSession();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  // Navigation handlers
+  const [formData, setFormData] = useState({
+    patientId: `PT${Date.now().toString().slice(-6)}`,
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    bloodGroup: "",
+    age: "",
+    dateOfBirth: "",
+    patientType: "",
+    gender: "",
+    companyName: "",
+    maritalStatus: "",
+    phoneNumber: "",
+    emergencyNumber: "",
+    guardianName: "",
+    address: "",
+    address2: "",
+    country: "",
+    city: "",
+    state: "",
+    pincode: "",
+    referredBy: "",
+    referredOn: "",
+    department: "",
+    notes: "",
+    allergies: [] as string[],
+    chronicConditions: [] as string[],
+    currentComplaints: "",
+  });
+
   const goToStep = (idx: number) => setCurrentStep(idx);
   const goNext = () =>
     setCurrentStep((prev) => Math.min(prev + 1, stepKeys.length - 1));
   const goBack = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
-  // Clean up any lingering modal backdrops on component mount
   useEffect(() => {
-    // Remove any lingering modal-backdrop and modal-open classes
     document.body.classList.remove('modal-open');
     const backdrops = document.querySelectorAll('.modal-backdrop');
     backdrops.forEach((el) => el.parentNode && el.parentNode.removeChild(el));
   }, []);
 
-  // Function to handle modal cleanup when navigating
-  const handleModalNavigation = () => {
-    const modal = document.getElementById("success_modal");
-    if (modal) {
-      // @ts-ignore
-      const bsModal = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
-      bsModal.hide();
-      
-      // Remove backdrop manually if needed
-      const backdrop = document.querySelector('.modal-backdrop');
-      if (backdrop) {
-        backdrop.remove();
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSelectChange = (name: string, value: any) => {
+    setFormData({ ...formData, [name]: value?.value || value });
+  };
+
+  const handleDateChange = (name: string, date: Date | null) => {
+    if (date) {
+      setFormData({ ...formData, [name]: date.toISOString() });
+    }
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      if (!session?.user?.branch) {
+        throw new Error("Branch information not found");
       }
-      
-      // Remove modal-open class from body
-      document.body.classList.remove('modal-open');
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+
+      const branchId = typeof session.user.branch === 'object' ? session.user.branch._id : session.user.branch;
+
+      const patientData = {
+        patientId: formData.patientId,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        middleName: formData.middleName,
+        dateOfBirth: formData.dateOfBirth,
+        age: formData.age ? parseInt(formData.age) : undefined,
+        gender: formData.gender,
+        bloodGroup: formData.bloodGroup,
+        maritalStatus: formData.maritalStatus,
+        patientType: formData.patientType,
+        companyName: formData.companyName,
+        referredBy: formData.referredBy,
+        referredOn: formData.referredOn,
+        department: formData.department,
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
+        address2: formData.address2,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        zipCode: formData.pincode,
+        emergencyContact: {
+          name: formData.guardianName,
+          relationship: "Guardian",
+          phoneNumber: formData.emergencyNumber,
+        },
+        allergies: formData.allergies,
+        chronicConditions: formData.chronicConditions,
+        notes: formData.notes,
+        chiefComplaint: formData.currentComplaints,
+        branchId: branchId,
+      };
+
+      await apiClient.post("/api/patients", patientData, {
+        successMessage: "Patient added successfully",
+      });
+
+      router.push(all_routes.allPatientsList);
+    } catch (error) {
+      console.error("Failed to add patient:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <>
-      {/* ========================
-			Start Page Content
-		========================= */}
       <div className="page-wrapper">
-        {/* Start Content */}
         <div className="content">
-          {/* Page Header */}
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
             <div className="breadcrumb-arrow">
               <h4 className="mb-1">Patients</h4>
@@ -96,8 +170,7 @@ const AddPatientComponent = () => {
               Back to Patient
             </Link>
           </div>
-          {/* End Page Header */}
-          {/* row start */}
+
           <div className="row vertical-tab">
             <div className="col-xl-3 col-lg-4">
               <div className="nav flex-column nav-pills vertical-tab mb-lg-0 mb-4" id="v-pills-tab">
@@ -125,13 +198,13 @@ const AddPatientComponent = () => {
                       ? " activated"
                       : ""
                   }`}
-                  id="v-pills-vituals-tab"
+                  id="v-pills-medical-history-tab"
                   onClick={() => goToStep(1)}
                   type="button"
                 >
                   <span />
-                  <i className="ti ti-vector-spline fs-16" />
-                  Vitals
+                  <i className="ti ti-files fs-16" />
+                  Medical History
                 </button>
                 <button
                   className={`nav-link fw-medium d-flex align-items-center rounded${
@@ -141,24 +214,8 @@ const AddPatientComponent = () => {
                       ? " activated"
                       : ""
                   }`}
-                  id="v-pills-medical-history-tab"
-                  onClick={() => goToStep(2)}
-                  type="button"
-                >
-                  <span />
-                  <i className="ti ti-files fs-16" />
-                  Medical HIstory
-                </button>
-                <button
-                  className={`nav-link fw-medium d-flex align-items-center rounded${
-                    currentStep === 3
-                      ? " active"
-                      : currentStep > 3
-                      ? " activated"
-                      : ""
-                  }`}
                   id="v-pills-complaints-tab"
-                  onClick={() => goToStep(3)}
+                  onClick={() => goToStep(2)}
                   type="button"
                 >
                   <span />
@@ -172,815 +229,392 @@ const AddPatientComponent = () => {
                 className="patient-form-wizard flex-fill"
                 id="v-pills-tabContent"
               >
-                {/* basic information */}
+                {/* Basic Information */}
                 <div
                   className={`form-wizard-content${
                     currentStep === 0 ? " active" : " d-none"
                   }`}
                   id="v-pills-info"
                 >
-                  <form
-                    
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      goNext();
-                    }}
-                  >
-                    <div className="card">
-                      <div className="card-header">
-                        <h5 className="mb-0">Basic Information</h5>
-                      </div>
-                      <div className="card-body pb-1">
-                        <div className="mb-3">
-                          <label className="form-label">
-                            Profile Image
-                            <span className="text-danger ms-1">*</span>
-                          </label>
-                          <div className="d-flex align-items-center flex-wrap gap-3">
-                            <div className="flex-shrink-0">
-                              <div className="position-relative d-flex align-items-center border rounded">
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-12.jpg"
-                                  className="avatar avatar-xxl"
-                                  alt="patient"
-                                />
-                              </div>
-                            </div>
-                            <div className="d-inline-flex flex-column align-items-start">
-                              <div className="d-inline-flex align-items-start gap-2 flex-wrap">
-                                <div className="drag-upload-btn btn btn-dark position-relative mb-2">
-                                  <i className="ti ti-arrows-exchange-2 me-1" />
-                                  Change Image
-                                  <input
-                                    type="file"
-                                    className="form-control image-sign"
-                                    multiple
-                                  />
-                                </div>
-                                <div>
-                                  <Link
-                                    href="#"
-                                    className="btn btn-danger d-flex align-items-center gap-1"
-                                  >
-                                    {" "}
-                                    <i className="ti ti-trash" /> Remove
-                                  </Link>
-                                </div>
-                              </div>
-                              <span className="fs-13 text-body">
-                                Use JPEG, PNG, or GIF. Best size: 200x200
-                                pixels. Keep it under 5MB
-                              </span>
-                            </div>
+                  <div className="card">
+                    <div className="card-header">
+                      <h5 className="mb-0">Basic Information</h5>
+                    </div>
+                    <div className="card-body pb-1">
+                      <div className="row">
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Patient ID</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="patientId"
+                              value={formData.patientId}
+                              onChange={handleInputChange}
+                              disabled
+                            />
                           </div>
                         </div>
-                        <div className="row">
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label" htmlFor="patient-id">ID</label>
-                              <input type="text" className="form-control" id="patient-id" defaultValue="#PT0005" disabled />
-                            </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              First Name<span className="text-danger ms-1">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="firstName"
+                              value={formData.firstName}
+                              onChange={handleInputChange}
+                              required
+                            />
                           </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label" htmlFor="patient-first-name">First Name<span className="text-danger ms-1">*</span></label>
-                              <input type="text" className="form-control" id="patient-first-name" />
-                            </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Middle Name</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="middleName"
+                              value={formData.middleName}
+                              onChange={handleInputChange}
+                            />
                           </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label" htmlFor="patient-middle-name">Middle Name<span className="text-danger ms-1">*</span></label>
-                              <input type="text" className="form-control" id="patient-middle-name" />
-                            </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Last Name<span className="text-danger ms-1">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="lastName"
+                              value={formData.lastName}
+                              onChange={handleInputChange}
+                              required
+                            />
                           </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Last Name
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <input type="text" className="form-control" />
-                            </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Blood Group<span className="text-danger ms-1">*</span>
+                            </label>
+                            <CommonSelect
+                              options={BloodGroup}
+                              className="select"
+                              onChange={(val: any) => handleSelectChange("bloodGroup", val)}
+                            />
                           </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Blood Group
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <CommonSelect
-                                options={BloodGroup}
-                                className="select"
-                                defaultValue={BloodGroup[0]}
-                              />
-                            </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              DOB<span className="text-danger ms-1">*</span>
+                            </label>
+                            <CommonDatePicker
+                              placeholder="dd/mm/yyyy"
+                              onChange={(date: Date | null) => handleDateChange("dateOfBirth", date)}
+                            />
                           </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Age<span className="text-danger ms-1">*</span>
-                              </label>
-                              <input type="text" className="form-control" />
-                            </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Gender<span className="text-danger ms-1">*</span>
+                            </label>
+                            <CommonSelect
+                              options={Gender}
+                              className="select"
+                              onChange={(val: any) => handleSelectChange("gender", val)}
+                            />
                           </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                DOB<span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className=" w-auto input-group-flat">
-                                <CommonDatePicker placeholder="dd/mm/yyyy" />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Patient Type
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <CommonSelect
-                                options={PatientType}
-                                className="select"
-                                defaultValue={PatientType[0]}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Gender
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <CommonSelect
-                                options={Gender}
-                                className="select"
-                                defaultValue={Gender[0]}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Company Name with Location
-                              </label>
-                              <input type="text" className="form-control" />
-                            </div>
-                          </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Martial Status
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <CommonSelect
-                                options={MartialStatus}
-                                className="select"
-                                defaultValue={MartialStatus[0]}
-                              />
-                            </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Marital Status</label>
+                            <CommonSelect
+                              options={MartialStatus}
+                              className="select"
+                              onChange={(val: any) => handleSelectChange("maritalStatus", val)}
+                            />
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="card">
-                      <div className="card-header">
-                        <h5 className="mb-0">Contact Information</h5>
-                      </div>
-                      <div className="card-body pb-1">
-                        <div className="row">
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Mobile Number
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <input
-                                className="form-control"
-                                name="phone"
-                                type="tel"
-                              />
-                            </div>
+                  </div>
+
+                  <div className="card">
+                    <div className="card-header">
+                      <h5 className="mb-0">Contact Information</h5>
+                    </div>
+                    <div className="card-body pb-1">
+                      <div className="row">
+                        <div className="col-xl-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Mobile Number<span className="text-danger ms-1">*</span>
+                            </label>
+                            <input
+                              className="form-control"
+                              name="phoneNumber"
+                              type="tel"
+                              value={formData.phoneNumber}
+                              onChange={handleInputChange}
+                              required
+                            />
                           </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Emergency Number
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <input
-                                className="form-control"
-                                name="phone"
-                                type="text"
-                              />
-                            </div>
+                        </div>
+                        <div className="col-xl-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Emergency Number<span className="text-danger ms-1">*</span>
+                            </label>
+                            <input
+                              className="form-control"
+                              name="emergencyNumber"
+                              type="text"
+                              value={formData.emergencyNumber}
+                              onChange={handleInputChange}
+                              required
+                            />
                           </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Guardian / Person Name
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <input type="text" className="form-control" />
-                            </div>
+                        </div>
+                        <div className="col-xl-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Guardian / Person Name<span className="text-danger ms-1">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="guardianName"
+                              value={formData.guardianName}
+                              onChange={handleInputChange}
+                              required
+                            />
                           </div>
-                          <div className="col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Address Line 1
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <input type="text" className="form-control" />
-                            </div>
+                        </div>
+                        <div className="col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Address<span className="text-danger ms-1">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="address"
+                              value={formData.address}
+                              onChange={handleInputChange}
+                              required
+                            />
                           </div>
-                          <div className="col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Address Line 2
-                              </label>
-                              <input type="text" className="form-control" />
-                            </div>
+                        </div>
+                        <div className="col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Address Line 2</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="address2"
+                              value={formData.address2}
+                              onChange={handleInputChange}
+                            />
                           </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Country
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <CommonSelect
-                                options={Country}
-                                className="select"
-                                defaultValue={Country[0]}
-                              />
-                            </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Country<span className="text-danger ms-1">*</span>
+                            </label>
+                            <CommonSelect
+                              options={Country}
+                              className="select"
+                              onChange={(val: any) => handleSelectChange("country", val)}
+                            />
                           </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">City</label>
-                              <CommonSelect
-                                options={City}
-                                className="select"
-                                defaultValue={City[0]}
-                              />
-                            </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              City<span className="text-danger ms-1">*</span>
+                            </label>
+                            <CommonSelect
+                              options={City}
+                              className="select"
+                              onChange={(val: any) => handleSelectChange("city", val)}
+                            />
                           </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">State</label>
-                              <CommonSelect
-                                options={State}
-                                className="select"
-                                defaultValue={State[0]}
-                              />
-                            </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              State<span className="text-danger ms-1">*</span>
+                            </label>
+                            <CommonSelect
+                              options={State}
+                              className="select"
+                              onChange={(val: any) => handleSelectChange("state", val)}
+                            />
                           </div>
-                          <div className="col-xl-3 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">Pincode</label>
-                              <input type="text" className="form-control" />
-                            </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Pincode</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="pincode"
+                              value={formData.pincode}
+                              onChange={handleInputChange}
+                            />
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="card">
-                      <div className="card-header">
-                        <h5 className="mb-0">Referral Doctor’s Info</h5>
-                      </div>
-                      <div className="card-body pb-1">
-                        <div className="row">
-                          <div className="col-md-4">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Referred By
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <CommonSelect
-                                options={ReferredBy}
-                                className="select"
-                                defaultValue={ReferredBy[0]}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-md-4">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Referred On
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className=" w-auto input-group-flat">
-                                <CommonDatePicker placeholder="dd/mm/yyyy" />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-md-4">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Department
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <CommonSelect
-                                options={Department}
-                                className="select"
-                                defaultValue={Department[0]}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="card">
-                      <div className="card-header">
-                        <h5 className="mb-0">Other Information</h5>
-                      </div>
-                      <div className="card-body pb-1">
-                        <div className="row">
-                          <div className="col-md-12">
-                            <div className="mb-3">
-                              <label className="form-label">Notes If Any</label>
-                              <textarea
-                                rows={4}
-                                className="form-control"
-                                defaultValue={""}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="d-flex justify-content-end flex-wrap align-items-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-primary next-tab-btn"
-                        id="save-basic-info"
-                        onClick={goNext}
-                      >
-                        Save &amp; Add Vitals
-                      </button>
-                    </div>
-                  </form>
+                  </div>
+
+                  <div className="d-flex justify-content-end flex-wrap align-items-center gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={goNext}
+                    >
+                      Next: Medical History
+                    </button>
+                  </div>
                 </div>
-                {/* vituals */}
+
+                {/* Medical History */}
                 <div
                   className={`form-wizard-content${
                     currentStep === 1 ? " active" : " d-none"
                   }`}
-                  id="v-pills-vituals"
+                  id="v-pills-medical-history"
                 >
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      goNext();
-                    }}
-                  >
-                    <div className="card pb-0">
-                      <div className="card-header">
-                        <h5 className="mb-0">Vitals</h5>
-                      </div>
-                      <div className="card-body">
-                        <div className="row">
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Temperature
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className="input-group">
-                                <input type="text" className="form-control" />
-                                <span className="input-group-text">F</span>
-                              </div>
-                            </div>
+                  <div className="card">
+                    <div className="card-header">
+                      <h5 className="mb-0">Medical History</h5>
+                    </div>
+                    <div className="card-body pb-1">
+                      <div className="row">
+                        <div className="col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Allergies (comma separated)</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="e.g., Penicillin, Peanuts"
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  allergies: e.target.value.split(',').map(s => s.trim()).filter(Boolean),
+                                })
+                              }
+                            />
                           </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Pulse<span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className="input-group">
-                                <input type="text" className="form-control" />
-                                <span className="input-group-text">mmHg</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Respiratory Rate
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className="input-group">
-                                <input type="text" className="form-control" />
-                                <span className="input-group-text">rpm</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                SPO2<span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className="input-group">
-                                <input type="text" className="form-control" />
-                                <span className="input-group-text">%</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Height
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className="input-group">
-                                <input type="text" className="form-control" />
-                                <span className="input-group-text">cm</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Weight
-                                <span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className="input-group">
-                                <input type="text" className="form-control" />
-                                <span className="input-group-text">Kg</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                BMI<span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className="input-group">
-                                <input type="text" className="form-control" />
-                                <span className="input-group-text">kg/cm</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Waist<span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className="input-group">
-                                <input type="text" className="form-control" />
-                                <span className="input-group-text">cm</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-xl-4 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                BSA<span className="text-danger ms-1">*</span>
-                              </label>
-                              <div className="input-group">
-                                <input type="text" className="form-control" />
-                                <span className="input-group-text">M</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-md-12">
-                            <div className="mb-0">
-                              <label className="form-label">Quick Notes</label>
-                              <textarea
-                                rows={4}
-                                className="form-control"
-                                placeholder="Description"
-                                defaultValue={""}
-                              />
-                            </div>
+                        </div>
+                        <div className="col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Chronic Conditions (comma separated)</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="e.g., Diabetes, Hypertension"
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  chronicConditions: e.target.value.split(',').map(s => s.trim()).filter(Boolean),
+                                })
+                              }
+                            />
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="d-flex justify-content-end flex-wrap align-items-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-white back-btn"
-                        onClick={goBack}
-                      >
-                        Back
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-primary next-tab-btn"
-                        id="save-vitals"
-                        onClick={goNext}
-                      >
-                        Save &amp; Add Medical Histroy
-                      </button>
-                    </div>
-                  </form>
+                  </div>
+
+                  <div className="d-flex justify-content-between flex-wrap align-items-center gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={goBack}
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={goNext}
+                    >
+                      Next: Complaints
+                    </button>
+                  </div>
                 </div>
-                {/* medical history */}
+
+                {/* Complaints */}
                 <div
                   className={`form-wizard-content${
                     currentStep === 2 ? " active" : " d-none"
                   }`}
-                  id="v-pills-medical-history"
-                >
-                  <form
-                  
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      goNext();
-                    }}
-                  >
-                    <div className="card">
-                      <div className="card-header">
-                        <h5 className="mb-0">Medical History</h5>
-                      </div>
-                      <div className="card-body">
-                        {/* start row */}
-                        <div className="row">
-                          <div className="col-xl-6 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">Type</label>
-                              <CommonSelect
-                                options={Type}
-                                className="select"
-                                defaultValue={Type[0]}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-xl-6 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">Reason</label>
-                              <input type="text" className="form-control" />
-                            </div>
-                          </div>
-                          <div className="col-xl-6 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Date of Illness
-                              </label>
-                              <div className=" w-auto input-group-flat">
-                                <CommonDatePicker placeholder="dd/mm/yyyy" />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-xl-6 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Hospital Name
-                              </label>
-                              <input type="text" className="form-control" />
-                            </div>
-                          </div>
-                          <div className="col-md-12">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Assessment done if any
-                              </label>
-                              <textarea
-                                rows={4}
-                                className="form-control"
-                                defaultValue={""}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-md-12">
-                            <div>
-                              <label className="form-label">Notes</label>
-                              <textarea
-                                rows={4}
-                                className="form-control"
-                                defaultValue={""}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        {/* end row */}
-                        <div className="mt-4 pt-4 border-top" />
-                        {/* start row */}
-                        <div className="row">
-                          <div className="col-xl-6 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">Type</label>
-                              <CommonSelect
-                                options={Type}
-                                className="select"
-                                defaultValue={Type[0]}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-xl-6 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">Reason</label>
-                              <input type="text" className="form-control" />
-                            </div>
-                          </div>
-                          <div className="col-xl-6 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Date of Illness
-                              </label>
-                              <div className=" w-auto input-group-flat">
-                                <CommonDatePicker placeholder="dd/mm/yyyy" />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-xl-6 col-md-6">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Hospital Name
-                              </label>
-                              <input type="text" className="form-control" />
-                            </div>
-                          </div>
-                          <div className="col-md-12">
-                            <div className="mb-3">
-                              <label className="form-label">
-                                Assessment done if any
-                              </label>
-                              <textarea
-                                rows={4}
-                                className="form-control"
-                                defaultValue={""}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-md-12">
-                            <div>
-                              <label className="form-label">Notes</label>
-                              <textarea
-                                rows={4}
-                                className="form-control"
-                                defaultValue={""}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        {/* end row */}
-                        <div className="mt-4 pt-4 border-top">
-                          <Link
-                            href="#"
-                            className="text-orange d-linline-flex align-items-center gap-1 fw-medium"
-                          >
-                            {" "}
-                            <i className="ti ti-plus" /> Add More
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="d-flex justify-content-end flex-wrap align-items-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-white back-btn"
-                        onClick={goBack}
-                      >
-                        Back
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-primary next-tab-btn"
-                        id="save-medical-history"
-                        onClick={goNext}
-                      >
-                        Save &amp; Add Complaints
-                      </button>
-                    </div>
-                  </form>
-                </div>
-                {/* complaints */}
-                <div
-                  className={`form-wizard-content${
-                    currentStep === 3 ? " active" : " d-none"
-                  }`}
                   id="v-pills-complaints"
                 >
-                  <form onSubmit={(e) => e.preventDefault()}>
-                    <div className="card pb-0">
-                      <div className="card-header">
-                        <h5 className="mb-0">Complaints</h5>
-                      </div>
-                      <div className="card-body pb-1">
-                        <div className="row">
-                          <div className="col-md-12">
-                            <div className="mb-4">
-                              <label className="form-label">
-                                Patients Overall Health Condition
-                              </label>
-                              <CommonSelect
-                                options={HealthCondition}
-                                className="select"
-                                defaultValue={HealthCondition[0]}
-                              />
-                            </div>
-                          </div>
-                          <div className="col-md-12">
-                            <div className="mb-4">
-                              <div className="form-check mb-2">
-                                <input
-                                  type="checkbox"
-                                  className="form-check-input"
-                                  id="customCheck4"
-                                  defaultChecked
-                                />
-                                <label
-                                  className="form-check-label form-label mb-0"
-                                  htmlFor="customCheck4"
-                                >
-                                  Does patient have any health Condition
-                                </label>
-                              </div>
-                               <input type="text" className="form-control" />
-                            </div>
-                          </div>
-                          <div className="col-md-12">
-                            <div className="mb-3">
-                              <div className="form-check mb-2">
-                                <input
-                                  type="checkbox"
-                                  className="form-check-input"
-                                  id="customCheck8"
-                                  defaultChecked
-                                />
-                                <label
-                                  className="form-check-label form-label mb-0"
-                                  htmlFor="customCheck8"
-                                >
-                                  Allergies if Any Before
-                                </label>
-                              </div>
-                               <input type="text" className="form-control" />
-                            </div>
+                  <div className="card">
+                    <div className="card-header">
+                      <h5 className="mb-0">Current Complaints</h5>
+                    </div>
+                    <div className="card-body pb-1">
+                      <div className="row">
+                        <div className="col-md-12">
+                          <div className="mb-3">
+                            <label className="form-label">Complaints / Notes</label>
+                            <textarea
+                              rows={4}
+                              className="form-control"
+                              name="currentComplaints"
+                              value={formData.currentComplaints}
+                              onChange={handleInputChange}
+                              placeholder="Enter current complaints or notes..."
+                            />
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="d-flex justify-content-end flex-wrap align-items-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-white back-btn"
-                        onClick={goBack}
-                      >
-                        Back
-                      </button>
-                      <Link
-                        href="#"
-                        className="btn btn-primary"
-                        data-bs-toggle="modal"
-                        data-bs-target="#success_modal"
-                      >
-                        Save &amp; Confirm
-                      </Link>
-                    </div>
-                  </form>
+                  </div>
+
+                  <div className="d-flex justify-content-between flex-wrap align-items-center gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={goBack}
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleSubmit}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Patient'
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          {/* row end */}
         </div>
-        {/* End Content */}
-        {/* Start Footer */}
         <CommonFooter />
-        {/* End Footer */}
       </div>
-      {/* ========================
-			End Page Content
-		========================= */}
-      <>
-        {/* success modal */}
-        <div className="modal fade" id="success_modal">
-          <div className="modal-dialog modal-dialog-centered modal-sm">
-            <div className="modal-content">
-              <div className="modal-body text-center position-relative">
-                <div className="mb-4 position-relative z-1">
-                  <span className="avatar avatar-xl badge-soft-success text-success rounded-circle">
-                    <i className="ti ti-calendar-check fs-40" />
-                  </span>
-                </div>
-                <h6 className="mb-1">Added Successfully</h6>
-                <p className="mb-4">
-                  Patient “Hendrita Merkel” has been added to the Patient List
-                </p>
-                <div className="d-flex justify-content-center gap-2">
-                  <Link
-                    href={all_routes.patients}
-                    className="btn btn-outline-light position-relative z-1 me-2 w-100"
-                    onClick={handleModalNavigation}
-                  >
-                    Back To List
-                  </Link>
-                  <Link
-                    href={all_routes.patientDetails}
-                    className="btn btn-primary position-relative z-1 w-100"
-                    onClick={handleModalNavigation}
-                  >
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* success modal */}
-      </>
     </>
   );
 };
