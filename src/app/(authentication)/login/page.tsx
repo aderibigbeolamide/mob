@@ -59,23 +59,32 @@ export default function LoginPage() {
           <div 
             className="w-100 h-100 position-absolute top-0 start-0"
             style={{
-              background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.9) 0%, rgba(30, 64, 175, 0.75) 100%)',
+              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.65) 0%, rgba(30, 64, 175, 0.75) 100%)',
             }}
           ></div>
           <div className="position-relative d-flex flex-column justify-content-center align-items-center text-white p-5 w-100">
-            <Image
-              src="/life-point-logo.png"
-              alt="Life Point Medical Centre"
-              width={120}
-              height={120}
-              className="mb-4"
-            />
-            <h1 className="fw-bold text-center mb-3">Life Point Medical Centre</h1>
-            <p className="text-center lead mb-4">Electronic Medical Records System</p>
-            <div className="text-center">
-              <p className="mb-2"><i className="fas fa-shield-alt me-2"></i>Secure & Confidential</p>
-              <p className="mb-2"><i className="fas fa-clock me-2"></i>24/7 Access</p>
-              <p className="mb-0"><i className="fas fa-users me-2"></i>Staff Portal</p>
+            <div style={{ 
+              background: 'rgba(0, 0, 0, 0.35)', 
+              padding: '2rem', 
+              borderRadius: '1rem',
+              backdropFilter: 'blur(5px)'
+            }}>
+              <div className="text-center">
+                <Image
+                  src="/life-point-logo.png"
+                  alt="Life Point Medical Centre"
+                  width={120}
+                  height={120}
+                  className="mb-4"
+                />
+                <h1 className="fw-bold text-white mb-3">Life Point Medical Centre</h1>
+                <p className="lead text-white mb-4">Electronic Medical Records System</p>
+                <div>
+                  <p className="mb-2 text-white"><i className="fas fa-shield-alt me-2"></i>Secure & Confidential</p>
+                  <p className="mb-2 text-white"><i className="fas fa-clock me-2"></i>24/7 Access</p>
+                  <p className="mb-0 text-white"><i className="fas fa-users me-2"></i>Staff Portal</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

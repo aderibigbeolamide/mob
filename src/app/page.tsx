@@ -57,17 +57,25 @@ export default function LandingPage() {
         <div 
           className="position-absolute top-0 start-0 w-100 h-100" 
           style={{ 
-            background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.85) 0%, rgba(30, 64, 175, 0.7) 100%)',
+            background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(30, 64, 175, 0.65) 100%)',
             zIndex: 1 
           }}
         ></div>
         <div className="container position-relative" style={{ zIndex: 2 }}>
           <div className="row align-items-center">
             <div className="col-lg-6">
-              <h1 className="hero-title fw-bold mb-4">Your Health, Our Priority</h1>
-              <p className="hero-subtitle mb-4">
-                Life Point Medical Centre provides comprehensive healthcare services with cutting-edge technology and compassionate care. Your journey to better health starts here.
-              </p>
+              <div style={{ 
+                background: 'rgba(0, 0, 0, 0.4)', 
+                padding: '2rem', 
+                borderRadius: '0.75rem',
+                backdropFilter: 'blur(5px)',
+                marginBottom: '1.5rem'
+              }}>
+                <h1 className="hero-title fw-bold mb-4 text-white">Your Health, Our Priority</h1>
+                <p className="hero-subtitle mb-0 text-white">
+                  Life Point Medical Centre provides comprehensive healthcare services with cutting-edge technology and compassionate care. Your journey to better health starts here.
+                </p>
+              </div>
               <div className="hero-buttons d-flex flex-column flex-sm-row gap-3 mb-4">
                 <Link href="/login" className="btn btn-light btn-lg px-4">
                   <i className="fas fa-calendar-check me-2"></i>Book Appointment
