@@ -103,6 +103,14 @@ export async function PUT(
           );
         }
 
+        const hasAccess = canAccessResource(session.user, existingDoctor.branchId?.toString());
+        if (!hasAccess) {
+          return NextResponse.json(
+            { error: 'Forbidden. You do not have access to this branch resource.' },
+            { status: 403 }
+          );
+        }
+
         const body = await req.json();
 
         const updateData: any = {};
@@ -228,6 +236,14 @@ export async function DELETE(
           return NextResponse.json(
             { error: 'Doctor not found' },
             { status: 404 }
+          );
+        }
+
+        const hasAccess = canAccessResource(session.user, doctor.branchId?.toString());
+        if (!hasAccess) {
+          return NextResponse.json(
+            { error: 'Forbidden. You do not have access to this branch resource.' },
+            { status: 403 }
           );
         }
 

@@ -229,6 +229,14 @@ export async function DELETE(
           );
         }
 
+        const hasAccess = canAccessResource(session.user, patient.branchId?.toString());
+        if (!hasAccess) {
+          return NextResponse.json(
+            { error: 'Forbidden. You do not have access to this branch resource.' },
+            { status: 403 }
+          );
+        }
+
         await Patient.findByIdAndUpdate(
           id,
           { $set: { isActive: false } },

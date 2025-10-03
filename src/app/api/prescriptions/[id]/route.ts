@@ -86,6 +86,14 @@ export async function PUT(
           );
         }
 
+        const hasAccess = canAccessResource(session.user, existingPrescription.branch?.toString());
+        if (!hasAccess) {
+          return NextResponse.json(
+            { error: 'Forbidden. You do not have access to this branch resource.' },
+            { status: 403 }
+          );
+        }
+
         const body = await req.json();
 
         const updateData: any = {};
@@ -166,6 +174,14 @@ export async function DELETE(
           return NextResponse.json(
             { error: 'Prescription not found' },
             { status: 404 }
+          );
+        }
+
+        const hasAccess = canAccessResource(session.user, prescription.branch?.toString());
+        if (!hasAccess) {
+          return NextResponse.json(
+            { error: 'Forbidden. You do not have access to this branch resource.' },
+            { status: 403 }
           );
         }
 
