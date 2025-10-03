@@ -2,6 +2,7 @@
 
 import { StrictMode, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { SessionProvider } from "next-auth/react";
 import ClientStoreProvider from "@/core/redux/clientStore";
 import ErrorBoundary from "@/core/common-components/common-error-boundary/ErrorBoundary";
 
@@ -43,10 +44,12 @@ export default function ClientProviders({
 }) {
   return (
     <StrictMode>
-      <ClientStoreProvider>
-        <GlobalTooltipInit />
-        <ErrorBoundary>{children}</ErrorBoundary>
-      </ClientStoreProvider>
+      <SessionProvider>
+        <ClientStoreProvider>
+          <GlobalTooltipInit />
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </ClientStoreProvider>
+      </SessionProvider>
     </StrictMode>
   );
 }
