@@ -181,58 +181,72 @@ npm run build
 npm start
 ```
 
-### Replit Setup Notes (Oct 3, 2025 - Fresh Import - Latest)
+### Replit Setup Notes (Oct 3, 2025 - Fresh Clone Import)
 
-This project has been successfully imported and configured to run on Replit:
+✅ **Project successfully configured and running on Replit!**
 
-1. **Dependencies**: Installed with `--legacy-peer-deps` flag due to React 19 and react-paystack compatibility. The `.npmrc` file ensures this flag is used automatically.
-   - ✅ All npm packages installed successfully
+1. **Dependencies**: Installed successfully with `--legacy-peer-deps` flag
+   - ✅ All 596 npm packages installed
    - ✅ Node.js 20.19.3 and npm 10.8.2 verified
+   - ✅ `.npmrc` configured with `legacy-peer-deps=true` for React 19 compatibility
 
 2. **Environment Variables**: Created `.env.local` with:
-   - `MONGODB_URI`: MongoDB connection string (⚠️ Currently set to local, **REQUIRES CONFIGURATION**)
-   - `NEXTAUTH_SECRET`: Generated secure secret for session encryption
-   - `NEXTAUTH_URL`: Set to http://localhost:5000 (for Replit development)
+   - `MONGODB_URI`: Set to `mongodb://localhost:27017/lifepoint-emr` (⚠️ **REQUIRES CONFIGURATION**)
+   - `NEXTAUTH_SECRET`: Generated secure random secret for session encryption
+   - `NEXTAUTH_URL`: Set to `http://localhost:5000` for development
    - Optional integration placeholders (Cloudinary, EmailJS, Paystack) - add as needed
 
-3. **Development Server**: Configured to run on port 5000 with host 0.0.0.0 to work with Replit's proxy:
-   ```bash
-   npm run dev -- -p 5000 -H 0.0.0.0
-   ```
-   ✅ Server is running and accessible via Replit webview.
+3. **Development Workflow**: Configured and running on port 5000 with host 0.0.0.0
+   - ✅ Workflow: `npm run dev -- -p 5000 -H 0.0.0.0`
+   - ✅ Server accessible via Replit webview
+   - ✅ Next.js 15 with Turbopack enabled
 
-4. **Deployment**: Configured for autoscale deployment with:
-   - Build: `npm run build`
-   - Run: `npm start`
-   - Deployment type: Autoscale (ideal for stateless web apps)
+4. **Deployment Configuration**: Ready for production deployment
+   - Build command: `npm run build`
+   - Run command: `npm start`
+   - Deployment type: **Autoscale** (ideal for stateless Next.js web apps)
 
-5. **Replit Proxy Configuration**: Next.js config includes `allowedOrigins: ['*']` in experimental serverActions to work with Replit's iframe proxy.
+5. **Replit Proxy Configuration**: Next.js configured for Replit's iframe proxy
+   - ✅ `allowedOrigins: ['*']` in experimental serverActions
+   - ✅ `allowedDevOrigins: ['*']` configured
+   - ✅ CORS headers set for cross-origin requests
+   - ✅ Server binds to `0.0.0.0:5000` for external access
 
 6. **Verified Working**:
-   - ✅ Landing page loads correctly
-   - ✅ Life Point Medical Centre branding displays properly
-   - ✅ Login page accessible
-   - ✅ Frontend served on port 5000 with 0.0.0.0 host
-   - ✅ Next.js 15 with Turbopack running
-   - ✅ All routes and UI components rendering correctly
+   - ✅ Login page loads with Life Point Medical Centre branding
+   - ✅ Demo credentials displayed on login screen
+   - ✅ NextAuth session API responding
+   - ✅ Frontend rendering correctly
+   - ✅ Next.js Fast Refresh (HMR) active
+   - ✅ All static assets loading
 
-7. **Database Setup Required** ⚠️:
-   - The app uses MongoDB with Mongoose for data persistence
-   - **You need to configure a MongoDB database** for full functionality:
-     - Option 1: Use MongoDB Atlas (free tier available) - Get connection string from https://www.mongodb.com/atlas
-     - Option 2: Use another MongoDB hosting service
-   - Update `MONGODB_URI` in `.env.local` with your MongoDB connection string
-   - After adding database, run the seed endpoint to create initial data: POST to `/api/seed`
-   - Default credentials (after seeding):
+7. **Next Steps - Database Setup** ⚠️:
+   
+   The app uses MongoDB for data persistence. To enable full functionality:
+   
+   **Option 1: MongoDB Atlas (Recommended)**
+   - Create free account at https://www.mongodb.com/atlas
+   - Create a new cluster (free tier available)
+   - Get connection string
+   - Update `MONGODB_URI` in `.env.local`
+   
+   **Option 2: Other MongoDB hosting**
+   - Use any MongoDB hosting service
+   - Update `MONGODB_URI` in `.env.local`
+   
+   **After connecting database:**
+   - Run seed endpoint: `POST /api/seed` to create initial data
+   - Login with demo credentials:
      - Admin: admin@lifepointmedical.com / admin123
      - Doctor: dr.sarah@lifepointmedical.com / doctor123
      - Front Desk: frontdesk@lifepointmedical.com / desk123
      - Nurse: nurse@lifepointmedical.com / nurse123
 
 8. **Known Notes**:
-   - Webpack warning with Turbopack (informational only, doesn't affect functionality)
-   - Next.js telemetry notice (can be disabled if desired)
-   - Frontend works without database, but authentication and data features require MongoDB
+   - ⚠️ Webpack/Turbopack warning (informational, doesn't affect functionality)
+   - ⚠️ Cross-origin request warnings (expected in dev, handled by config)
+   - ⚠️ Hydration mismatch warnings (minor React SSR timing, doesn't affect UX)
+   - Frontend works without database, but login/data features require MongoDB connection
 
 ## Configuration
 

@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
       allowedOrigins: ['*'],
     },
   },
-  // Allow Replit proxy domains
+  allowedDevOrigins: ['*'],
   async headers() {
     return [
       {
