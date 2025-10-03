@@ -14,11 +14,11 @@ export function applyBranchFilter(
 ): any {
   const userRole = user?.role as UserRole;
   
-  if (userRole === UserRole.ADMIN && allowCrossBranch) {
+  if (userRole === UserRole.ADMIN) {
     return query;
   }
   
-  if (userRole !== UserRole.ADMIN && user?.branch) {
+  if (user?.branch) {
     const branchId = user.branch._id || user.branch;
     query[fieldName] = branchId;
   }
@@ -32,11 +32,11 @@ export function getBranchFilter(
 ): any {
   const userRole = user?.role as UserRole;
   
-  if (userRole === UserRole.ADMIN && allowCrossBranch) {
+  if (userRole === UserRole.ADMIN) {
     return {};
   }
   
-  if (userRole !== UserRole.ADMIN && user?.branch) {
+  if (user?.branch) {
     const branchId = user.branch._id || user.branch;
     return { branchId };
   }
