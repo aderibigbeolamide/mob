@@ -28,25 +28,24 @@ export async function seedDatabase() {
       isActive: true,
     });
 
-    // Create super admin
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    // Create super admin - password will be hashed by pre-save hook
     const superAdmin = await User.create({
       firstName: 'Super',
       lastName: 'Administrator',
       email: 'admin@lifepointmedical.com',
-      password: hashedPassword,
+      password: 'admin123',
       phoneNumber: '+234-800-ADMIN',
       role: 'ADMIN',
       branchId: mainBranch._id,
       isActive: true,
     });
 
-    // Create sample doctors
+    // Create sample doctors - passwords will be hashed by pre-save hook
     const doctor1 = await User.create({
       firstName: 'Sarah',
       lastName: 'Johnson',
       email: 'dr.sarah@lifepointmedical.com',
-      password: await bcrypt.hash('doctor123', 10),
+      password: 'doctor123',
       phoneNumber: '+234-801-2345678',
       role: 'DOCTOR',
       branchId: mainBranch._id,
@@ -57,7 +56,7 @@ export async function seedDatabase() {
       firstName: 'Michael',
       lastName: 'Chen',
       email: 'dr.michael@lifepointmedical.com',
-      password: await bcrypt.hash('doctor123', 10),
+      password: 'doctor123',
       phoneNumber: '+234-802-3456789',
       role: 'DOCTOR',
       branchId: mainBranch._id,
@@ -69,7 +68,7 @@ export async function seedDatabase() {
       firstName: 'Jane',
       lastName: 'Smith',
       email: 'frontdesk@lifepointmedical.com',
-      password: await bcrypt.hash('desk123', 10),
+      password: 'desk123',
       phoneNumber: '+234-803-4567890',
       role: 'FRONT_DESK',
       branchId: mainBranch._id,
@@ -81,7 +80,7 @@ export async function seedDatabase() {
       firstName: 'Mary',
       lastName: 'Williams',
       email: 'nurse@lifepointmedical.com',
-      password: await bcrypt.hash('nurse123', 10),
+      password: 'nurse123',
       phoneNumber: '+234-804-5678901',
       role: 'NURSE',
       branchId: mainBranch._id,
