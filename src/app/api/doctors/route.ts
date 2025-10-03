@@ -3,6 +3,11 @@ import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
 import StaffProfile from '@/models/StaffProfile';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
+import { 
+  applyBranchFilter, 
+  shouldAllowCrossBranch, 
+  buildPaginationResponse 
+} from '@/lib/utils/queryHelpers';
 
 export async function POST(req: NextRequest) {
   return checkRole([UserRole.ADMIN])(
@@ -138,13 +143,8 @@ export async function GET(req: NextRequest) {
         query.isActive = false;
       }
 
-      const userRole = session.user.role as UserRole;
-      if (userRole !== UserRole.ADMIN && session.user.branch) {
-        const userBranchId = session.user.branch._id || session.user.branch;
-        if (!branchId || branchId !== userBranchId.toString()) {
-          query.branchId = userBranchId;
-        }
-      }
+      const allowCrossBranch = shouldAllowCrossBranch(req);
+      applyBranchFilter(query, session.user, allowCrossBranch);
 
       const skip = (page - 1) * limit;
 
@@ -186,18 +186,11 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      const totalPages = Math.ceil(totalCount / limit);
+      const pagination = buildPaginationResponse(page, totalCount, limit);
 
       return NextResponse.json({
         doctors: filteredDoctors,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalCount,
-          limit,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1
-        }
+        pagination
       });
 
     } catch (error: any) {

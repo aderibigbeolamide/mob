@@ -89,3 +89,57 @@ export interface Appointment {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface StaffProfile {
+  _id?: string;
+  userId: string;
+  specialization?: string;
+  licenseNumber?: string;
+  department?: string;
+  bio?: string;
+  profileImage?: string;
+  workSchedule?: Array<{
+    day: string;
+    startTime: string;
+    endTime: string;
+  }>;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Doctor {
+  _id?: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  role: UserRole;
+  branchId: string | Branch;
+  isActive: boolean;
+  profile?: StaffProfile;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Staff {
+  _id?: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  role: UserRole;
+  branchId: string | Branch;
+  isActive: boolean;
+  profile?: StaffProfile;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}

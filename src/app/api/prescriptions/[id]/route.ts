@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Prescription from '@/models/Prescription';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
+import { canAccessResource } from '@/lib/utils/queryHelpers';
 import mongoose from 'mongoose';
 
 export async function GET(
@@ -36,17 +37,13 @@ export async function GET(
         );
       }
 
-      const userRole = session.user.role as UserRole;
-      if (userRole !== UserRole.ADMIN) {
-        const userBranchId = session.user.branch?._id || session.user.branch;
-        const prescriptionBranchId = (prescription.branch as any)?._id || prescription.branch;
-
-        if (userBranchId.toString() !== prescriptionBranchId.toString()) {
-          return NextResponse.json(
-            { error: 'Forbidden. You do not have access to this prescription.' },
-            { status: 403 }
-          );
-        }
+      const prescriptionBranchId = (prescription.branch as any)?._id || prescription.branch;
+      
+      if (!canAccessResource(session.user, prescriptionBranchId)) {
+        return NextResponse.json(
+          { error: 'Forbidden. You do not have access to this prescription.' },
+          { status: 403 }
+        );
       }
 
       return NextResponse.json({ prescription });

@@ -4,6 +4,7 @@ import Patient from '@/models/Patient';
 import PatientVisit from '@/models/PatientVisit';
 import { requireAuth, checkRole, checkBranch, UserRole } from '@/lib/middleware/auth';
 import { uploadPatientImage } from '@/lib/services/cloudinary';
+import { canAccessResource } from '@/lib/utils/queryHelpers';
 import mongoose from 'mongoose';
 
 export async function GET(
@@ -35,17 +36,13 @@ export async function GET(
         );
       }
 
-      const userRole = session.user.role as UserRole;
-      if (userRole !== UserRole.ADMIN) {
-        const userBranchId = session.user.branch?._id || session.user.branch;
-        const patientBranchId = (patient.branchId as any)?._id || patient.branchId;
-        
-        if (userBranchId.toString() !== patientBranchId.toString()) {
-          return NextResponse.json(
-            { error: 'Forbidden. You do not have access to this patient.' },
-            { status: 403 }
-          );
-        }
+      const patientBranchId = (patient.branchId as any)?._id || patient.branchId;
+      
+      if (!canAccessResource(session.user, patientBranchId)) {
+        return NextResponse.json(
+          { error: 'Forbidden. You do not have access to this patient.' },
+          { status: 403 }
+        );
       }
 
       const recentVisits = await PatientVisit.find({ patient: id })
@@ -99,17 +96,11 @@ export async function PUT(
           );
         }
 
-        const userRole = session.user.role as UserRole;
-        if (userRole !== UserRole.ADMIN) {
-          const userBranchId = session.user.branch?._id || session.user.branch;
-          const patientBranchId = existingPatient.branchId;
-          
-          if (userBranchId.toString() !== patientBranchId.toString()) {
-            return NextResponse.json(
-              { error: 'Forbidden. You do not have access to update this patient.' },
-              { status: 403 }
-            );
-          }
+        if (!canAccessResource(session.user, existingPatient.branchId)) {
+          return NextResponse.json(
+            { error: 'Forbidden. You do not have access to update this patient.' },
+            { status: 403 }
+          );
         }
 
         const body = await req.json();

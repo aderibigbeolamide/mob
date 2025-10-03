@@ -1,5 +1,7 @@
 "use client";
 import  { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   City,
   Country,
@@ -15,17 +17,68 @@ import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonSelect from "@/core/common-components/common-select/commonSelect";
 import CommonDatePicker from "@/core/common-components/common-date-picker/commonDatePicker";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import { apiClient } from "@/lib/services/api-client";
 
 const AddDoctorsComponent = () => {
+  const { data: session } = useSession();
+  const router = useRouter();
+
   // Step state: 'basic' or 'extra'
   const [step, setStep] = useState<'basic' | 'extra'>('basic');
   const [activatedSteps, setActivatedSteps] = useState<{ basic: boolean; extra: boolean }>({ basic: false, extra: false });
+  const [loading, setLoading] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+    specialization: "",
+    licenseNumber: "",
+    department: "",
+    bio: "",
+    profileImage: "",
+  });
 
   // Handlers for navigation
   const goToBasic = () => setStep('basic');
   const goToExtra = () => {
     setActivatedSteps((prev) => ({ ...prev, basic: true }));
     setStep('extra');
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSelectChange = (name: string, value: any) => {
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      if (!session?.user?.branch) {
+        throw new Error("Branch information not found");
+      }
+
+      const doctorData = {
+        ...formData,
+        branchId: typeof session.user.branch === 'object' ? session.user.branch._id : session.user.branch,
+      };
+
+      await apiClient.post("/api/doctors", doctorData, {
+        successMessage: "Doctor added successfully",
+      });
+
+      router.push(all_routes.allDoctorsList);
+    } catch (error) {
+      console.error("Failed to add doctor:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Clean up any lingering modal backdrops on component mount
@@ -62,8 +115,8 @@ const AddDoctorsComponent = () => {
   return (
     <>
       {/* ========================
-			Start Page Content
-		========================= */}
+                        Start Page Content
+                ========================= */}
       <div className="page-wrapper">
         {/* Start Content */}
         <div className="content">
@@ -712,8 +765,8 @@ const AddDoctorsComponent = () => {
         {/* End Footer */}
       </div>
       {/* ========================
-			End Page Content
-		========================= */}
+                        End Page Content
+                ========================= */}
     <>
   {/* success modal */}
   <div className="modal fade" id="success_modal">

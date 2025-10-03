@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import LabTest from '@/models/LabTest';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
+import { canAccessResource } from '@/lib/utils/queryHelpers';
 import mongoose from 'mongoose';
 
 export async function GET(
@@ -37,17 +38,13 @@ export async function GET(
         );
       }
 
-      const userRole = session.user.role as UserRole;
-      if (userRole !== UserRole.ADMIN) {
-        const userBranchId = session.user.branch?._id || session.user.branch;
-        const testBranchId = (labTest.branch as any)?._id || labTest.branch;
-
-        if (userBranchId.toString() !== testBranchId.toString()) {
-          return NextResponse.json(
-            { error: 'Forbidden. You do not have access to this lab test.' },
-            { status: 403 }
-          );
-        }
+      const testBranchId = (labTest.branch as any)?._id || labTest.branch;
+      
+      if (!canAccessResource(session.user, testBranchId)) {
+        return NextResponse.json(
+          { error: 'Forbidden. You do not have access to this lab test.' },
+          { status: 403 }
+        );
       }
 
       return NextResponse.json({ labTest });

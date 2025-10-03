@@ -3,7 +3,8 @@ import dbConnect from '@/lib/dbConnect';
 import PatientVisit from '@/models/PatientVisit';
 import LabTest from '@/models/LabTest';
 import Prescription from '@/models/Prescription';
-import { requireAuth, UserRole } from '@/lib/middleware/auth';
+import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
+import { canAccessResource } from '@/lib/utils/queryHelpers';
 import mongoose from 'mongoose';
 
 export async function GET(
@@ -49,17 +50,13 @@ export async function GET(
         );
       }
 
-      const userRole = session.user.role as UserRole;
-      if (userRole !== UserRole.ADMIN) {
-        const userBranchId = session.user.branch?._id || session.user.branch;
-        const visitBranchId = (visit.branch as any)?._id || visit.branch;
-
-        if (userBranchId.toString() !== visitBranchId.toString()) {
-          return NextResponse.json(
-            { error: 'Forbidden. You do not have access to this visit.' },
-            { status: 403 }
-          );
-        }
+      const visitBranchId = (visit.branch as any)?._id || visit.branch;
+      
+      if (!canAccessResource(session.user, visitBranchId)) {
+        return NextResponse.json(
+          { error: 'Forbidden. You do not have access to this visit.' },
+          { status: 403 }
+        );
       }
 
       const [labTests, prescriptions] = await Promise.all([

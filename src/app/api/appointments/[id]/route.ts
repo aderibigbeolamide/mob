@@ -4,6 +4,7 @@ import Appointment, { AppointmentStatus } from '@/models/Appointment';
 import User from '@/models/User';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { sendAppointmentNotification } from '@/lib/services/notification';
+import { canAccessResource } from '@/lib/utils/queryHelpers';
 import mongoose from 'mongoose';
 
 async function checkSchedulingConflict(
@@ -81,17 +82,13 @@ export async function GET(
         );
       }
 
-      const userRole = session.user.role as UserRole;
-      if (userRole !== UserRole.ADMIN) {
-        const userBranchId = session.user.branch?._id || session.user.branch;
-        const appointmentBranchId = (appointment.branchId as any)?._id || appointment.branchId;
-
-        if (userBranchId.toString() !== appointmentBranchId.toString()) {
-          return NextResponse.json(
-            { error: 'Forbidden. You do not have access to this appointment.' },
-            { status: 403 }
-          );
-        }
+      const appointmentBranchId = (appointment.branchId as any)?._id || appointment.branchId;
+      
+      if (!canAccessResource(session.user, appointmentBranchId)) {
+        return NextResponse.json(
+          { error: 'Forbidden. You do not have access to this appointment.' },
+          { status: 403 }
+        );
       }
 
       return NextResponse.json({ appointment });
@@ -134,17 +131,11 @@ export async function PUT(
           );
         }
 
-        const userRole = session.user.role as UserRole;
-        if (userRole !== UserRole.ADMIN) {
-          const userBranchId = session.user.branch?._id || session.user.branch;
-          const appointmentBranchId = existingAppointment.branchId;
-
-          if (userBranchId.toString() !== appointmentBranchId.toString()) {
-            return NextResponse.json(
-              { error: 'Forbidden. You do not have access to update this appointment.' },
-              { status: 403 }
-            );
-          }
+        if (!canAccessResource(session.user, existingAppointment.branchId)) {
+          return NextResponse.json(
+            { error: 'Forbidden. You do not have access to update this appointment.' },
+            { status: 403 }
+          );
         }
 
         const body = await req.json();
@@ -280,17 +271,11 @@ export async function DELETE(
           );
         }
 
-        const userRole = session.user.role as UserRole;
-        if (userRole !== UserRole.ADMIN) {
-          const userBranchId = session.user.branch?._id || session.user.branch;
-          const appointmentBranchId = appointment.branchId;
-
-          if (userBranchId.toString() !== appointmentBranchId.toString()) {
-            return NextResponse.json(
-              { error: 'Forbidden. You do not have access to cancel this appointment.' },
-              { status: 403 }
-            );
-          }
+        if (!canAccessResource(session.user, appointment.branchId)) {
+          return NextResponse.json(
+            { error: 'Forbidden. You do not have access to cancel this appointment.' },
+            { status: 403 }
+          );
         }
 
         const body = await req.json();

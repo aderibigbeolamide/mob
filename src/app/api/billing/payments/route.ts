@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Payment from '@/models/Payment';
 import { checkRole, UserRole } from '@/lib/middleware/auth';
+import { 
+  applyBranchFilter, 
+  shouldAllowCrossBranch, 
+  buildPaginationResponse 
+} from '@/lib/utils/queryHelpers';
 
 export async function GET(req: NextRequest) {
   return checkRole([UserRole.BILLING, UserRole.ACCOUNTING, UserRole.ADMIN])(
@@ -56,13 +61,8 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        const userRole = session.user.role as UserRole;
-        if (userRole !== UserRole.ADMIN && session.user.branch) {
-          const userBranchId = session.user.branch._id || session.user.branch;
-          if (!branchId || branchId !== userBranchId.toString()) {
-            query.branchId = userBranchId;
-          }
-        }
+        const allowCrossBranch = shouldAllowCrossBranch(req);
+        applyBranchFilter(query, session.user, allowCrossBranch);
 
         const skip = (page - 1) * limit;
 
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
           Payment.countDocuments(query)
         ]);
 
-        const totalPages = Math.ceil(totalCount / limit);
+        const pagination = buildPaginationResponse(page, totalCount, limit);
 
         const totalAmount = await Payment.aggregate([
           { $match: query },
@@ -93,14 +93,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({
           payments,
-          pagination: {
-            currentPage: page,
-            totalPages,
-            totalCount,
-            limit,
-            hasNextPage: page < totalPages,
-            hasPrevPage: page > 1
-          },
+          pagination,
           summary: {
             totalAmount: totalAmount.length > 0 ? totalAmount[0].total : 0
           }

@@ -5,6 +5,11 @@ import Patient from '@/models/Patient';
 import User from '@/models/User';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { sendAppointmentNotification } from '@/lib/services/notification';
+import { 
+  applyBranchFilter, 
+  shouldAllowCrossBranch, 
+  buildPaginationResponse 
+} from '@/lib/utils/queryHelpers';
 
 async function checkSchedulingConflict(
   doctorId: string,
@@ -239,13 +244,8 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      const userRole = session.user.role as UserRole;
-      if (userRole !== UserRole.ADMIN && session.user.branch) {
-        const userBranchId = session.user.branch._id || session.user.branch;
-        if (!branchId || branchId !== userBranchId.toString()) {
-          query.branchId = userBranchId;
-        }
-      }
+      const allowCrossBranch = shouldAllowCrossBranch(req);
+      applyBranchFilter(query, session.user, allowCrossBranch);
 
       const skip = (page - 1) * limit;
 
@@ -262,17 +262,18 @@ export async function GET(req: NextRequest) {
         Appointment.countDocuments(query)
       ]);
 
-      const totalPages = Math.ceil(totalCount / limit);
+      const pagination = buildPaginationResponse(page, totalCount, limit);
 
       return NextResponse.json({
         appointments,
         pagination: {
+          ...pagination,
           currentPage: page,
-          totalPages,
+          totalPages: pagination.totalPages,
           totalCount,
           limit,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1
+          hasNextPage: pagination.hasNextPage,
+          hasPrevPage: pagination.hasPrevPage
         }
       });
 

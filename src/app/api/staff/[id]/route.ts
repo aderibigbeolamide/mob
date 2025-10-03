@@ -4,6 +4,7 @@ import User from '@/models/User';
 import StaffProfile from '@/models/StaffProfile';
 import Attendance from '@/models/Attendance';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
+import { canAccessResource } from '@/lib/utils/queryHelpers';
 import mongoose from 'mongoose';
 
 export async function GET(
@@ -34,17 +35,13 @@ export async function GET(
         );
       }
 
-      const userRole = session.user.role as UserRole;
-      if (userRole !== UserRole.ADMIN) {
-        const userBranchId = session.user.branch?._id || session.user.branch;
-        const staffBranchId = (staff.branchId as any)?._id || staff.branchId;
-
-        if (userBranchId.toString() !== staffBranchId.toString()) {
-          return NextResponse.json(
-            { error: 'Forbidden. You do not have access to this staff member.' },
-            { status: 403 }
-          );
-        }
+      const staffBranchId = (staff.branchId as any)?._id || staff.branchId;
+      
+      if (!canAccessResource(session.user, staffBranchId)) {
+        return NextResponse.json(
+          { error: 'Forbidden. You do not have access to this staff member.' },
+          { status: 403 }
+        );
       }
 
       const staffProfile = await StaffProfile.findOne({ userId: id }).lean();

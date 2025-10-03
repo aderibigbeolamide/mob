@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import ClientStoreProvider from "@/core/redux/clientStore";
 import ErrorBoundary from "@/core/common-components/common-error-boundary/ErrorBoundary";
+import ToastProvider from "@/components/ui-intrerface/ToastProvider";
 
 function GlobalTooltipInit() {
   const pathname = usePathname();
@@ -47,6 +48,7 @@ export default function ClientProviders({
       <SessionProvider>
         <ClientStoreProvider>
           <GlobalTooltipInit />
+          <ToastProvider />
           <ErrorBoundary>{children}</ErrorBoundary>
         </ClientStoreProvider>
       </SessionProvider>
