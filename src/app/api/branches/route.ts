@@ -14,6 +14,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (session.user.role !== UserRole.ADMIN) {
+      return NextResponse.json(
+        { error: 'Only admins can view branches' },
+        { status: 403 }
+      );
+    }
+
     await dbConnect();
 
     const { searchParams } = new URL(req.url);
