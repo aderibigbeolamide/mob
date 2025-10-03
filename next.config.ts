@@ -11,7 +11,6 @@ const nextConfig: NextConfig = {
       allowedOrigins: ['*'],
     },
   },
-  allowedDevOrigins: ['*'],
   async headers() {
     return [
       {
