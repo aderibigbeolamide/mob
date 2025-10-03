@@ -11,6 +11,8 @@ import { all_routes } from "@/router/all_routes";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/core/redux/store";
 import { updateTheme } from "@/core/redux/themeSlice";
+import { useSession } from "next-auth/react";
+import { UserRole } from "@/types/emr";
 import Link from "next/link";
 
 // Define SidebarMenuItem type if not already defined
@@ -21,7 +23,8 @@ interface SidebarMenuItem {
   icon?: string;
   submenuItems?: SidebarMenuItem[];
   relatedRoutes?: string[];
-  count?: number; // Added count property
+  count?: number;
+  adminOnly?: boolean;
 }
 
 const Sidebar = () => {
@@ -29,10 +32,11 @@ const Sidebar = () => {
   const Location = usePathname();
   const pathname = Location;
   const [subsidebar, setSubsidebar] = useState("");
-  // Track open state for each menu by label
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === UserRole.ADMIN;
 
   // Utility: Recursively check if a menu item or any of its children is active
   const isMenuItemActive = useCallback((item: SidebarMenuItem, pathname: string): boolean => {
@@ -220,7 +224,7 @@ const Sidebar = () => {
                                          <li className="menu-title">
                       <span>{t(`sidebarTitles.${mainLabel?.tittle}`)}</span>
                     </li>
-                    {(mainLabel?.submenuItems as SidebarMenuItem[])?.map((title, i) => {
+                    {(mainLabel?.submenuItems as SidebarMenuItem[])?.filter(title => !title.adminOnly || isAdmin)?.map((title, i) => {
                       const isActive = isMenuItemActive(title, Location);
                       const isMenuOpen = openMenus[title.label] || false;
                       return (

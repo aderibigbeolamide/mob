@@ -6,6 +6,7 @@ import Link from "next/link";
 import { all_routes } from "@/router/all_routes";
 import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import BranchSelect from "@/core/common-components/common-select/BranchSelect";
 import { apiClient } from "@/lib/services/api-client";
 import { Doctor } from "@/types/emr";
 
@@ -33,6 +34,7 @@ const EditDoctorsComponent = () => {
     licenseNumber: "",
     department: "",
     bio: "",
+    branchId: "",
   });
 
   useEffect(() => {
@@ -57,6 +59,10 @@ const EditDoctorsComponent = () => {
       });
 
       setDoctor(response);
+      const branchId = typeof response.branch === 'object' && response.branch?._id 
+        ? response.branch._id 
+        : (typeof response.branch === 'string' ? response.branch : "");
+      
       setFormData({
         firstName: response.firstName || "",
         lastName: response.lastName || "",
@@ -66,6 +72,7 @@ const EditDoctorsComponent = () => {
         licenseNumber: response.profile?.licenseNumber || "",
         department: response.profile?.department || "",
         bio: response.profile?.bio || "",
+        branchId: branchId,
       });
     } catch (error) {
       console.error("Failed to fetch doctor:", error);
@@ -77,6 +84,10 @@ const EditDoctorsComponent = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleBranchChange = (branchId: string) => {
+    setFormData({ ...formData, branchId });
   };
 
   const handleNext = () => {
@@ -321,6 +332,18 @@ const EditDoctorsComponent = () => {
                                   name="department"
                                   value={formData.department}
                                   onChange={handleInputChange}
+                                />
+                              </div>
+                            </div>
+                            <div className="col-xl-4 col-md-6">
+                              <div className="mb-3">
+                                <label className="form-label">
+                                  Branch<span className="text-danger ms-1">*</span>
+                                </label>
+                                <BranchSelect
+                                  value={formData.branchId}
+                                  onChange={handleBranchChange}
+                                  required
                                 />
                               </div>
                             </div>

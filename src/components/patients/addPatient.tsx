@@ -21,6 +21,7 @@ import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonSelect from "@/core/common-components/common-select/commonSelect";
 import CommonDatePicker from "@/core/common-components/common-date-picker/commonDatePicker";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import BranchSelect from "@/core/common-components/common-select/BranchSelect";
 import { apiClient } from "@/lib/services/api-client";
 
 const stepKeys = [
@@ -64,6 +65,7 @@ const AddPatientComponent = () => {
     allergies: [] as string[],
     chronicConditions: [] as string[],
     currentComplaints: "",
+    branchId: "",
   });
 
   const goToStep = (idx: number) => setCurrentStep(idx);
@@ -94,11 +96,14 @@ const AddPatientComponent = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      if (!session?.user?.branch) {
+      const branchId = formData.branchId || 
+        (session?.user?.branch 
+          ? (typeof session.user.branch === 'object' ? session.user.branch._id : session.user.branch)
+          : null);
+
+      if (!branchId) {
         throw new Error("Branch information not found");
       }
-
-      const branchId = typeof session.user.branch === 'object' ? session.user.branch._id : session.user.branch;
 
       const patientData = {
         patientId: formData.patientId,
@@ -252,6 +257,18 @@ const AddPatientComponent = () => {
                               value={formData.patientId}
                               onChange={handleInputChange}
                               disabled
+                            />
+                          </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Branch<span className="text-danger ms-1">*</span>
+                            </label>
+                            <BranchSelect
+                              value={formData.branchId}
+                              onChange={(value) => setFormData({ ...formData, branchId: value })}
+                              required
                             />
                           </div>
                         </div>

@@ -21,6 +21,7 @@ import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonSelect from "@/core/common-components/common-select/commonSelect";
 import CommonDatePicker from "@/core/common-components/common-date-picker/commonDatePicker";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import BranchSelect from "@/core/common-components/common-select/BranchSelect";
 import { apiClient } from "@/lib/services/api-client";
 import { Patient } from "@/types/emr";
 
@@ -69,6 +70,7 @@ const EditPatientComponent = () => {
     chiefComplaint: "",
     allergies: [] as string[],
     chronicConditions: [] as string[],
+    branchId: "",
   });
 
   const goToStep = (idx: number) => setCurrentStep(idx);
@@ -100,6 +102,10 @@ const EditPatientComponent = () => {
       const patientData = response.patient;
       setPatient(patientData);
       
+      const branchId = typeof patientData.branch === 'object' && patientData.branch?._id 
+        ? patientData.branch._id 
+        : (typeof patientData.branch === 'string' ? patientData.branch : "");
+      
       setFormData({
         patientId: patientData.patientId || "",
         firstName: patientData.firstName || "",
@@ -128,6 +134,7 @@ const EditPatientComponent = () => {
         chiefComplaint: patientData.chiefComplaint || "",
         allergies: patientData.allergies || [],
         chronicConditions: patientData.chronicConditions || [],
+        branchId: branchId,
       });
     } catch (error) {
       console.error("Failed to fetch patient:", error);
@@ -149,6 +156,10 @@ const EditPatientComponent = () => {
     if (date) {
       setFormData({ ...formData, [name]: date.toISOString() });
     }
+  };
+
+  const handleBranchChange = (branchId: string) => {
+    setFormData({ ...formData, branchId });
   };
 
   const handleSubmit = async () => {
@@ -177,6 +188,7 @@ const EditPatientComponent = () => {
         state: formData.state,
         country: formData.country,
         zipCode: formData.pincode,
+        branchId: formData.branchId,
         emergencyContact: {
           name: formData.guardianName,
           relationship: "Guardian",
@@ -411,6 +423,18 @@ const EditPatientComponent = () => {
                               className="select"
                               value={MartialStatus.find(m => m.value === formData.maritalStatus)}
                               onChange={(val: any) => handleSelectChange("maritalStatus", val)}
+                            />
+                          </div>
+                        </div>
+                        <div className="col-xl-3 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">
+                              Branch<span className="text-danger ms-1">*</span>
+                            </label>
+                            <BranchSelect
+                              value={formData.branchId}
+                              onChange={handleBranchChange}
+                              required
                             />
                           </div>
                         </div>

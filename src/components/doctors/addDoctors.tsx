@@ -17,6 +17,7 @@ import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonSelect from "@/core/common-components/common-select/commonSelect";
 import CommonDatePicker from "@/core/common-components/common-date-picker/commonDatePicker";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import BranchSelect from "@/core/common-components/common-select/BranchSelect";
 import { apiClient } from "@/lib/services/api-client";
 
 const AddDoctorsComponent = () => {
@@ -40,6 +41,7 @@ const AddDoctorsComponent = () => {
     department: "",
     bio: "",
     profileImage: "",
+    branchId: "",
   });
 
   // Handlers for navigation
@@ -60,13 +62,18 @@ const AddDoctorsComponent = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      if (!session?.user?.branch) {
+      const branchId = formData.branchId || 
+        (session?.user?.branch 
+          ? (typeof session.user.branch === 'object' ? session.user.branch._id : session.user.branch)
+          : null);
+
+      if (!branchId) {
         throw new Error("Branch information not found");
       }
 
       const doctorData = {
         ...formData,
-        branchId: typeof session.user.branch === 'object' ? session.user.branch._id : session.user.branch,
+        branchId: branchId,
       };
 
       await apiClient.post("/api/doctors", doctorData, {
@@ -235,6 +242,18 @@ const AddDoctorsComponent = () => {
                                 <div className="mb-3">
                                   <label className="form-label" htmlFor="doctor-id">ID</label>
                                   <input type="text" className="form-control" id="doctor-id" defaultValue="#DR0005" disabled />
+                                </div>
+                              </div>
+                              <div className="col-xl-4 col-md-6">
+                                <div className="mb-3">
+                                  <label className="form-label">
+                                    Branch<span className="text-danger ms-1">*</span>
+                                  </label>
+                                  <BranchSelect
+                                    value={formData.branchId}
+                                    onChange={(value) => setFormData({ ...formData, branchId: value })}
+                                    required
+                                  />
                                 </div>
                               </div>
                               <div className="col-xl-4 col-md-6">

@@ -226,6 +226,14 @@ export const SidebarData = [
         submenuItems: [],
       },
       {
+        label: "Branch Management",
+        link: "/branch-management",
+        submenu: false,
+        icon: "building",
+        submenuItems: [],
+        adminOnly: true,
+      },
+      {
         label: "Notifications",
         link: route.notifications,
         submenu: false,
