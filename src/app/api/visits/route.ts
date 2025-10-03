@@ -2,12 +2,93 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import PatientVisit from '@/models/PatientVisit';
 import Patient from '@/models/Patient';
-import { requireAuth, UserRole } from '@/lib/middleware/auth';
+import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { 
   applyBranchFilter, 
   shouldAllowCrossBranch, 
   buildPaginationResponse 
 } from '@/lib/utils/queryHelpers';
+
+export async function POST(req: NextRequest) {
+  return checkRole([UserRole.ADMIN, UserRole.FRONT_DESK, UserRole.NURSE, UserRole.DOCTOR])(
+    req,
+    async (req: NextRequest, session: any) => {
+      try {
+        await dbConnect();
+
+        const body = await req.json();
+
+        const requiredFields = ['patient', 'branchId', 'visitDate'];
+
+        const missingFields = requiredFields.filter(field => !body[field]);
+        if (missingFields.length > 0) {
+          return NextResponse.json(
+            { error: `Missing required fields: ${missingFields.join(', ')}` },
+            { status: 400 }
+          );
+        }
+
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const visitNumber = `VIS-${timestamp}-${random}`;
+
+        const visitData: any = {
+          visitNumber,
+          patient: body.patient,
+          branchId: body.branchId,
+          visitDate: new Date(body.visitDate),
+          currentStage: 'front_desk',
+          status: 'in_progress',
+          stages: {
+            frontDesk: {
+              clockedInBy: session.user.id,
+              clockedInAt: new Date()
+            }
+          }
+        };
+
+        if (body.appointment) {
+          visitData.appointment = body.appointment;
+        }
+
+        const visit = await PatientVisit.create(visitData);
+
+        const populatedVisit = await PatientVisit.findById(visit._id)
+          .populate('patient', 'firstName lastName patientId phoneNumber')
+          .populate('branchId', 'name address city state')
+          .populate('appointment')
+          .populate('stages.frontDesk.clockedInBy', 'firstName lastName')
+          .lean();
+
+        return NextResponse.json(
+          {
+            message: 'Visit created successfully',
+            visit: populatedVisit
+          },
+          { status: 201 }
+        );
+
+      } catch (error: any) {
+        console.error('Create visit error:', error);
+
+        if (error.name === 'ValidationError') {
+          const validationErrors = Object.keys(error.errors).map(
+            key => error.errors[key].message
+          );
+          return NextResponse.json(
+            { error: 'Validation error', details: validationErrors },
+            { status: 400 }
+          );
+        }
+
+        return NextResponse.json(
+          { error: 'Failed to create visit', message: error.message },
+          { status: 500 }
+        );
+      }
+    }
+  );
+}
 
 export async function GET(req: NextRequest) {
   return requireAuth(req, async (req: NextRequest, session: any) => {
@@ -45,7 +126,7 @@ export async function GET(req: NextRequest) {
       }
 
       if (branchId) {
-        query.branch = branchId;
+        query.branchId = branchId;
       }
 
       if (patientId) {
@@ -71,14 +152,14 @@ export async function GET(req: NextRequest) {
       }
 
       const allowCrossBranch = shouldAllowCrossBranch(req);
-      applyBranchFilter(query, session.user, allowCrossBranch, 'branch');
+      applyBranchFilter(query, session.user, allowCrossBranch, 'branchId');
 
       const skip = (page - 1) * limit;
 
       const [visits, totalCount] = await Promise.all([
         PatientVisit.find(query)
           .populate('patient', 'firstName lastName patientId phoneNumber')
-          .populate('branch', 'name')
+          .populate('branchId', 'name')
           .populate('appointment')
           .sort({ visitDate: -1 })
           .skip(skip)
