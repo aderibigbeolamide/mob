@@ -252,18 +252,31 @@ export default function LandingPage() {
         
         .hero-title {
           font-size: 3.5rem;
+          font-weight: 900 !important;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.2), 0 0 20px rgba(0,0,0,0.1);
         }
         
         .hero-subtitle {
           font-size: 1.25rem;
+          font-weight: 400;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 0 10px rgba(0,0,0,0.1);
         }
         
         .hero-stat {
           font-size: 2rem;
+          font-weight: 900 !important;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 0 10px rgba(0,0,0,0.1);
         }
         
         .hero-stat-label {
           font-size: 0.875rem;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+          font-weight: 500;
+        }
+        
+        .hero-buttons .btn {
+          font-weight: 600;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
         @media (max-width: 991.98px) {

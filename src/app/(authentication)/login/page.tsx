@@ -14,6 +14,7 @@ export default function LoginPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,13 +137,21 @@ export default function LoginPage() {
                     <i className="fas fa-lock text-muted"></i>
                   </span>
                   <input
-                    type="password"
-                    className="form-control"
+                    type={showPassword ? 'text' : 'password'}
+                    className="form-control border-end-0"
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
                   />
+                  <button 
+                    type="button"
+                    className="input-group-text bg-light border-start-0"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-muted`}></i>
+                  </button>
                 </div>
               </div>
 
@@ -189,6 +198,20 @@ export default function LoginPage() {
         .login-image-section {
           width: 50%;
           flex-shrink: 0;
+        }
+
+        .login-image-section h1 {
+          font-weight: 900 !important;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3), 0 0 15px rgba(0,0,0,0.2);
+        }
+
+        .login-image-section p, .login-image-section .lead {
+          font-weight: 500;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .login-image-section .fas {
+          text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
         .login-form-section {
