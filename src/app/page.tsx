@@ -43,15 +43,32 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="hero-section lifepoint-gradient text-white py-5" style={{ paddingTop: '100px', minHeight: '600px' }}>
-        <div className="container">
+      <section 
+        className="hero-section text-white py-5 position-relative" 
+        style={{ 
+          paddingTop: '100px', 
+          minHeight: '600px',
+          backgroundImage: 'url(/medical-center-building.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        <div 
+          className="position-absolute top-0 start-0 w-100 h-100" 
+          style={{ 
+            background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.85) 0%, rgba(30, 64, 175, 0.7) 100%)',
+            zIndex: 1 
+          }}
+        ></div>
+        <div className="container position-relative" style={{ zIndex: 2 }}>
           <div className="row align-items-center">
             <div className="col-lg-6">
-              <h1 className="display-3 fw-bold mb-4">Your Health, Our Priority</h1>
-              <p className="lead mb-4">
+              <h1 className="hero-title fw-bold mb-4">Your Health, Our Priority</h1>
+              <p className="hero-subtitle mb-4">
                 Life Point Medical Centre provides comprehensive healthcare services with cutting-edge technology and compassionate care. Your journey to better health starts here.
               </p>
-              <div className="d-flex gap-3">
+              <div className="hero-buttons d-flex flex-column flex-sm-row gap-3 mb-4">
                 <Link href="/login" className="btn btn-light btn-lg px-4">
                   <i className="fas fa-calendar-check me-2"></i>Book Appointment
                 </Link>
@@ -59,19 +76,19 @@ export default function LandingPage() {
                   <i className="fas fa-info-circle me-2"></i>Learn More
                 </a>
               </div>
-              <div className="mt-5">
-                <div className="row g-4">
+              <div className="mt-4 mt-md-5">
+                <div className="row g-3 g-md-4">
                   <div className="col-4">
-                    <h3 className="fw-bold">500+</h3>
-                    <p className="small mb-0">Happy Patients</p>
+                    <h3 className="hero-stat fw-bold">500+</h3>
+                    <p className="hero-stat-label small mb-0">Happy Patients</p>
                   </div>
                   <div className="col-4">
-                    <h3 className="fw-bold">25+</h3>
-                    <p className="small mb-0">Expert Doctors</p>
+                    <h3 className="hero-stat fw-bold">25+</h3>
+                    <p className="hero-stat-label small mb-0">Expert Doctors</p>
                   </div>
                   <div className="col-4">
-                    <h3 className="fw-bold">24/7</h3>
-                    <p className="small mb-0">Emergency Care</p>
+                    <h3 className="hero-stat fw-bold">24/7</h3>
+                    <p className="hero-stat-label small mb-0">Emergency Care</p>
                   </div>
                 </div>
               </div>
@@ -231,6 +248,58 @@ export default function LandingPage() {
         .hover-lift:hover {
           transform: translateY(-5px);
           box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
+        }
+        
+        .hero-title {
+          font-size: 3.5rem;
+        }
+        
+        .hero-subtitle {
+          font-size: 1.25rem;
+        }
+        
+        .hero-stat {
+          font-size: 2rem;
+        }
+        
+        .hero-stat-label {
+          font-size: 0.875rem;
+        }
+        
+        @media (max-width: 991.98px) {
+          .hero-title {
+            font-size: 2.5rem;
+          }
+          
+          .hero-subtitle {
+            font-size: 1.1rem;
+          }
+          
+          .hero-stat {
+            font-size: 1.5rem;
+          }
+        }
+        
+        @media (max-width: 575.98px) {
+          .hero-title {
+            font-size: 2rem;
+          }
+          
+          .hero-subtitle {
+            font-size: 1rem;
+          }
+          
+          .hero-stat {
+            font-size: 1.25rem;
+          }
+          
+          .hero-stat-label {
+            font-size: 0.75rem;
+          }
+          
+          .hero-buttons .btn {
+            width: 100%;
+          }
         }
       `}</style>
     </div>
