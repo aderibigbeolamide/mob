@@ -183,7 +183,6 @@ PatientSchema.methods.getAge = function(): number {
   return age;
 };
 
-PatientSchema.index({ patientId: 1 });
 PatientSchema.index({ branchId: 1 });
 PatientSchema.index({ firstName: 1, lastName: 1 });
 PatientSchema.index({ phoneNumber: 1 });

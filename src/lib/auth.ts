@@ -20,7 +20,7 @@ export const authOptions: NextAuthOptions = {
         await dbConnect();
 
         const user = await User.findOne({ email: credentials.email })
-          .populate('branch')
+          .populate('branchId')
           .select('+password');
 
         if (!user) {
@@ -42,10 +42,9 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user._id.toString(),
           email: user.email,
-          name: user.name,
+          name: user.getFullName(),
           role: user.role,
-          branch: user.branch,
-          avatar: user.avatar,
+          branch: user.branchId,
         };
       }
     })
@@ -56,7 +55,6 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.branch = user.branch;
-        token.avatar = user.avatar;
       }
       return token;
     },
@@ -65,7 +63,6 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.branch = token.branch as any;
-        session.user.avatar = token.avatar as string;
       }
       return session;
     }

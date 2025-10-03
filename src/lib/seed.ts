@@ -18,9 +18,11 @@ export async function seedDatabase() {
     // Create main branch
     const mainBranch = await Branch.create({
       name: 'Life Point Medical Centre - Main Branch',
+      code: 'LPMC-MAIN',
       address: '123 Medical Avenue',
       city: 'Lagos',
       state: 'Lagos',
+      country: 'Nigeria',
       phone: '+234-800-LIFEPOINT',
       email: 'info@lifepointmedical.com',
       isActive: true,
@@ -29,59 +31,60 @@ export async function seedDatabase() {
     // Create super admin
     const hashedPassword = await bcrypt.hash('admin123', 10);
     const superAdmin = await User.create({
-      name: 'Super Administrator',
+      firstName: 'Super',
+      lastName: 'Administrator',
       email: 'admin@lifepointmedical.com',
       password: hashedPassword,
-      phone: '+234-800-ADMIN',
-      role: 'admin',
-      branch: mainBranch._id,
+      phoneNumber: '+234-800-ADMIN',
+      role: 'ADMIN',
+      branchId: mainBranch._id,
       isActive: true,
     });
 
     // Create sample doctors
     const doctor1 = await User.create({
-      name: 'Dr. Sarah Johnson',
+      firstName: 'Sarah',
+      lastName: 'Johnson',
       email: 'dr.sarah@lifepointmedical.com',
       password: await bcrypt.hash('doctor123', 10),
-      phone: '+234-801-2345678',
-      role: 'doctor',
-      branch: mainBranch._id,
-      specialization: 'General Physician',
-      licenseNumber: 'DOC-2024-001',
+      phoneNumber: '+234-801-2345678',
+      role: 'DOCTOR',
+      branchId: mainBranch._id,
       isActive: true,
     });
 
     const doctor2 = await User.create({
-      name: 'Dr. Michael Chen',
+      firstName: 'Michael',
+      lastName: 'Chen',
       email: 'dr.michael@lifepointmedical.com',
       password: await bcrypt.hash('doctor123', 10),
-      phone: '+234-802-3456789',
-      role: 'doctor',
-      branch: mainBranch._id,
-      specialization: 'Cardiologist',
-      licenseNumber: 'DOC-2024-002',
+      phoneNumber: '+234-802-3456789',
+      role: 'DOCTOR',
+      branchId: mainBranch._id,
       isActive: true,
     });
 
     // Create front desk staff
     await User.create({
-      name: 'Jane Smith',
+      firstName: 'Jane',
+      lastName: 'Smith',
       email: 'frontdesk@lifepointmedical.com',
       password: await bcrypt.hash('desk123', 10),
-      phone: '+234-803-4567890',
-      role: 'front_desk',
-      branch: mainBranch._id,
+      phoneNumber: '+234-803-4567890',
+      role: 'FRONT_DESK',
+      branchId: mainBranch._id,
       isActive: true,
     });
 
     // Create nurse
     await User.create({
-      name: 'Mary Williams',
+      firstName: 'Mary',
+      lastName: 'Williams',
       email: 'nurse@lifepointmedical.com',
       password: await bcrypt.hash('nurse123', 10),
-      phone: '+234-804-5678901',
-      role: 'nurse',
-      branch: mainBranch._id,
+      phoneNumber: '+234-804-5678901',
+      role: 'NURSE',
+      branchId: mainBranch._id,
       isActive: true,
     });
 
@@ -91,20 +94,21 @@ export async function seedDatabase() {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john.doe@email.com',
-      phone: '+234-805-1234567',
+      phoneNumber: '+234-805-1234567',
       dateOfBirth: new Date('1985-05-15'),
-      gender: 'male',
+      gender: 'Male',
       bloodGroup: 'O+',
       address: '45 Victoria Street',
       city: 'Lagos',
       state: 'Lagos',
+      country: 'Nigeria',
       emergencyContact: {
         name: 'Jane Doe',
-        phone: '+234-806-1234567',
+        phoneNumber: '+234-806-1234567',
         relationship: 'Wife',
       },
-      branch: mainBranch._id,
-      createdBy: superAdmin._id,
+      branchId: mainBranch._id,
+      registeredBy: superAdmin._id,
       isActive: true,
     });
 
@@ -113,16 +117,17 @@ export async function seedDatabase() {
       firstName: 'Mary',
       lastName: 'Johnson',
       email: 'mary.j@email.com',
-      phone: '+234-807-2345678',
+      phoneNumber: '+234-807-2345678',
       dateOfBirth: new Date('1990-08-20'),
-      gender: 'female',
+      gender: 'Female',
       bloodGroup: 'A+',
       address: '78 Allen Avenue',
       city: 'Lagos',
       state: 'Lagos',
+      country: 'Nigeria',
       emergencyContact: {
         name: 'Robert Johnson',
-        phone: '+234-808-2345678',
+        phoneNumber: '+234-808-2345678',
         relationship: 'Husband',
       },
       insurance: {
@@ -131,8 +136,8 @@ export async function seedDatabase() {
         validUntil: new Date('2025-12-31'),
       },
       allergies: ['Penicillin', 'Peanuts'],
-      branch: mainBranch._id,
-      createdBy: superAdmin._id,
+      branchId: mainBranch._id,
+      registeredBy: superAdmin._id,
       isActive: true,
     });
 

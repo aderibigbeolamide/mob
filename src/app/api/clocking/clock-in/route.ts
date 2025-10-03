@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
           visitNumber,
           patient: body.patientId,
           appointment: body.appointmentId,
-          branch: body.branchId,
+          branchId: body.branchId,
           visitDate: new Date(),
           currentStage: 'front_desk',
           status: 'in_progress',
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
         const populatedVisit = await PatientVisit.findById(visit._id)
           .populate('patient', 'patientId firstName lastName phoneNumber email dateOfBirth gender')
           .populate('appointment')
-          .populate('branch', 'name address city state')
+          .populate('branchId', 'name address city state')
           .populate('stages.frontDesk.clockedInBy', 'firstName lastName email role');
 
         return NextResponse.json(

@@ -76,7 +76,6 @@ const BranchSchema = new Schema<IBranch>({
   },
 }, { timestamps: true });
 
-BranchSchema.index({ code: 1 });
 BranchSchema.index({ isActive: 1 });
 BranchSchema.index({ city: 1, state: 1 });
 

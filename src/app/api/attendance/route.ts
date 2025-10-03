@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
       const attendanceData = {
         user: userId,
-        branch: branchId,
+        branchId: branchId,
         date: today,
         clockIn: new Date(),
         status: 'present',
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
       const populatedAttendance = await Attendance.findById(attendance._id)
         .populate('user', 'firstName lastName email')
-        .populate('branch', 'name');
+        .populate('branchId', 'name');
 
       return NextResponse.json(
         {
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
       }
 
       if (branchId) {
-        query.branch = branchId;
+        query.branchId = branchId;
       }
 
       if (status && ['present', 'absent', 'on_leave', 'half_day'].includes(status)) {
@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
       if (userRole !== UserRole.ADMIN && session.user.branch) {
         const userBranchId = session.user.branch._id || session.user.branch;
         if (!branchId || branchId !== userBranchId.toString()) {
-          query.branch = userBranchId;
+          query.branchId = userBranchId;
         }
       }
 
@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
       const [attendanceRecords, totalCount] = await Promise.all([
         Attendance.find(query)
           .populate('user', 'firstName lastName email role')
-          .populate('branch', 'name')
+          .populate('branchId', 'name')
           .sort({ date: -1 })
           .skip(skip)
           .limit(limit)
@@ -212,7 +212,7 @@ export async function PUT(req: NextRequest) {
 
       const populatedAttendance = await Attendance.findById(attendance._id)
         .populate('user', 'firstName lastName email')
-        .populate('branch', 'name');
+        .populate('branchId', 'name');
 
       return NextResponse.json({
         message: 'Clock-out successful',

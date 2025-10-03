@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IAttendance extends Document {
   user: mongoose.Types.ObjectId;
-  branch: mongoose.Types.ObjectId;
+  branchId: mongoose.Types.ObjectId;
   date: Date;
   clockIn: Date;
   clockOut?: Date;
@@ -15,7 +15,7 @@ export interface IAttendance extends Document {
 
 const AttendanceSchema = new Schema<IAttendance>({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
+  branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true, index: true },
   date: { type: Date, required: true },
   clockIn: { type: Date, required: true },
   clockOut: { type: Date },

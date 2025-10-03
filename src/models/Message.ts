@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IMessage extends Document {
   sender: mongoose.Types.ObjectId;
   recipient: mongoose.Types.ObjectId;
+  branchId: mongoose.Types.ObjectId;
   subject: string;
   message: string;
   isRead: boolean;
@@ -18,6 +19,7 @@ export interface IMessage extends Document {
 const MessageSchema = new Schema<IMessage>({
   sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   recipient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true, index: true },
   subject: { type: String, required: true },
   message: { type: String, required: true },
   isRead: { type: Boolean, default: false },

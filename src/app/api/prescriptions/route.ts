@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
           'patient',
           'doctor',
           'visit',
-          'branch',
+          'branchId',
           'medications',
           'diagnosis'
         ];
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
           patient: body.patient,
           doctor: body.doctor,
           visit: body.visit,
-          branch: body.branch,
+          branchId: body.branchId || body.branch,
           medications: body.medications,
           diagnosis: body.diagnosis,
           notes: body.notes,
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
         const populatedPrescription = await Prescription.findById(prescription._id)
           .populate('patient', 'firstName lastName patientId phoneNumber')
           .populate('doctor', 'firstName lastName')
-          .populate('branch', 'name')
+          .populate('branchId', 'name')
           .populate('visit');
 
         return NextResponse.json(
@@ -124,7 +124,7 @@ export async function GET(req: NextRequest) {
       }
 
       if (branchId) {
-        query.branch = branchId;
+        query.branchId = branchId;
       }
 
       if (patientId) {
@@ -147,7 +147,7 @@ export async function GET(req: NextRequest) {
       if (userRole !== UserRole.ADMIN && session.user.branch) {
         const userBranchId = session.user.branch._id || session.user.branch;
         if (!branchId || branchId !== userBranchId.toString()) {
-          query.branch = userBranchId;
+          query.branchId = userBranchId;
         }
       }
 
@@ -157,7 +157,7 @@ export async function GET(req: NextRequest) {
         Prescription.find(query)
           .populate('patient', 'firstName lastName patientId phoneNumber')
           .populate('doctor', 'firstName lastName')
-          .populate('branch', 'name')
+          .populate('branchId', 'name')
           .populate('visit')
           .populate('dispensedBy', 'firstName lastName')
           .sort({ createdAt: -1 })

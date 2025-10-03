@@ -97,7 +97,6 @@ UserSchema.statics.findByEmail = function(email: string) {
   return this.findOne({ email: email.toLowerCase() });
 };
 
-UserSchema.index({ email: 1 });
 UserSchema.index({ branchId: 1 });
 UserSchema.index({ role: 1 });
 UserSchema.index({ isActive: 1 });

@@ -9,6 +9,7 @@ export interface IWorkSchedule {
 
 export interface IStaffProfile extends Document {
   userId: mongoose.Types.ObjectId;
+  branchId: mongoose.Types.ObjectId;
   specialization?: string;
   licenseNumber?: string;
   department?: string;
@@ -36,6 +37,12 @@ const StaffProfileSchema = new Schema<IStaffProfile>({
     ref: 'User', 
     required: [true, 'User ID is required'],
     unique: true
+  },
+  branchId: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'Branch', 
+    required: [true, 'Branch is required'],
+    index: true
   },
   specialization: { 
     type: String,

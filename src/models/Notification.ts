@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface INotification extends Document {
   recipient: mongoose.Types.ObjectId;
   sender?: mongoose.Types.ObjectId;
+  branchId: mongoose.Types.ObjectId;
   title: string;
   message: string;
   type: 'info' | 'warning' | 'success' | 'error' | 'clock_out' | 'appointment' | 'message';
@@ -18,6 +19,7 @@ export interface INotification extends Document {
 const NotificationSchema = new Schema<INotification>({
   recipient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   sender: { type: Schema.Types.ObjectId, ref: 'User' },
+  branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true, index: true },
   title: { type: String, required: true },
   message: { type: String, required: true },
   type: {

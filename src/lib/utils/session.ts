@@ -27,7 +27,6 @@ export async function getUserFromSession() {
       name: session.user.name,
       role: session.user.role as UserRole,
       branch: session.user.branch,
-      avatar: session.user.avatar,
     };
   } catch (error) {
     console.error('Error getting user from session:', error);
@@ -116,5 +115,4 @@ export interface SessionUser {
   name: string;
   role: UserRole;
   branch: any;
-  avatar?: string;
 }

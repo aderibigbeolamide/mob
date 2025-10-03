@@ -5,7 +5,7 @@ export interface ILabTest extends Document {
   patient: mongoose.Types.ObjectId;
   doctor: mongoose.Types.ObjectId;
   visit: mongoose.Types.ObjectId;
-  branch: mongoose.Types.ObjectId;
+  branchId: mongoose.Types.ObjectId;
   
   testName: string;
   testCategory: string;
@@ -35,7 +35,7 @@ const LabTestSchema = new Schema<ILabTest>({
   patient: { type: Schema.Types.ObjectId, ref: 'Patient', required: true },
   doctor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   visit: { type: Schema.Types.ObjectId, ref: 'PatientVisit', required: true },
-  branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
+  branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true, index: true },
   
   testName: { type: String, required: true },
   testCategory: { type: String, required: true },
