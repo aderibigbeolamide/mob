@@ -24,6 +24,7 @@ import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import BranchSelect from "@/core/common-components/common-select/BranchSelect";
 import { apiClient } from "@/lib/services/api-client";
 import { Patient } from "@/types/emr";
+import dayjs, { Dayjs } from "dayjs";
 
 const stepKeys = [
   "v-pills-info",
@@ -152,9 +153,9 @@ const EditPatientComponent = () => {
     setFormData({ ...formData, [name]: value?.value || value });
   };
 
-  const handleDateChange = (name: string, date: Date | null) => {
+  const handleDateChange = (name: string, date: Dayjs | null) => {
     if (date) {
-      setFormData({ ...formData, [name]: date.toISOString() });
+      setFormData({ ...formData, [name]: date.format('YYYY-MM-DD') });
     }
   };
 
@@ -399,8 +400,8 @@ const EditPatientComponent = () => {
                             <label className="form-label">DOB</label>
                             <CommonDatePicker
                               placeholder="dd/mm/yyyy"
-                              value={formData.dateOfBirth ? new Date(formData.dateOfBirth) : null}
-                              onChange={(date: Date | null) => handleDateChange("dateOfBirth", date)}
+                              value={formData.dateOfBirth ? dayjs(formData.dateOfBirth) : null}
+                              onChange={(date) => handleDateChange("dateOfBirth", date)}
                             />
                           </div>
                         </div>

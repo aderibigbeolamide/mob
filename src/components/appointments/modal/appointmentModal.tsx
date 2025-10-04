@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import dayjs, { Dayjs } from "dayjs";
 import { Consultation, ModePayment, PatientType, SelectDepartment } from "../../../core/json/selectOption";
 import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import { all_routes } from "@/router/all_routes";
@@ -200,14 +201,16 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
     setFormData({ ...formData, [name]: value?.value || value });
   };
 
-  const handleDateChange = (date: Date | null) => {
+  const handleDateChange = (date: Dayjs | null) => {
     if (date) {
-      setFormData({ ...formData, appointmentDate: date.toISOString().split('T')[0] });
+      setFormData({ ...formData, appointmentDate: date.format('YYYY-MM-DD') });
     }
   };
 
-  const handleTimeChange = (name: string, time: string) => {
-    setFormData({ ...formData, [name]: time });
+  const handleTimeChange = (name: string) => (time: Dayjs | null) => {
+    if (time) {
+      setFormData({ ...formData, [name]: time.format('HH:mm') });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -468,6 +471,7 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
                         <CommonDatePicker 
                           placeholder="dd/mm/yyyy"
                           onChange={handleDateChange}
+                          value={formData.appointmentDate ? dayjs(formData.appointmentDate) : null}
                         />
                       </div>
                     </div>
@@ -477,7 +481,8 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
                       <label className="form-label">Start Time<span className="text-danger ms-1">*</span></label>
                       <div className="position-relative">
                         <CommonTimePicker 
-                          onChange={(time: string) => handleTimeChange('startTime', time)}
+                          onChange={handleTimeChange('startTime')}
+                          value={formData.startTime ? dayjs(formData.startTime, 'HH:mm') : null}
                         />
                       </div>
                     </div>
@@ -487,7 +492,8 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
                       <label className="form-label">End Time</label>
                       <div className="position-relative">
                         <CommonTimePicker 
-                          onChange={(time: string) => handleTimeChange('endTime', time)}
+                          onChange={handleTimeChange('endTime')}
+                          value={formData.endTime ? dayjs(formData.endTime, 'HH:mm') : null}
                         />
                       </div>
                     </div>
@@ -639,7 +645,7 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
                           <CommonDatePicker 
                             placeholder="dd/mm/yyyy"
                             onChange={handleDateChange}
-                            value={formData.appointmentDate ? new Date(formData.appointmentDate) : undefined}
+                            value={formData.appointmentDate ? dayjs(formData.appointmentDate) : null}
                           />
                         </div>
                       </div>
@@ -649,8 +655,8 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
                         <label className="form-label">Start Time<span className="text-danger ms-1">*</span></label>
                         <div className="input-icon-end position-relative">
                           <CommonTimePicker 
-                            onChange={(time: string) => handleTimeChange('startTime', time)}
-                            value={formData.startTime}
+                            onChange={handleTimeChange('startTime')}
+                            value={formData.startTime ? dayjs(formData.startTime, 'HH:mm') : null}
                           />
                         </div>
                       </div>
@@ -660,8 +666,8 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
                         <label className="form-label">End Time</label>
                         <div className="input-icon-end position-relative">
                           <CommonTimePicker 
-                            onChange={(time: string) => handleTimeChange('endTime', time)}
-                            value={formData.endTime}
+                            onChange={handleTimeChange('endTime')}
+                            value={formData.endTime ? dayjs(formData.endTime, 'HH:mm') : null}
                           />
                         </div>
                       </div>

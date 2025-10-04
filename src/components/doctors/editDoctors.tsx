@@ -59,9 +59,9 @@ const EditDoctorsComponent = () => {
       });
 
       setDoctor(response);
-      const branchId = typeof response.branch === 'object' && response.branch?._id 
-        ? response.branch._id 
-        : (typeof response.branch === 'string' ? response.branch : "");
+      const branchId = typeof response.branchId === 'object' && response.branchId?._id 
+        ? response.branchId._id 
+        : (typeof response.branchId === 'string' ? response.branchId : "");
       
       setFormData({
         firstName: response.firstName || "",

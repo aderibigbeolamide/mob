@@ -11,6 +11,8 @@ export type Option = {
 export interface SelectProps {
   options: Option[];
   defaultValue?: Option;
+  value?: Option | null;
+  onChange?: (option: Option | null) => void;
   className?: string;
   styles?: StylesConfig<Option, false>;
   ariaLabel?: string;
@@ -42,8 +44,16 @@ const customComponents = {
   DropdownIndicator: DropdownIndicator,
 };
 
-const CommonSelect: React.FC<SelectProps> = ({ options, defaultValue, className, ariaLabel, placeholder = "Select" }) => {
-  const [selectedOption, setSelectedOption] = useState<Option | undefined>(defaultValue);
+const CommonSelect: React.FC<SelectProps> = ({ 
+  options, 
+  defaultValue, 
+  value, 
+  onChange, 
+  className, 
+  ariaLabel, 
+  placeholder = "Select" 
+}) => {
+  const [internalValue, setInternalValue] = useState<Option | undefined>(defaultValue);
 
   const customStyles = {
     option: (base: any, state: any) => ({
@@ -77,12 +87,23 @@ const CommonSelect: React.FC<SelectProps> = ({ options, defaultValue, className,
 
   };
 
+  const isControlled = value !== undefined;
+  const displayValue = isControlled ? value : internalValue;
+
   const handleChange = useCallback((option: Option | null) => {
-    setSelectedOption(option || undefined);
-  }, []);
+    if (onChange) {
+      onChange(option);
+    }
+    if (!isControlled) {
+      setInternalValue(option || undefined);
+    }
+  }, [onChange, isControlled]);
+
   useEffect(() => {
-    setSelectedOption(defaultValue || undefined);
-  }, [defaultValue])
+    if (!isControlled && defaultValue !== undefined) {
+      setInternalValue(defaultValue || undefined);
+    }
+  }, [defaultValue, isControlled])
   
   return (
     <div className="common-select">
@@ -91,7 +112,7 @@ const CommonSelect: React.FC<SelectProps> = ({ options, defaultValue, className,
       className={className}
       styles={customStyles}
       options={options}
-      value={selectedOption}
+      value={displayValue}
       onChange={handleChange}
       components={customComponents}
       placeholder={placeholder}

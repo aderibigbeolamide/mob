@@ -23,12 +23,14 @@ export enum ClockStatus {
 export interface Branch {
   _id?: string;
   name: string;
+  code?: string;
   address: string;
   phone: string;
   email: string;
   city: string;
   state: string;
   country: string;
+  manager?: any;
   isActive: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -56,6 +58,7 @@ export interface Patient {
   bloodGroup?: string;
   allergies?: string[];
   chronicConditions?: string[];
+  profileImage?: string;
   branch: string | Branch;
   isActive: boolean;
   createdAt?: Date;

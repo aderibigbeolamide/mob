@@ -23,6 +23,7 @@ import CommonDatePicker from "@/core/common-components/common-date-picker/common
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import BranchSelect from "@/core/common-components/common-select/BranchSelect";
 import { apiClient } from "@/lib/services/api-client";
+import dayjs, { Dayjs } from "dayjs";
 
 const stepKeys = [
   "v-pills-info",
@@ -87,9 +88,9 @@ const AddPatientComponent = () => {
     setFormData({ ...formData, [name]: value?.value || value });
   };
 
-  const handleDateChange = (name: string, date: Date | null) => {
+  const handleDateChange = (name: string, date: Dayjs | null) => {
     if (date) {
-      setFormData({ ...formData, [name]: date.toISOString() });
+      setFormData({ ...formData, [name]: date.format('YYYY-MM-DD') });
     }
   };
 
@@ -333,7 +334,7 @@ const AddPatientComponent = () => {
                             </label>
                             <CommonDatePicker
                               placeholder="dd/mm/yyyy"
-                              onChange={(date: Date | null) => handleDateChange("dateOfBirth", date)}
+                              onChange={(date) => handleDateChange("dateOfBirth", date)}
                             />
                           </div>
                         </div>
