@@ -227,6 +227,39 @@ const AddDoctorsComponent = () => {
     }
   };
 
+  useEffect(() => {
+    if (session && session.user?.role !== 'ADMIN') {
+      router.push(all_routes.doctors);
+    }
+  }, [session, router]);
+
+  if (!session) {
+    return (
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (session.user?.role !== 'ADMIN') {
+    return (
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="alert alert-danger">
+            <h4>Access Denied</h4>
+            <p>Admin privileges are required to add doctors. Redirecting to doctors list...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="page-wrapper">
