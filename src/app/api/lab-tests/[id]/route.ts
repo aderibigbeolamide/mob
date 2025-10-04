@@ -4,6 +4,7 @@ import LabTest from '@/models/LabTest';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { canAccessResource } from '@/lib/utils/queryHelpers';
 import mongoose from 'mongoose';
+import { LabTestLean, getBranchId } from '@/types/db';
 
 export async function GET(
   req: NextRequest,
@@ -29,7 +30,7 @@ export async function GET(
         .populate('visit')
         .populate('requestedBy', 'firstName lastName')
         .populate('result.performedBy', 'firstName lastName')
-        .lean();
+        .lean<LabTestLean>();
 
       if (!labTest) {
         return NextResponse.json(
@@ -38,7 +39,7 @@ export async function GET(
         );
       }
 
-      const testBranchId = (labTest.branch as any)?._id || labTest.branch;
+      const testBranchId = getBranchId(labTest.branch);
       
       if (!canAccessResource(session.user, testBranchId)) {
         return NextResponse.json(

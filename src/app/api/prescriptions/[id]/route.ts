@@ -4,6 +4,7 @@ import Prescription from '@/models/Prescription';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { canAccessResource } from '@/lib/utils/queryHelpers';
 import mongoose from 'mongoose';
+import { PrescriptionLean, getBranchId } from '@/types/db';
 
 export async function GET(
   req: NextRequest,
@@ -28,7 +29,7 @@ export async function GET(
         .populate('branch', 'name address city state')
         .populate('visit')
         .populate('dispensedBy', 'firstName lastName')
-        .lean();
+        .lean<PrescriptionLean>();
 
       if (!prescription) {
         return NextResponse.json(
@@ -37,7 +38,7 @@ export async function GET(
         );
       }
 
-      const prescriptionBranchId = (prescription.branch as any)?._id || prescription.branch;
+      const prescriptionBranchId = getBranchId(prescription.branch);
       
       if (!canAccessResource(session.user, prescriptionBranchId)) {
         return NextResponse.json(

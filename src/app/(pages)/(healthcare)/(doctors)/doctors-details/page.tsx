@@ -6,6 +6,8 @@ export const metadata: Metadata = {
     "Doctors Details | Dreams EMR - Responsive Bootstrap 5 Medical Admin Template",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function DoctorsDetailsPage() {
   return (
     <>
