@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import dayjs, { Dayjs } from "dayjs";
 import {
   City,
   Country,
@@ -30,7 +31,31 @@ const AddDoctorsComponent = () => {
   const [imagePreview, setImagePreview] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    phoneNumber: string;
+    specialization: string;
+    licenseNumber: string;
+    department: string;
+    bio: string;
+    profileImage: string;
+    branchId: string;
+    gender: string;
+    dob: Dayjs | null;
+    languages: string;
+    fees: string;
+    address: string;
+    country: string;
+    state: string;
+    city: string;
+    pinCode: string;
+    displayName: string;
+    userName: string;
+  }>({
     firstName: "",
     lastName: "",
     email: "",
@@ -44,7 +69,7 @@ const AddDoctorsComponent = () => {
     profileImage: "",
     branchId: "",
     gender: "",
-    dob: "",
+    dob: null,
     languages: "",
     fees: "",
     address: "",
@@ -74,7 +99,11 @@ const AddDoctorsComponent = () => {
   };
 
   const handleSelectChange = (name: string, value: any) => {
-    setFormData({ ...formData, [name]: value?.value || value });
+    if (name === 'dob') {
+      setFormData({ ...formData, [name]: value });
+    } else {
+      setFormData({ ...formData, [name]: value?.value || value });
+    }
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
     }
@@ -160,6 +189,7 @@ const AddDoctorsComponent = () => {
         department: formData.department,
         bio: formData.bio,
         profileImage: formData.profileImage,
+        ...(formData.dob && { dob: formData.dob.toISOString() }),
       };
 
       await apiClient.post("/api/doctors", doctorData, {
