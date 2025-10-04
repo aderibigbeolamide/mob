@@ -1,11 +1,13 @@
 export const BloodGroup = [
   { value: "Select", label: "Select" },
-  { value: "O +", label: "O +" },
-  { value: "O -", label: "O -" },
-  { value: "A +", label: "A +" },
-  { value: "A -", label: "A -" },
-  { value: "B +", label: "B +" },
-  { value: "B -", label: "B -" },
+  { value: "A+", label: "A+" },
+  { value: "A-", label: "A-" },
+  { value: "B+", label: "B+" },
+  { value: "B-", label: "B-" },
+  { value: "AB+", label: "AB+" },
+  { value: "AB-", label: "AB-" },
+  { value: "O+", label: "O+" },
+  { value: "O-", label: "O-" },
 ];
 export const Patient = [
   { value: "Select", label: "Select" },
@@ -125,7 +127,7 @@ export const Gender = [
   { value: "Select", label: "Select" },
   { value: "Male", label: "Male" },
   { value: "Female", label: "Female" },
-  { value: "Others", label: "Others" },
+  { value: "Other", label: "Other" },
 ];
 export const MartialStatus = [
   { value: "Select", label: "Select" },
