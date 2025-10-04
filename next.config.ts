@@ -12,13 +12,13 @@ const nextConfig: NextConfig = {
       allowedOrigins: process.env.NODE_ENV === 'development' ? ['*'] : [],
     },
   },
-  // Allow all hosts in development for Replit proxy compatibility
   async headers() {
     return [
       {
         source: '/:path*',
         headers: [
           { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
         ],
       },
     ];
