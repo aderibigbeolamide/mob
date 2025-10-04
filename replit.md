@@ -88,9 +88,44 @@ The EMR system is built on Next.js 15 with the App Router, TypeScript, and React
 - **Memory Optimization**: Increased Node.js memory allocation from 4GB to 8GB (`--max-old-space-size=8192`) in build script to prevent SIGKILL errors during Docker builds
 - **Branch Reference Fix**: Updated editDoctors component to use `branchId` instead of `branch` property for consistency
 
+### Doctor Management Complete Overhaul (October 4, 2025)
+- **TypeScript Fixes**:
+  - Fixed date of birth (dob) field type mismatch in addDoctors.tsx (changed from string to Dayjs | null)
+  - Created Bootstrap type declarations (src/types/bootstrap.d.ts) to resolve build errors
+  - Production build now succeeds without TypeScript errors
+- **Security Enhancements**:
+  - **ImageWithBasePath XSS Prevention**: Added comprehensive URL validation to block dangerous protocols
+    - Blocks javascript:, vbscript:, and other executable protocols
+    - Restricts data: URIs to safe image MIME types only (png, jpeg, jpg, gif, webp)
+    - Prevents stored XSS attacks via SVG data URIs with embedded JavaScript
+    - Allows only safe protocols: http://, https://, blob:, data: (with MIME validation), and relative paths
+  - **Admin-Only Access Control**: Added role-based access restrictions to add/edit doctor pages
+    - Non-admin users are redirected with proper error messages
+    - Prevents 403 errors and provides better UX
+    - Aligns frontend authorization with backend API requirements
+- **Profile Image Management**:
+  - Fixed ImageWithBasePath component to properly handle base64 images and relative paths
+  - Added profile image upload capability to edit doctor form (matching add doctor functionality)
+  - Images now display correctly in both grid and list views
+- **UI/UX Improvements**:
+  - Fixed three-dot dropdown menu in doctor grid view (changed from Link to button element)
+  - Added Bootstrap dropdown initialization after doctors data loads
+  - Dropdown now properly shows edit/view/delete options when clicked
+- **API Enhancements**:
+  - **Duplicate Prevention**: Enhanced email validation with normalization (.toLowerCase().trim())
+  - **MongoDB Error Handling**: Added duplicate key error (code 11000) handling for race conditions
+  - **Pagination Fix**: Corrected pagination when department/specialization filters are applied
+  - **BranchId Sync**: Added logic to sync branchId updates from User to StaffProfile model
+  - **Improved Error Messages**: Better user feedback for duplicate email and validation errors
+- **CRUD Operations**: All doctor CRUD operations verified and working correctly:
+  - CREATE: Prevents duplicate emails, validates required fields, creates User and StaffProfile
+  - READ: Proper population of related data, pagination works correctly, no duplicates
+  - UPDATE: Supports all fields including profileImage, syncs branchId, checks permissions
+  - DELETE: Soft delete (isActive: false), admin-only access, branch permissions enforced
+
 ### Known Issues
-- Replit dev environment has memory constraints preventing full production builds locally (requires 8GB+)
-- Docker deployments will succeed with the increased memory allocation
+- Production build completed successfully (79s) - no blocking issues
+- ESLint warnings present (unused variables) - non-blocking, for future cleanup
 
 ## External Dependencies
 -   **Database**: MongoDB (with Mongoose ORM)
