@@ -36,14 +36,8 @@ export async function GET(
         );
       }
 
-      const patientBranchId = (patient.branchId as any)?._id || patient.branchId;
-      
-      if (!canAccessResource(session.user, patientBranchId)) {
-        return NextResponse.json(
-          { error: 'Forbidden. You do not have access to this patient.' },
-          { status: 403 }
-        );
-      }
+      // Allow cross-branch viewing for all authenticated users
+      // (edit restrictions are enforced in PUT/DELETE endpoints)
 
       const recentVisits = await PatientVisit.find({ patient: id })
         .sort({ visitDate: -1 })

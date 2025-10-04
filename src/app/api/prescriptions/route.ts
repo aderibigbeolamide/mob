@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
         query.status = status;
       }
 
-      const allowCrossBranch = shouldAllowCrossBranch(req);
+      const allowCrossBranch = true;
       applyBranchFilter(query, session.user, allowCrossBranch);
 
       const skip = (page - 1) * limit;

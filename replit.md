@@ -37,11 +37,24 @@ The EMR system is built on Next.js 15 with the App Router, TypeScript, and React
 -   **Next.js Configuration**: Includes `serverExternalPackages` for Mongoose and Webpack configurations for Replit compatibility, and `output: 'standalone'` for optimized Docker deployment.
 
 **System Design Choices:**
--   **Branch-Specific Data Isolation**: Enforces strict branch-based data isolation using a `branchId` for all relevant models. Non-admin users access only their assigned branch's data, while admins can view across all branches.
--   **API Endpoints**: Provides complete CRUD operations for all modules, incorporating branch filtering.
+-   **Cross-Branch Viewing with Edit Restrictions**: Staff from any branch can VIEW patient records, appointments, and other data across all branches to enable inter-branch communication and coordination. However, EDIT/DELETE operations are restricted to same-branch only. Admins have full access to view and edit across all branches.
+-   **API Endpoints**: Provides complete CRUD operations for all modules with read/write permission separation:
+    - GET endpoints: Cross-branch viewing enabled by default for all staff
+    - POST/PUT/DELETE endpoints: Strict branch isolation enforced
 -   **Docker Deployment**: The application is fully containerized using a multi-stage Dockerfile optimized for Next.js 15, resulting in a smaller image size and secure runtime.
 
 ## Recent Changes (October 2025)
+
+### Cross-Branch Viewing Implementation (October 4, 2025)
+- **Viewing Permissions**: Enabled cross-branch viewing for all staff members across all modules (patients, appointments, visits, lab tests, prescriptions, billing, etc.)
+- **Edit Restrictions**: Maintained strict branch-based restrictions for all write operations (POST, PUT, DELETE) to ensure data integrity
+- **TypeScript Fixes**: 
+  - Fixed `patient.phoneNumber` references to `patient.phone` in allPatientsList.tsx and notification.ts
+  - Fixed `patient.branchId` references to `patient.branch` in allPatientsList.tsx
+- **Query Helper Updates**:
+  - Updated `applyBranchFilter()` to properly respect the `allowCrossBranch` parameter
+  - Added comprehensive documentation explaining read vs write permission model
+- **Security Model**: All authenticated staff can view cross-branch data, but can only edit/delete data from their own branch (admins have full access)
 
 ### Replit Environment Setup (October 4, 2025)
 - **Successfully configured for Replit**: The project has been successfully set up to run in the Replit environment

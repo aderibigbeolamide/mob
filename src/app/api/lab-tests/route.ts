@@ -154,7 +154,7 @@ export async function GET(req: NextRequest) {
         query.testCategory = { $regex: category, $options: 'i' };
       }
 
-      const allowCrossBranch = shouldAllowCrossBranch(req);
+      const allowCrossBranch = true;
       applyBranchFilter(query, session.user, allowCrossBranch);
 
       const skip = (page - 1) * limit;
