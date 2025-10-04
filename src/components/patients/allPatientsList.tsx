@@ -255,15 +255,13 @@ const AllPatientsListComponent = () => {
                             </div>
                           </td>
                           <td>{patient.gender}</td>
-                          <td>{patient.phone || patient.phoneNumber}</td>
+                          <td>{patient.phone}</td>
                           <td>{patient.bloodGroup || "N/A"}</td>
                           <td>{formatDate(patient.dateOfBirth)}</td>
                           {isAdmin && (
                             <td>
                               {typeof patient.branch === 'object' && patient.branch
                                 ? patient.branch.name
-                                : typeof patient.branchId === 'object' && patient.branchId
-                                ? patient.branchId.name
                                 : 'N/A'}
                             </td>
                           )}

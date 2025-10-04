@@ -58,7 +58,7 @@ export async function sendAppointmentNotification(
     console.log('📧 Notification sent:', {
       type: notificationType,
       subject,
-      patientEmail: patient.email || patient.phoneNumber,
+      patientEmail: patient.email || patient.phone,
       doctorEmail: doctor.email,
       appointmentNumber: appointment.appointmentNumber
     });
