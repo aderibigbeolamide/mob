@@ -78,22 +78,14 @@ const Sidebar = () => {
   const themeSettings = useAppSelector((state) => state.theme.themeSettings);
 
   const handleMiniSidebar = useCallback(() => {
-    console.log('🔵 handleMiniSidebar clicked!');
-    console.log('🔵 Current layout:', themeSettings["data-layout"]);
-    
-    // If we're in hidden mode and sidebar is visible, hide it
     if (themeSettings["data-layout"] === "hidden") {
       dispatch(setHiddenLayout(false));
       return;
     }
     
-    // Read current state from Redux, not from DOM
     const isMini = themeSettings["data-layout"] === "mini";
     const updatedLayout = isMini ? "default" : "mini";
     
-    console.log('🔵 Toggling to:', updatedLayout);
-    
-    // Update Redux state (useEffect will handle DOM updates)
     dispatch(
       updateTheme({
         "data-layout": updatedLayout,
@@ -149,23 +141,10 @@ const Sidebar = () => {
     dispatch(setMobileSidebar(!mobileSidebar));
   }, [dispatch, mobileSidebar]);
   useEffect(() => {
-    console.log('🟢 useEffect triggered! data-layout:', themeSettings["data-layout"]);
     const rootElement: any = document.documentElement;
     Object.entries(themeSettings).forEach(([key, value]) => {
       rootElement.setAttribute(key, value);
     });
-    
-    // Only handle mini-sidebar class if not in hidden mode
-    if (themeSettings["data-layout"] === "hidden") {
-      rootElement.classList.remove("mini-sidebar");
-      console.log('🟢 Removed mini-sidebar class (hidden mode)');
-    } else if (themeSettings["data-layout"] === "mini") {
-      rootElement.classList.add("mini-sidebar");
-      console.log('🟢 Added mini-sidebar class');
-    } else {
-      rootElement.classList.remove("mini-sidebar");
-      console.log('🟢 Removed mini-sidebar class (default mode)');
-    }
   }, [
     themeSettings["data-bs-theme"],
     themeSettings["dir"],
@@ -176,7 +155,7 @@ const Sidebar = () => {
     themeSettings["data-size"],
     themeSettings["data-width"],
     themeSettings["data-sidebarbg"]
-  ]); // Depend on all relevant theme settings
+  ]);
 
   return (
     <>
