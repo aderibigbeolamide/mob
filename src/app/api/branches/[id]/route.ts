@@ -7,7 +7,7 @@ import { UserRole } from '@/types/emr';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,9 +18,9 @@ export async function GET(
 
     await dbConnect();
 
-    const branch = await Branch.findById(params.id)
+    const branch = await Branch.findById((await params).id)
       .populate('manager', 'firstName lastName email phoneNumber')
-      .lean();
+      .lean() as any;
 
     if (!branch) {
       return NextResponse.json({ error: 'Branch not found' }, { status: 404 });
@@ -38,7 +38,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -59,7 +59,7 @@ export async function PUT(
     const body = await req.json();
     const { name, code, address, city, state, country, phone, email, manager, isActive } = body;
 
-    const branch = await Branch.findById(params.id);
+    const branch = await Branch.findById((await params).id);
     if (!branch) {
       return NextResponse.json({ error: 'Branch not found' }, { status: 404 });
     }
@@ -67,7 +67,7 @@ export async function PUT(
     if (code && code.toUpperCase() !== branch.code) {
       const existingBranch = await Branch.findOne({ 
         code: code.toUpperCase(),
-        _id: { $ne: params.id }
+        _id: { $ne: (await params).id }
       });
       if (existingBranch) {
         return NextResponse.json(
@@ -90,10 +90,10 @@ export async function PUT(
     if (isActive !== undefined) updateData.isActive = isActive;
 
     const updatedBranch = await Branch.findByIdAndUpdate(
-      params.id,
+      (await params).id,
       updateData,
       { new: true, runValidators: true }
-    ).populate('manager', 'firstName lastName email phoneNumber').lean();
+    ).populate('manager', 'firstName lastName email phoneNumber').lean() as any;
 
     return NextResponse.json(updatedBranch);
   } catch (error: any) {
@@ -107,7 +107,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -125,7 +125,7 @@ export async function DELETE(
 
     await dbConnect();
 
-    const branch = await Branch.findByIdAndDelete(params.id);
+    const branch = await Branch.findByIdAndDelete((await params).id);
 
     if (!branch) {
       return NextResponse.json({ error: 'Branch not found' }, { status: 404 });

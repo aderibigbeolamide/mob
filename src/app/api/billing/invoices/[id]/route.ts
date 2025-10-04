@@ -8,13 +8,13 @@ import mongoose from 'mongoose';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return requireAuth(req, async (req: NextRequest, session: any) => {
     try {
       await dbConnect();
 
-      const { id } = params;
+      const { id } = await params;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json(
@@ -28,7 +28,7 @@ export async function GET(
         .populate('branchId', 'name address city state phoneNumber email')
         .populate('generatedBy', 'firstName lastName email phoneNumber role')
         .populate('encounterId')
-        .lean();
+        .lean() as any;
 
       if (!invoice) {
         return NextResponse.json(
@@ -49,7 +49,7 @@ export async function GET(
       const payments = await Payment.find({ invoiceId: id })
         .populate('receivedBy', 'firstName lastName email')
         .sort({ paymentDate: -1 })
-        .lean();
+        .lean() as any;
 
       return NextResponse.json({
         invoice: {
@@ -70,7 +70,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return checkRole([UserRole.BILLING, UserRole.ADMIN])(
     req,
@@ -78,7 +78,7 @@ export async function PUT(
       try {
         await dbConnect();
 
-        const { id } = params;
+        const { id } = await params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
           return NextResponse.json(
@@ -162,7 +162,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return checkRole([UserRole.ADMIN])(
     req,
@@ -170,7 +170,7 @@ export async function DELETE(
       try {
         await dbConnect();
 
-        const { id } = params;
+        const { id } = await params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
           return NextResponse.json(

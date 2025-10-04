@@ -5,13 +5,13 @@ import { requireAuth } from '@/lib/middleware/auth';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { visitId: string } }
+  { params }: { params: Promise<{ visitId: string }> }
 ) {
   return requireAuth(req, async (req: NextRequest, session: any) => {
     try {
       await dbConnect();
 
-      const { visitId } = params;
+      const { visitId } = await params;
 
       if (!visitId) {
         return NextResponse.json(
@@ -37,7 +37,7 @@ export async function GET(
         .populate('stages.billing.clockedInBy', 'firstName lastName email role')
         .populate('stages.billing.clockedOutBy', 'firstName lastName email role')
         .populate('finalClockOut.clockedOutBy', 'firstName lastName email role')
-        .lean();
+        .lean() as any;
 
       if (!visit) {
         return NextResponse.json(

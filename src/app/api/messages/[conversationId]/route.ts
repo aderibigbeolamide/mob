@@ -8,13 +8,13 @@ import mongoose from 'mongoose';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   return requireAuth(req, async (req: NextRequest, session: any) => {
     try {
       await dbConnect();
 
-      const { conversationId } = params;
+      const { conversationId } = await params;
 
       if (!mongoose.Types.ObjectId.isValid(conversationId)) {
         return NextResponse.json(

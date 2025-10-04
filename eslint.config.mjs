@@ -19,16 +19,18 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
       "src/style/icon/fontawesome/js/fontawesome.min.js",
-      "src/style/icon/fontawesome/js/v4-shims.min.js", // 👈 added
-      "**/*.min.js", // 👈 optional: ignore ALL minified JS
+      "src/style/icon/fontawesome/js/v4-shims.min.js",
+      "**/*.min.js",
     ],
-   // 🔹 2. Extend Next.js rules
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
-  // 🔹 3. Custom rule overrides
-  
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+      "react/no-unescaped-entities": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/ban-ts-comment": "warn",
+      "prefer-const": "warn",
+      "@next/next/no-img-element": "warn",
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
 ];

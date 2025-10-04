@@ -9,13 +9,13 @@ import mongoose from 'mongoose';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return requireAuth(req, async (req: NextRequest, session: any) => {
     try {
       await dbConnect();
 
-      const { id } = params;
+      const { id } = await params;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json(
@@ -26,7 +26,7 @@ export async function GET(
 
       const doctor = await User.findOne({ _id: id, role: UserRole.DOCTOR })
         .populate('branchId', 'name address city state country phone email')
-        .lean();
+        .lean() as any;
 
       if (!doctor) {
         return NextResponse.json(
@@ -44,7 +44,7 @@ export async function GET(
         );
       }
 
-      const staffProfile = await StaffProfile.findOne({ userId: id }).lean();
+      const staffProfile = await StaffProfile.findOne({ userId: id }).lean() as any;
 
       const upcomingAppointments = await Appointment.find({
         doctor: id,
@@ -55,7 +55,7 @@ export async function GET(
         .limit(10)
         .populate('patient', 'firstName lastName patientId phoneNumber')
         .populate('branch', 'name')
-        .lean();
+        .lean() as any;
 
       return NextResponse.json({
         doctor: {
@@ -77,7 +77,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return checkRole([UserRole.ADMIN])(
     req,
@@ -85,7 +85,7 @@ export async function PUT(
       try {
         await dbConnect();
 
-        const { id } = params;
+        const { id } = await params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
           return NextResponse.json(
@@ -213,7 +213,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return checkRole([UserRole.ADMIN])(
     req,
@@ -221,7 +221,7 @@ export async function DELETE(
       try {
         await dbConnect();
 
-        const { id } = params;
+        const { id } = await params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
           return NextResponse.json(

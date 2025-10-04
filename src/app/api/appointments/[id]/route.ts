@@ -52,13 +52,13 @@ async function checkSchedulingConflict(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return requireAuth(req, async (req: NextRequest, session: any) => {
     try {
       await dbConnect();
 
-      const { id } = params;
+      const { id } = await params;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json(
@@ -73,7 +73,7 @@ export async function GET(
         .populate('branchId', 'name address city state country phone email')
         .populate('createdBy', 'firstName lastName email')
         .populate('cancelledBy', 'firstName lastName email')
-        .lean();
+        .lean() as any;
 
       if (!appointment) {
         return NextResponse.json(
@@ -82,7 +82,7 @@ export async function GET(
         );
       }
 
-      const appointmentBranchId = (appointment.branchId as any)?._id || appointment.branchId;
+      const appointmentBranchId = appointment.branchId?._id || appointment.branchId;
       
       if (!canAccessResource(session.user, appointmentBranchId)) {
         return NextResponse.json(
@@ -105,7 +105,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return checkRole([UserRole.FRONT_DESK, UserRole.DOCTOR, UserRole.ADMIN])(
     req,
@@ -113,7 +113,7 @@ export async function PUT(
       try {
         await dbConnect();
 
-        const { id } = params;
+        const { id } = await params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
           return NextResponse.json(
@@ -245,7 +245,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return checkRole([UserRole.FRONT_DESK, UserRole.DOCTOR, UserRole.ADMIN])(
     req,
@@ -253,7 +253,7 @@ export async function DELETE(
       try {
         await dbConnect();
 
-        const { id } = params;
+        const { id } = await params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
           return NextResponse.json(
