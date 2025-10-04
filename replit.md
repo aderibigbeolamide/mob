@@ -1,7 +1,7 @@
 # Life Point Medical Centre - EMR System
 
 ## Overview
-Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR) system built with Next.js 15 and TypeScript. This platform streamlines patient care, clinical workflows, billing, and communication across different hospital units through branch-specific and role-based access. The system aims to enhance efficiency and patient outcomes in a medical center environment.
+Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR) system built with Next.js 15 and TypeScript. It streamlines patient care, clinical workflows, billing, and communication across different hospital units, offering branch-specific and role-based access. The system aims to enhance efficiency and patient outcomes in a medical center environment. Key capabilities include patient management, appointment scheduling, clinical workflow management, billing and payments, messaging, and staff attendance tracking.
 
 ## User Preferences
 The user prefers a development approach that emphasizes:
@@ -13,28 +13,33 @@ The user prefers a development approach that emphasizes:
 - **Autonomy**: The agent should take initiative in identifying and fixing issues, but report them.
 
 ## System Architecture
-The EMR system is built on Next.js 15 with the App Router, utilizing TypeScript for type safety and React 19 for the UI. MongoDB with Mongoose handles data persistence, and NextAuth manages authentication. The UI incorporates Bootstrap 5, Ant Design, and React Bootstrap for a consistent and responsive experience.
+The EMR system is built on Next.js 15 with the App Router, TypeScript, and React 19. It uses MongoDB with Mongoose for data persistence and NextAuth for authentication. The UI integrates Bootstrap 5, Ant Design, and React Bootstrap for a responsive and consistent user experience.
 
 **Core Features:**
--   **Patient Management**: Registration, record keeping, document uploads via Cloudinary, medical history, and vitals tracking.
--   **Appointment Scheduling**: Calendar-based booking (FullCalendar), role-aware management, and patient self-service requests.
--   **Clinical Workflow**: A structured patient clocking system (Checked In → Nurse → Doctor → Lab → Pharmacy → Billing → Returned to Front Desk → Completed) ensures smooth patient handoffs.
--   **Billing & Payments**: Invoice generation, payment processing through Paystack, and insurance claims management.
--   **Messaging & Notifications**: In-app communication, event-driven notifications, and email fallbacks using EmailJS.
+-   **Patient Management**: Registration, record keeping, document uploads, medical history, and vitals tracking.
+-   **Appointment Scheduling**: Calendar-based booking, role-aware management, and patient self-service requests.
+-   **Clinical Workflow**: Structured patient clocking system (Checked In → Nurse → Doctor → Lab → Pharmacy → Billing → Returned to Front Desk → Completed) for smooth patient handoffs.
+-   **Billing & Payments**: Invoice generation, payment processing, and insurance claims management.
+-   **Messaging & Notifications**: In-app communication, event-driven notifications, and email fallbacks.
 -   **Staff Attendance**: Clock-in/out system for tracking attendance.
 
 **User Roles:** The system supports 8 distinct role-based access levels: ADMIN, FRONT_DESK, NURSE, DOCTOR, LAB, PHARMACY, BILLING, and ACCOUNTING, each with specific permissions and workflows.
 
 **UI/UX Decisions:**
 -   **Branding**: Uses "Life Point Medical Centre" with a navy blue (`#003366`), red (`#CC0000`), and white (`#FFFFFF`) color scheme.
--   **Components**: Leverages Ant Design and React Bootstrap for a professional and consistent user interface.
--   **Data Visualization**: ApexCharts is used for presenting data, and FullCalendar for scheduling.
+-   **Components**: Leverages Ant Design and React Bootstrap.
+-   **Data Visualization**: ApexCharts for data presentation and FullCalendar for scheduling.
 
 **Technical Implementations:**
--   **State Management**: Redux Toolkit is used for predictable state management.
--   **Styling**: SCSS/Sass for maintainable stylesheets.
--   **Deployment**: Configured for Autoscale deployment on Replit, with specific build and run commands.
--   **Next.js Configuration**: Includes `serverExternalPackages` for Mongoose and Webpack configurations for Replit compatibility.
+-   **State Management**: Redux Toolkit.
+-   **Styling**: SCSS/Sass.
+-   **Deployment**: Configured for Autoscale deployment on Replit.
+-   **Next.js Configuration**: Includes `serverExternalPackages` for Mongoose and Webpack configurations for Replit compatibility, and `output: 'standalone'` for optimized Docker deployment.
+
+**System Design Choices:**
+-   **Branch-Specific Data Isolation**: Enforces strict branch-based data isolation using a `branchId` for all relevant models. Non-admin users access only their assigned branch's data, while admins can view across all branches.
+-   **API Endpoints**: Provides complete CRUD operations for all modules, incorporating branch filtering.
+-   **Docker Deployment**: The application is fully containerized using a multi-stage Dockerfile optimized for Next.js 15, resulting in a smaller image size and secure runtime.
 
 ## External Dependencies
 -   **Database**: MongoDB (with Mongoose ORM)
@@ -47,259 +52,3 @@ The EMR system is built on Next.js 15 with the App Router, utilizing TypeScript 
 -   **Charting**: ApexCharts
 -   **Rich Text Editor**: React Quill
 -   **Maps**: Leaflet (if integrated for location-based services)
-
-## Branch-Specific Data Isolation
-The system enforces strict branch-based data isolation:
-- **Branch Model**: Each branch has a unique code and manages its own operations
-- **User Assignment**: All users (staff) are assigned to a specific branch via `branchId`
-- **Data Filtering**: All models (Patient, Appointment, Visit, LabTest, etc.) include `branchId` for isolation
-- **Access Control**: 
-  - Non-admin users can only access data from their assigned branch
-  - Admins can view and manage data across all branches
-  - Branch filtering is automatically applied via middleware helpers
-- **Cross-Branch Access**: Admins can use `?allBranches=true` query parameter to view all branch data
-
-## API Endpoints (Complete CRUD)
-All modules have full CRUD operations with branch filtering:
-- **Branches** (`/api/branches`): Admin-only management of hospital branches
-- **Doctors** (`/api/doctors`): Complete doctor management with staff profiles
-- **Patients** (`/api/patients`): Patient registration and records
-- **Appointments** (`/api/appointments`): Appointment scheduling and management
-- **Visits** (`/api/visits`): Patient visit tracking and clinical workflow
-- **Lab Tests** (`/api/lab-tests`): Laboratory test requests and results
-- **Prescriptions** (`/api/prescriptions`): Medication prescriptions
-- **Billing/Invoices** (`/api/billing/invoices`): Invoice generation and payments
-- **Staff** (`/api/staff`): Staff member management
-- **Messages** (`/api/messages`): Inter-staff communication
-- **Notifications** (`/api/notifications`): System notifications
-
-## Docker Deployment
-
-### Production Deployment with Docker
-The application is fully containerized using a multi-stage Dockerfile optimized for Next.js 15:
-
-**Build the Docker image:**
-```bash
-docker build -t lifepoint-emr:latest .
-```
-
-**Run the container:**
-```bash
-docker run -p 5000:5000 \
-  -e MONGODB_URI="your_mongodb_connection_string" \
-  -e NEXTAUTH_SECRET="your_secret_key" \
-  -e NEXTAUTH_URL="https://yourdomain.com" \
-  lifepoint-emr:latest
-```
-
-**With Docker Compose:**
-Create a `docker-compose.yml` file:
-```yaml
-version: '3.8'
-services:
-  web:
-    build: .
-    ports:
-      - "5000:5000"
-    environment:
-      - NODE_ENV=production
-      - MONGODB_URI=your_mongodb_uri
-      - NEXTAUTH_SECRET=your_secret
-      - NEXTAUTH_URL=https://yourdomain.com
-    restart: unless-stopped
-```
-
-Then run:
-```bash
-docker-compose up -d
-```
-
-### Docker Configuration Details
-- **Base Image**: Node.js 20 Alpine (minimal footprint)
-- **Multi-stage Build**: Separate stages for dependencies, build, and runtime
-- **Standalone Output**: Uses Next.js standalone mode for ~80% smaller image size
-- **Security**: Runs as non-root user (nextjs:nodejs)
-- **Port**: Exposes port 5000 (configured for Life Point EMR)
-- **Production Optimized**: Telemetry disabled, production environment variables
-
-### Environment Variables for Docker
-Required environment variables:
-```
-NODE_ENV=production
-MONGODB_URI=<your_mongodb_connection_string>
-NEXTAUTH_SECRET=<your_secure_secret_key>
-NEXTAUTH_URL=<your_production_url>
-PORT=5000
-HOSTNAME=0.0.0.0
-```
-
-Optional (for full features):
-```
-CLOUDINARY_CLOUD_NAME=<cloudinary_name>
-CLOUDINARY_API_KEY=<cloudinary_key>
-CLOUDINARY_API_SECRET=<cloudinary_secret>
-EMAILJS_SERVICE_ID=<emailjs_service>
-EMAILJS_TEMPLATE_ID=<emailjs_template>
-EMAILJS_PUBLIC_KEY=<emailjs_public>
-EMAILJS_PRIVATE_KEY=<emailjs_private>
-PAYSTACK_PUBLIC_KEY=<paystack_public>
-PAYSTACK_SECRET_KEY=<paystack_secret>
-```
-
-## Recent Updates
-
-### Critical Build & Runtime Fixes ✅ COMPLETE (Oct 4, 2025 - Latest)
-Fixed critical TypeScript and Mongoose errors that were preventing deployment:
-
-**TypeScript Build Errors Fixed:**
-- ✅ Fixed `'patientsRes' is of type 'unknown'` error in `appointmentModal.tsx:73`
-- ✅ Fixed `'doctorsRes' is of type 'unknown'` error in `appointmentModal.tsx:78`  
-- ✅ Fixed `'response' is of type 'unknown'` error in `appointmentModal.tsx:94`
-
-**Solution Applied:**
-- Created proper TypeScript interfaces (`PatientsResponse`, `DoctorsResponse`, `AppointmentResponse`)
-- Updated API client calls to use type parameters: `apiClient.get<PatientsResponse>(...)`
-- Removed `as any` type assertions in favor of proper type safety
-- Ensures type safety and prevents runtime errors from schema mismatches
-
-**Mongoose Model Registration Error Fixed:**
-- ✅ Fixed "Schema hasn't been registered for model 'Branch'" error
-- ✅ Created central model registry at `src/models/index.ts`
-- ✅ Updated `src/lib/dbConnect.ts` to import all models with `import '@/models'`
-- ✅ Ensures all models (Branch, User, Patient, etc.) are registered before use
-- ✅ Prevents circular dependency issues in model references
-
-**Files Changed:**
-- `src/components/appointments/modal/appointmentModal.tsx` - Added proper TypeScript interfaces
-- `src/models/index.ts` - NEW: Central model registry (15 models)
-- `src/lib/dbConnect.ts` - Added import to register all models on connection
-
-**Build & Runtime Status:**
-- ✅ TypeScript errors that caused Docker build failures are now resolved
-- ✅ Mongoose model registration working correctly
-- ✅ Development server running perfectly
-- ✅ Application fully functional with proper type safety
-- ✅ All models properly registered and accessible
-- ⚠️ Note: Full production builds in Replit dev environment are limited by memory constraints
-- ✅ Docker deployments will succeed as they have sufficient memory resources
-
-**Deployment Ready:**
-- All critical build and runtime errors are fixed
-- Docker build will complete successfully
-- Development environment works perfectly for testing
-
-### Fresh GitHub Import - Replit Setup ✅ COMPLETE (Oct 4, 2025 - Latest)
-The project has been successfully imported from GitHub and fully configured for the Replit environment:
-
-**Installation & Dependencies:**
-- ✅ All npm dependencies installed successfully using Replit packager tool
-- ✅ Node.js 20 and 598 packages properly configured and working
-- ✅ Next.js 15.5.4 with Turbopack enabled
-
-**Environment Configuration:**
-- ✅ `.env.local` created with NextAuth configuration
-- ✅ NEXTAUTH_SECRET automatically generated (Rl7ea75AcNO/pv1C7660jCm99q5RjzP6MBKyY2vnvsI=)
-- ✅ NEXTAUTH_URL configured for development (http://localhost:5000)
-- ✅ Template includes placeholders for MongoDB, Cloudinary, EmailJS, and Paystack
-
-**Next.js Configuration (Already Optimized for Replit):**
-- ✅ Server Actions configured with `allowedOrigins: ['*']` for development
-- ✅ CORS headers configured with `Access-Control-Allow-Origin: *` for development
-- ✅ Cache-Control headers set to `no-cache, no-store, must-revalidate` to prevent caching issues
-- ✅ Standalone output mode enabled for deployment
-- ✅ Webpack configured with proper externals for Mongoose and bcryptjs
-- ✅ Server external packages configured: mongoose, bcryptjs
-
-**Development Server:**
-- ✅ Workflow configured: `npm run dev -- -p 5000 -H 0.0.0.0`
-- ✅ Server bound to 0.0.0.0:5000 (required for Replit proxy)
-- ✅ Next.js 15.5.4 with Turbopack running successfully
-- ✅ Login page verified and rendering beautifully with medical-themed design
-- ✅ Application fully functional and accessible through Replit webview
-- ✅ NextAuth session API responding correctly
-
-**Deployment Configuration:**
-- ✅ Autoscale deployment configured for production
-- ✅ Build command: `npm run build`
-- ✅ Run command: `npm start`
-- ✅ Ready to publish when needed
-
-**Files Updated During Import:**
-- ✅ `.env.local` - Created with NextAuth and service placeholders
-- ✅ `.gitignore` - Updated to ignore `/out/` directory (Next.js static export)
-- ✅ Port configuration verified in `.replit` (5000 → 80 external mapping)
-
-**Application Status:**
-- ✅ Frontend fully functional and accessible
-- ✅ NextAuth integration working correctly
-- ✅ Beautiful login page with Life Point Medical Centre branding
-- ✅ Demo credentials displayed on login page
-- ✅ Professional navy blue and white color scheme
-- ✅ Ready for database configuration and seeding
-
-**Known Development Warnings (Non-Critical):**
-- ⚠️ Cross-origin request warnings for `/_next/*` resources are expected in Replit environment (HMR related)
-- ⚠️ Webpack/Turbopack configuration conflict warning is cosmetic only
-- ⚠️ Mongoose duplicate index warnings on 5 models (userId, appointmentNumber, encounterId, invoiceNumber, paymentNumber)
-  - These occur when fields have `unique: true` (which creates an index) and also explicit `.index()` calls
-  - Doesn't affect functionality but can be optimized by removing duplicate `.index()` calls
-  - Models affected: StaffProfile, Appointment, Encounter, Invoice, Payment
-
-**Next Steps for User:**
-1. Configure MongoDB URI in Replit Secrets or `.env.local` to enable database functionality
-2. Run database seed: POST request to `/api/seed` to populate initial data
-3. Login with demo credentials:
-   - **Admin**: admin@lifepointmedical.com / admin123
-   - **Doctor**: dr.sarah@lifepointmedical.com / doctor123
-   - **Front Desk**: frontdesk@lifepointmedical.com / desk123
-   - **Nurse**: nurse@lifepointmedical.com / nurse123
-4. Configure optional integrations (Cloudinary, Paystack, EmailJS) as needed for full features
-
-**Optional Optimizations:**
-- Remove duplicate index definitions in 5 Mongoose models (see warnings above)
-
-### Previous Updates (Oct 3, 2025)
-
-### Branch Management System (Oct 3, 2025)
-✅ Complete branch management system with full admin control
-
-**Backend API:**
-- Admin-only branch creation, update, and deletion
-- Branch filtering middleware enforces data isolation
-- All API endpoints properly apply branch-based filtering
-- Cross-branch access available to admins with query parameter
-
-**Frontend Implementation:**
-- ✅ Branch Service Layer (`src/lib/services/branches.ts`): API client functions for fetching and managing branches
-- ✅ BranchSelect Component (`src/core/common-components/common-select/BranchSelect.tsx`): Reusable dropdown with admin/non-admin logic
-- ✅ Branch Management Page (`src/app/(pages)/(manage-module)/branch-management/page.tsx`): Admin-only access with metadata
-- ✅ Branch Management UI (`src/components/manage/branches/BranchManagement.tsx`): Responsive table/card layout with CRUD operations
-- ✅ Branch Modal (`src/components/manage/branches/BranchModal.tsx`): Create/edit form with validation and duplicate checking
-- ✅ Navigation Integration: "Branch Management" link added to sidebar (admin-only visibility)
-
-**Form Integration:**
-- ✅ Doctor Forms: BranchSelect integrated in `src/components/doctors/addDoctors.tsx`
-- ✅ Patient Forms: BranchSelect integrated in `src/components/patients/addPatient.tsx`
-- ✅ Consistent behavior: Admins can select any branch, non-admins see their assigned branch (disabled)
-
-**Staff Forms Note:**
-- Staff modal (`src/components/manage/staffs/modal/staffsModal.tsx`) is legacy UI without proper backend integration
-- API expects branchId but modal lacks functional form submission
-- Requires separate modernization effort to match doctors/patients pattern
-
-### Docker Deployment Ready
-✅ Production-ready containerization
-- Multi-stage Dockerfile with Next.js 15 standalone mode
-- `.dockerignore` configured for optimal build
-- `next.config.ts` updated with `output: 'standalone'`
-- Image size optimized (~200-250MB vs 1GB+)
-
-### Admin Capabilities
-✅ Full CRUD access implemented for admins:
-- Create, Read, Update, Delete operations on all modules
-- Branch management (create, update, delete branches)
-- Doctor management (add, update, remove doctors)
-- Patient management (register, update, manage patients)
-- Staff management (add, update, remove staff members)
-- All other modules (appointments, visits, lab tests, prescriptions, billing)
-- Cross-branch data viewing with `?allBranches=true` parameter
