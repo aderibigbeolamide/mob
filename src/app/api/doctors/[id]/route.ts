@@ -127,20 +127,21 @@ export async function PUT(
           }
         });
 
-        if (body.email && body.email.toLowerCase() !== existingDoctor.email) {
+        if (body.email && body.email.toLowerCase().trim() !== existingDoctor.email) {
+          const normalizedEmail = body.email.toLowerCase().trim();
           const emailExists = await User.findOne({
-            email: body.email.toLowerCase(),
+            email: normalizedEmail,
             _id: { $ne: id }
           });
 
           if (emailExists) {
             return NextResponse.json(
-              { error: 'Email already exists' },
+              { error: 'A doctor with this email address already exists. Please use a different email.' },
               { status: 409 }
             );
           }
 
-          updateData.email = body.email;
+          updateData.email = normalizedEmail;
         }
 
         if (body.password) {
@@ -170,6 +171,10 @@ export async function PUT(
           }
         });
 
+        if (body.branchId && body.branchId !== existingDoctor.branchId?.toString()) {
+          profileUpdateData.branchId = body.branchId;
+        }
+
         let updatedProfile = null;
         if (Object.keys(profileUpdateData).length > 0) {
           updatedProfile = await StaffProfile.findOneAndUpdate(
@@ -191,6 +196,14 @@ export async function PUT(
 
       } catch (error: any) {
         console.error('Update doctor error:', error);
+
+        if (error.code === 11000) {
+          const field = Object.keys(error.keyPattern || {})[0] || 'field';
+          return NextResponse.json(
+            { error: `A doctor with this ${field} already exists. Please use a different ${field}.` },
+            { status: 409 }
+          );
+        }
 
         if (error.name === 'ValidationError') {
           const validationErrors = Object.keys(error.errors).map(

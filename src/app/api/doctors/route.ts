@@ -35,16 +35,17 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        const existingUser = await User.findOne({ email: body.email.toLowerCase() });
+        const normalizedEmail = body.email.toLowerCase().trim();
+        const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
           return NextResponse.json(
-            { error: 'Email already exists' },
+            { error: 'A doctor with this email address already exists. Please use a different email.' },
             { status: 409 }
           );
         }
 
         const userData = {
-          email: body.email,
+          email: normalizedEmail,
           password: body.password,
           firstName: body.firstName,
           lastName: body.lastName,
@@ -88,6 +89,14 @@ export async function POST(req: NextRequest) {
 
       } catch (error: any) {
         console.error('Create doctor error:', error);
+
+        if (error.code === 11000) {
+          const field = Object.keys(error.keyPattern || {})[0] || 'field';
+          return NextResponse.json(
+            { error: `A doctor with this ${field} already exists. Please use a different ${field}.` },
+            { status: 409 }
+          );
+        }
 
         if (error.name === 'ValidationError') {
           const validationErrors = Object.keys(error.errors).map(
@@ -187,7 +196,8 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      const pagination = buildPaginationResponse(page, totalCount, limit);
+      const finalCount = (department || specialization) ? filteredDoctors.length : totalCount;
+      const pagination = buildPaginationResponse(page, finalCount, limit);
 
       return NextResponse.json({
         doctors: filteredDoctors,
