@@ -130,47 +130,49 @@ const DoctorsComponent = () => {
                         <span className="badge badge-soft-primary">
                           #DR{doctor._id?.slice(-6).toUpperCase()}
                         </span>
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light border-0"
-                          data-bs-toggle="dropdown"
-                          aria-label="Doctor actions menu"
-                          aria-haspopup="true"
-                          aria-expanded="false"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href={`${all_routes.doctorDetails}?id=${doctor._id}`}
-                              className="dropdown-item d-flex align-items-center"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href={`${all_routes.editDoctors}?id=${doctor._id}`}
-                              className="dropdown-item d-flex align-items-center"
-                            >
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
+                        <div className="dropdown">
+                          <Link
+                            href="#"
+                            className="btn btn-icon btn-outline-light border-0"
+                            data-bs-toggle="dropdown"
+                            aria-label="Doctor actions menu"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                          >
+                            <i className="ti ti-dots-vertical" aria-hidden="true" />
+                          </Link>
+                          <ul className="dropdown-menu p-2">
+                            <li>
+                              <Link
+                                href={`${all_routes.doctorDetails}?id=${doctor._id}`}
+                                className="dropdown-item d-flex align-items-center"
+                              >
+                                <i className="ti ti-eye me-1" />
+                                View Details
+                              </Link>
+                            </li>
+                            <li>
+                              <Link
+                                href={`${all_routes.editDoctors}?id=${doctor._id}`}
+                                className="dropdown-item d-flex align-items-center"
+                              >
+                                <i className="ti ti-edit me-1" />
+                                Edit
+                              </Link>
+                            </li>
+                            <li>
+                              <Link
+                                href="#"
+                                className="dropdown-item d-flex align-items-center"
+                                data-bs-toggle="modal"
+                                data-bs-target="#delete_modal"
+                              >
+                                <i className="ti ti-trash me-1" />
+                                Delete
+                              </Link>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                       <div className="text-center mb-3">
                         <span className={`avatar avatar-xl ${doctor.isActive ? 'online' : 'offline'} avatar-rounded`}>
