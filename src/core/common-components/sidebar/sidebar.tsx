@@ -84,19 +84,16 @@ const Sidebar = () => {
       return;
     }
     
-    const rootElement = document.documentElement;
-    const isMini = rootElement.getAttribute("data-layout") === "mini";
+    // Read current state from Redux, not from DOM
+    const isMini = themeSettings["data-layout"] === "mini";
     const updatedLayout = isMini ? "default" : "mini";
+    
+    // Update Redux state (useEffect will handle DOM updates)
     dispatch(
       updateTheme({
         "data-layout": updatedLayout,
       })
     );
-    if (isMini) {
-      rootElement.classList.remove("mini-sidebar");
-    } else {
-      rootElement.classList.add("mini-sidebar");
-    }
   }, [dispatch, themeSettings]);
 
   const onMouseEnter = useCallback(() => {

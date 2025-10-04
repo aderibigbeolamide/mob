@@ -115,11 +115,20 @@ const Header = () => {
     e.stopPropagation();
     
     if (themeSettings["data-layout"] === "hidden") {
-      // In hidden mode, just toggle the hidden layout state
+      // In hidden mode, toggle the hidden layout state
       dispatch(toggleHiddenLayout());
     } else {
-      // In other modes, use mobile sidebar toggle
-      toggleMobileSidebar();
+      // On desktop, toggle mini sidebar; on mobile, toggle mobile sidebar
+      const isMobile = window.innerWidth < 992; // Bootstrap lg breakpoint
+      
+      if (isMobile) {
+        toggleMobileSidebar();
+      } else {
+        // Toggle mini sidebar on desktop
+        const isMini = themeSettings["data-layout"] === "mini";
+        const updatedLayout = isMini ? "default" : "mini";
+        dispatch(updateTheme({ "data-layout": updatedLayout }));
+      }
     }
   }, [dispatch, toggleMobileSidebar, themeSettings, hiddenLayout]);
   const handleSearchInputChange = useCallback(
