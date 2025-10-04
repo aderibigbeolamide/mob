@@ -19,6 +19,7 @@
     "@fullcalendar/react": "^6.1.19",
     "@fullcalendar/timegrid": "^6.1.19",
     "@hello-pangea/dnd": "^18.0.1",
+    "@playwright/test": "^1.55.1",
     "@reduxjs/toolkit": "^2.8.2",
     "@tabler/icons-webfont": "^3.34.1",
     "@types/bcryptjs": "^2.4.6",

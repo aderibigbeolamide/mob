@@ -82,27 +82,10 @@ const Header = () => {
       }
       dispatch(updateTheme({ [key]: value }));
     },
-    [dispatch, themeSettings]
+    [dispatch, themeSettings["dir"]]
   );
 
-  // Extract themeSettings dependencies for useEffect
-  const themeDeps = [
-    themeSettings["data-bs-theme"],
-    themeSettings["dir"],
-    themeSettings["data-layout"],
-    themeSettings["data-sidebar"],
-    themeSettings["data-color"],
-    themeSettings["data-topbar"],
-    themeSettings["data-size"],
-    themeSettings["data-width"],
-    themeSettings["data-sidebarbg"],
-  ];
-  useEffect(() => {
-    const htmlElement = document.documentElement as HTMLElement;
-    Object.entries(themeSettings).forEach(([key, value]) => {
-      htmlElement.setAttribute(key as string, String(value));
-    });
-  }, themeDeps);
+  // Note: DOM updates are handled by sidebar.tsx useEffect to avoid race conditions
 
   const [searchValue, setSearchValue] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -130,7 +113,7 @@ const Header = () => {
         dispatch(updateTheme({ "data-layout": updatedLayout }));
       }
     }
-  }, [dispatch, toggleMobileSidebar, themeSettings, hiddenLayout]);
+  }, [dispatch, toggleMobileSidebar, themeSettings["data-layout"]]);
   const handleSearchInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchValue(e.target.value);
