@@ -16,6 +16,17 @@ const DoctorsComponent = () => {
     fetchDoctors();
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).bootstrap && doctors.length > 0) {
+      const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+      dropdownElementList.forEach((dropdownToggleEl) => {
+        if (!(window as any).bootstrap.Dropdown.getInstance(dropdownToggleEl)) {
+          new (window as any).bootstrap.Dropdown(dropdownToggleEl);
+        }
+      });
+    }
+  }, [doctors]);
+
   const fetchDoctors = async () => {
     setLoading(true);
     try {
@@ -131,16 +142,17 @@ const DoctorsComponent = () => {
                           #DR{doctor._id?.slice(-6).toUpperCase()}
                         </span>
                         <div className="dropdown">
-                          <Link
-                            href="#"
+                          <button
+                            type="button"
                             className="btn btn-icon btn-outline-light border-0"
                             data-bs-toggle="dropdown"
+                            data-bs-auto-close="true"
                             aria-label="Doctor actions menu"
                             aria-haspopup="true"
                             aria-expanded="false"
                           >
                             <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
+                          </button>
                           <ul className="dropdown-menu p-2">
                             <li>
                               <Link

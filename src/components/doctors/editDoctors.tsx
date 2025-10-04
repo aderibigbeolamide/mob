@@ -24,6 +24,7 @@ const EditDoctorsComponent = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -35,6 +36,7 @@ const EditDoctorsComponent = () => {
     department: "",
     bio: "",
     branchId: "",
+    profileImage: "",
   });
 
   useEffect(() => {
@@ -63,6 +65,9 @@ const EditDoctorsComponent = () => {
         ? response.doctor.branchId._id 
         : (typeof response.doctor.branchId === 'string' ? response.doctor.branchId : "");
       
+      const profileImage = response.doctor.profile?.profileImage || "";
+      setImagePreview(profileImage);
+      
       setFormData({
         firstName: response.doctor.firstName || "",
         lastName: response.doctor.lastName || "",
@@ -73,6 +78,7 @@ const EditDoctorsComponent = () => {
         department: response.doctor.profile?.department || "",
         bio: response.doctor.profile?.bio || "",
         branchId: branchId,
+        profileImage: profileImage,
       });
     } catch (error) {
       console.error("Failed to fetch doctor:", error);
@@ -88,6 +94,29 @@ const EditDoctorsComponent = () => {
 
   const handleBranchChange = (branchId: string) => {
     setFormData({ ...formData, branchId });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File size must be less than 5MB");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        setFormData({ ...formData, profileImage: base64String });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview("");
+    setFormData({ ...formData, profileImage: "" });
   };
 
   const handleNext = () => {
@@ -214,12 +243,47 @@ const EditDoctorsComponent = () => {
                             <div className="d-flex align-items-center flex-wrap gap-3">
                               <div className="flex-shrink-0">
                                 <div className="position-relative d-flex align-items-center border rounded">
-                                  <ImageWithBasePath
-                                    src={doctor.profile?.profileImage || "assets/img/doctors/doctor-01.jpg"}
-                                    className="avatar avatar-xxl"
-                                    alt="doctor"
-                                  />
+                                  {imagePreview ? (
+                                    <img
+                                      src={imagePreview}
+                                      className="avatar avatar-xxl"
+                                      alt="doctor"
+                                      style={{ objectFit: 'cover' }}
+                                    />
+                                  ) : (
+                                    <ImageWithBasePath
+                                      src="assets/img/doctors/doctor-01.jpg"
+                                      className="avatar avatar-xxl"
+                                      alt="doctor"
+                                    />
+                                  )}
                                 </div>
+                              </div>
+                              <div className="d-inline-flex flex-column align-items-start">
+                                <div className="d-inline-flex align-items-start gap-2">
+                                  <div className="drag-upload-btn btn btn-dark position-relative mb-2">
+                                    <i className="ti ti-arrows-exchange-2 me-1" />
+                                    Change Image
+                                    <input
+                                      type="file"
+                                      className="form-control image-sign"
+                                      accept="image/jpeg,image/png,image/gif"
+                                      onChange={handleFileChange}
+                                    />
+                                  </div>
+                                  <div>
+                                    <button
+                                      type="button"
+                                      onClick={handleRemoveImage}
+                                      className="btn btn-danger d-flex align-items-center gap-1"
+                                    >
+                                      <i className="ti ti-trash" /> Remove
+                                    </button>
+                                  </div>
+                                </div>
+                                <span className="fs-13 text-body">
+                                  Use JPEG, PNG, or GIF. Best size: 200x200 pixels. Keep it under 5MB
+                                </span>
                               </div>
                             </div>
                           </div>

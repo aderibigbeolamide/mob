@@ -14,8 +14,13 @@ interface Image {
 }
 
 const ImageWithBasePath = (props: Image) => {
-  // Combine the base path and the provided src to create the full image source URL
-  const fullSrc = `${image_path}${props.src}`;
+  const isBase64OrUrl = props.src.startsWith('data:') || 
+                        props.src.startsWith('http://') || 
+                        props.src.startsWith('https://') ||
+                        props.src.startsWith('blob:');
+  
+  const fullSrc = isBase64OrUrl ? props.src : `${image_path}${props.src}`;
+  
   return (
     <img
       className={props.className}
