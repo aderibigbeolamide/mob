@@ -41,6 +41,22 @@ The EMR system is built on Next.js 15 with the App Router, TypeScript, and React
 -   **API Endpoints**: Provides complete CRUD operations for all modules, incorporating branch filtering.
 -   **Docker Deployment**: The application is fully containerized using a multi-stage Dockerfile optimized for Next.js 15, resulting in a smaller image size and secure runtime.
 
+## Recent Changes (October 2025)
+
+### Docker Build TypeScript Fixes
+- **CommonSelect Enhancement**: Updated to support controlled mode with `value` and `onChange` props for proper form state management, while maintaining backward compatibility for uncontrolled usage
+- **Date/Time Type Safety**: Resolved all Dayjs/Date type mismatches across appointment modal, patient add/edit forms by ensuring consistent Dayjs object handling throughout the component lifecycle
+- **Type Definitions**: Added missing fields to type definitions:
+  - Branch: `code` (string, optional) and `manager` (string, optional)
+  - Patient: `profileImage` (string, optional)
+- **Memory Optimization**: Increased Node.js memory allocation from 4GB to 8GB (`--max-old-space-size=8192`) in build script to prevent SIGKILL errors during Docker builds
+- **Branch Reference Fix**: Updated editDoctors component to use `branchId` instead of `branch` property for consistency
+
+### Known Issues
+- Replit dev environment has memory constraints preventing full production builds locally (requires 8GB+)
+- Docker deployments will succeed with the increased memory allocation
+- Mongoose duplicate index warnings are non-critical (schema indexes duplicated in model definitions)
+
 ## External Dependencies
 -   **Database**: MongoDB (with Mongoose ORM)
 -   **Authentication**: NextAuth
