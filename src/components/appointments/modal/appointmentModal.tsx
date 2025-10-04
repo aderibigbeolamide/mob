@@ -27,6 +27,37 @@ interface DoctorOption {
   label: string;
 }
 
+interface PatientsResponse {
+  patients: Array<{
+    _id: string;
+    firstName: string;
+    lastName: string;
+    patientId: string;
+  }>;
+}
+
+interface DoctorsResponse {
+  doctors: Array<{
+    _id: string;
+    firstName: string;
+    lastName: string;
+  }>;
+}
+
+interface AppointmentResponse {
+  appointment: {
+    appointmentNumber: string;
+    patientId: { _id: string } | string;
+    doctorId: { _id: string } | string;
+    type?: string;
+    appointmentDate: string;
+    appointmentTime: string;
+    duration: number;
+    reasonForVisit: string;
+    notes?: string;
+  };
+}
+
 const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }: AppointmentModalProps) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
@@ -66,16 +97,16 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
   const fetchPatientsAndDoctors = async () => {
     try {
       const [patientsRes, doctorsRes] = await Promise.all([
-        apiClient.get('/api/patients?limit=1000'),
-        apiClient.get('/api/doctors?limit=1000')
+        apiClient.get<PatientsResponse>('/api/patients?limit=1000'),
+        apiClient.get<DoctorsResponse>('/api/doctors?limit=1000')
       ]);
 
-      const patientOptions = patientsRes.patients?.map((patient: any) => ({
+      const patientOptions = patientsRes.patients?.map((patient) => ({
         value: patient._id,
         label: `${patient.firstName} ${patient.lastName} (${patient.patientId})`
       })) || [];
 
-      const doctorOptions = doctorsRes.doctors?.map((doctor: any) => ({
+      const doctorOptions = doctorsRes.doctors?.map((doctor) => ({
         value: doctor._id,
         label: `Dr. ${doctor.firstName} ${doctor.lastName}`
       })) || [];
@@ -90,7 +121,7 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
   const fetchAppointmentDetails = async (id: string) => {
     setLoadingData(true);
     try {
-      const response = await apiClient.get(`/api/appointments/${id}`);
+      const response = await apiClient.get<AppointmentResponse>(`/api/appointments/${id}`);
       const appointment = response.appointment;
       
       setEditData(appointment);
@@ -100,10 +131,10 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
 
       setFormData({
         appointmentNumber: appointment.appointmentNumber,
-        patientId: appointment.patientId._id || appointment.patientId,
+        patientId: typeof appointment.patientId === 'string' ? appointment.patientId : appointment.patientId._id,
         patientType: "",
         department: "",
-        doctorId: appointment.doctorId._id || appointment.doctorId,
+        doctorId: typeof appointment.doctorId === 'string' ? appointment.doctorId : appointment.doctorId._id,
         consultationType: appointment.type || "CONSULTATION",
         appointmentDate: appointmentDate.toISOString().split('T')[0],
         startTime: appointment.appointmentTime,
