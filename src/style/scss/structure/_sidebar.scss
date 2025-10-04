@@ -610,6 +610,8 @@
         opacity: 0;
     }
     .sidebar {
+        width: $sidenav-width-sm;
+        overflow: hidden;
         .sidebar-logo {
             width: $sidenav-width-sm;
             .logo {
