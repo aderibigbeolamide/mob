@@ -168,7 +168,6 @@ InvoiceSchema.pre('save', async function(next) {
   next();
 });
 
-InvoiceSchema.index({ invoiceNumber: 1 });
 InvoiceSchema.index({ patientId: 1 });
 InvoiceSchema.index({ branchId: 1 });
 InvoiceSchema.index({ status: 1 });

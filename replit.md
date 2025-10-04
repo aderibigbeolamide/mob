@@ -56,18 +56,21 @@ The EMR system is built on Next.js 15 with the App Router, TypeScript, and React
   - Added comprehensive documentation explaining read vs write permission model
 - **Security Model**: All authenticated staff can view cross-branch data, but can only edit/delete data from their own branch (admins have full access)
 
-### Replit Environment Setup (October 4, 2025)
-- **Successfully configured for Replit**: The project has been successfully set up to run in the Replit environment
+### Fresh GitHub Import - Replit Environment Setup (October 4, 2025)
+- **Successfully configured for Replit**: The project has been successfully imported from GitHub and set up to run in the Replit environment
 - **Dependencies Installed**: All npm packages (597 packages) installed successfully
-- **Next.js Configuration**: Added `allowedDevOrigins: ['*']` for development mode to support Replit's proxy infrastructure
+- **Next.js Configuration**: Already includes `allowedDevOrigins: ['*']` for development mode to support Replit's proxy infrastructure
 - **Environment Variables**: Created `.env.local` with default configuration for MongoDB, NextAuth, Cloudinary, EmailJS, and Paystack
-- **Workflow Configuration**: Dev server runs on port 5000 with host 0.0.0.0 to allow external access
+- **Workflow Configuration**: Dev server runs on port 5000 with host 0.0.0.0 to allow external access (`npm run dev -- -p 5000 -H 0.0.0.0`)
 - **Deployment Configuration**: Set up for Autoscale deployment with build command `npm run build` and run command `npm start`
+- **Mongoose Index Optimization**: Fixed duplicate index warnings by removing redundant explicit index declarations on fields with `unique: true`
+  - Fixed models: StaffProfile, Appointment, Encounter, Invoice, Payment
+  - Removed duplicate indexes on: userId, appointmentNumber, encounterId, invoiceNumber, paymentNumber
 - **Application Status**: ✅ Frontend is fully functional and displaying the login page correctly
 - **Known Setup Notes**: 
   - MongoDB connection defaults to local instance - users should update `MONGODB_URI` in environment variables to connect to MongoDB Atlas
   - WebSocket warnings for HMR are expected in Replit environment and don't affect functionality
-  - Mongoose duplicate index warnings are non-critical
+  - Cross-origin request warnings in development are expected and don't affect functionality (allowedDevOrigins is configured)
 
 ### Docker Build TypeScript Fixes
 - **CommonSelect Enhancement**: Updated to support controlled mode with `value` and `onChange` props for proper form state management, while maintaining backward compatibility for uncontrolled usage
@@ -81,7 +84,6 @@ The EMR system is built on Next.js 15 with the App Router, TypeScript, and React
 ### Known Issues
 - Replit dev environment has memory constraints preventing full production builds locally (requires 8GB+)
 - Docker deployments will succeed with the increased memory allocation
-- Mongoose duplicate index warnings are non-critical (schema indexes duplicated in model definitions)
 
 ## External Dependencies
 -   **Database**: MongoDB (with Mongoose ORM)

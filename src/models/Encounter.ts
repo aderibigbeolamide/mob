@@ -151,7 +151,6 @@ EncounterSchema.pre('save', function(next) {
   next();
 });
 
-EncounterSchema.index({ encounterId: 1 });
 EncounterSchema.index({ patientId: 1 });
 EncounterSchema.index({ branchId: 1 });
 EncounterSchema.index({ clockStatus: 1 });

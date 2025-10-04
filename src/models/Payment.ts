@@ -97,7 +97,6 @@ PaymentSchema.pre('save', async function(next) {
   next();
 });
 
-PaymentSchema.index({ paymentNumber: 1 });
 PaymentSchema.index({ invoiceId: 1 });
 PaymentSchema.index({ patientId: 1 });
 PaymentSchema.index({ branchId: 1 });

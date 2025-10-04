@@ -70,7 +70,6 @@ const StaffProfileSchema = new Schema<IStaffProfile>({
   }
 }, { timestamps: true });
 
-StaffProfileSchema.index({ userId: 1 });
 StaffProfileSchema.index({ department: 1 });
 StaffProfileSchema.index({ specialization: 1 });
 
