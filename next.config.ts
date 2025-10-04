@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
       allowedOrigins: process.env.NODE_ENV === 'development' ? ['*'] : [],
     },
   },
+  devIndicators: {
+    buildActivity: true,
+    buildActivityPosition: 'bottom-right',
+  },
+  allowedDevOrigins: ['*'],
   async headers() {
     return [
       {
