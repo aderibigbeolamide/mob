@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
 
         const staffProfileData = {
           userId: user._id,
+          branchId: body.branchId,
           specialization: body.specialization,
           licenseNumber: body.licenseNumber,
           department: body.department,

@@ -34,10 +34,10 @@ const DoctorDetailsComponent = () => {
 
     setLoading(true);
     try {
-      const response = await apiClient.get<Doctor>(`/api/doctors/${doctorId}`, {
+      const response = await apiClient.get<{ doctor: Doctor; upcomingAppointments: any[] }>(`/api/doctors/${doctorId}`, {
         showErrorToast: true,
       });
-      setDoctor(response);
+      setDoctor(response.doctor);
     } catch (error) {
       console.error("Failed to fetch doctor:", error);
     } finally {

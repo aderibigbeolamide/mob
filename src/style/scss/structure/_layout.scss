@@ -22,3 +22,12 @@
         min-height: calc(100vh - 109px);
     }
 }
+
+[data-layout="mini"] {
+    .page-wrapper {
+        margin-left: $sidenav-width-sm;
+        @include respond-below(lg) {
+            margin: 0;
+        }
+    }
+}

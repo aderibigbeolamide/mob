@@ -54,24 +54,24 @@ const EditDoctorsComponent = () => {
     
     setLoading(true);
     try {
-      const response = await apiClient.get<Doctor>(`/api/doctors/${doctorId}`, {
+      const response = await apiClient.get<{ doctor: Doctor; upcomingAppointments: any[] }>(`/api/doctors/${doctorId}`, {
         showErrorToast: true,
       });
 
-      setDoctor(response);
-      const branchId = typeof response.branchId === 'object' && response.branchId?._id 
-        ? response.branchId._id 
-        : (typeof response.branchId === 'string' ? response.branchId : "");
+      setDoctor(response.doctor);
+      const branchId = typeof response.doctor.branchId === 'object' && response.doctor.branchId?._id 
+        ? response.doctor.branchId._id 
+        : (typeof response.doctor.branchId === 'string' ? response.doctor.branchId : "");
       
       setFormData({
-        firstName: response.firstName || "",
-        lastName: response.lastName || "",
-        email: response.email || "",
-        phoneNumber: response.phoneNumber || "",
-        specialization: response.profile?.specialization || "",
-        licenseNumber: response.profile?.licenseNumber || "",
-        department: response.profile?.department || "",
-        bio: response.profile?.bio || "",
+        firstName: response.doctor.firstName || "",
+        lastName: response.doctor.lastName || "",
+        email: response.doctor.email || "",
+        phoneNumber: response.doctor.phoneNumber || "",
+        specialization: response.doctor.profile?.specialization || "",
+        licenseNumber: response.doctor.profile?.licenseNumber || "",
+        department: response.doctor.profile?.department || "",
+        bio: response.doctor.profile?.bio || "",
         branchId: branchId,
       });
     } catch (error) {
