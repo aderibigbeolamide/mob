@@ -157,15 +157,15 @@ export async function POST(req: NextRequest) {
       }
 
       if (nextStage !== 'completed') {
-        const nextStageField = getStageFieldName(nextStage);
-        updateData[`stages.${nextStageField}.clockedInBy`] = session.user.id;
-        updateData[`stages.${nextStageField}.clockedInAt`] = new Date();
-
         const nextRole = STAGE_TO_ROLE[nextStage];
         if (nextRole) {
+          const visitBranchId = typeof visit.branchId === 'object' && visit.branchId?._id 
+            ? visit.branchId._id.toString() 
+            : visit.branchId?.toString();
+          
           const nextStaffMembers = await User.find({
             role: nextRole,
-            branchId: visit.branch,
+            branchId: visitBranchId,
             isActive: true
           });
 
@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
             for (const staff of nextStaffMembers) {
               await createInAppNotification({
                 recipientId: staff._id.toString(),
-                branchId: visit.branchId.toString(),
+                branchId: visitBranchId,
                 title: `New Patient in ${nextStage.replace('_', ' ').toUpperCase()} Queue`,
                 message: `${(visit.patient as any).firstName} ${(visit.patient as any).lastName} (${visit.visitNumber}) has been handed off to your department.`,
                 type: 'info',
