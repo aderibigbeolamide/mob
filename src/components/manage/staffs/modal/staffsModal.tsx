@@ -1,1381 +1,631 @@
 "use client";
-import Link from "next/link";
-import { City, Country, Designation, Gender, JobType, StaffType, State } from "../../../../core/json/selectOption";
-import ImageWithBasePath from "@/core/common-components/image-with-base-path";
-import CommonSelect from "@/core/common-components/common-select/commonSelect";
-import CommonDatePicker from "@/core/common-components/common-date-picker/commonDatePicker";
-import { all_routes } from "@/router/all_routes";
+import { useState, useEffect } from "react";
+import { apiClient } from "@/lib/services/api-client";
+import { Staff, Branch, UserRole } from "@/types/emr";
 
+interface StaffsModalProps {
+  type: "add" | "edit" | "view" | "delete";
+  staff: Staff | null;
+  onClose: () => void;
+  onSuccess: () => void;
+}
 
-const StaffsModal = () => {
-  return (
-    <>
-      {/* Add New Staff */}
-      <div className="modal fade" id="add_staff">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="text-dark modal-title fw-bold text-truncate">
-                Add New Staff
-              </h5>
-              <button
-                type="button"
-                className="btn-close btn-close-modal"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <i className="ti ti-circle-x-filled" />
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <ul className="nav nav-tabs nav-item-dark nav-solid-primary mb-3 pb-3 border-bottom border-0 gap-3">
-                  <li className="nav-item">
-                    <Link
-                      className="nav-link rounded btn btn-md active"
-                      href="#basic-staff"
-                      data-bs-toggle="tab"
-                    >
-                      Basic Info
-                    </Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link
-                      className="nav-link rounded btn btn-md"
-                      href="#salery-staff"
-                      data-bs-toggle="tab"
-                    >
-                      Salary Info
-                    </Link>
-                  </li>
-                </ul>
-                <div className="tab-content">
-                  {/* Item 1 */}
-                  <div className="tab-pane show active" id="basic-staff">
-                    {/* start row */}
-                    <div className="row row-gap-3">
-                      <div className="col-md-12">
-                        <div>
-                          <label className="form-label">
-                            Profile Image
-                            <span className="text-danger ms-1">*</span>
-                          </label>
-                          <div className="d-flex align-items-center flex-wrap gap-3">
-                            <div className="flex-shrink-0">
-                              <div className="position-relative d-flex align-items-center border rounded">
-                                <ImageWithBasePath
-                                  src="assets/img/avatars/avatar-39.jpg"
-                                  className="avatar avatar-xxl"
-                                  alt="staff"
-                                />
-                              </div>
-                            </div>
-                            <div className="d-inline-flex flex-column align-items-start">
-                              <div className="d-inline-flex align-items-start gap-2">
-                                <div className="drag-upload-btn btn btn-dark position-relative mb-2">
-                                  <i className="ti ti-arrows-exchange-2 me-1" />
-                                  Change Image
-                                  <label htmlFor="profileImageInput" className="visually-hidden">Profile Image</label>
-                                  <input
-                                    type="file"
-                                    className="form-control image-sign"
-                                    id="profileImageInput"
-                                    multiple
-                                  />
-                                </div>
-                                <div>
-                                  <Link
-                                    href="#"
-                                    className="btn btn-light d-flex align-items-center gap-1"
-                                  >
-                                    {" "}
-                                    <i className="ti ti-trash" /> Remove
-                                  </Link>
-                                </div>
-                              </div>
-                              <span className="fs-13 text-body">
-                                Use JPEG, PNG, or GIF. Best size: 200x200
-                                pixels. Keep it under 5MB
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label" htmlFor="staff-id">ID</label>
-                          <input type="text" className="form-control" id="staff-id" defaultValue="#SF0002" disabled />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label" htmlFor="staff-name">Name</label>
-                          <input type="text" className="form-control" id="staff-name" />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Gender</label>
-                          <CommonSelect
-                            options={Gender}
-                            className="select"
-                            defaultValue={Gender[0]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">DOB</label>
-                          <div className=" w-auto input-group-flat">
-                            <CommonDatePicker placeholder="dd/mm/yyyy" />
-                          </div>
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Mobile Number</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            name="phone"
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Email</label>
-                          <input type="email" className="form-control" />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Designation</label>
-                          <CommonSelect
-                            options={Designation}
-                            className="select"
-                            defaultValue={Designation[0]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Joining Date</label>
-                          <div className=" w-auto input-group-flat">
-                            <CommonDatePicker placeholder="dd/mm/yyyy" />
-                          </div>
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Staff Type</label>
-                          <CommonSelect
-                            options={StaffType}
-                            className="select"
-                            defaultValue={StaffType[0]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Job Type</label>
-                          <CommonSelect
-                            options={JobType}
-                            className="select"
-                            defaultValue={JobType[0]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">Address Line 1</label>
-                          <input type="text" className="form-control" />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">Address Line 2</label>
-                          <input type="text" className="form-control" />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">City</label>
-                          <CommonSelect
-                            options={City}
-                            className="select"
-                            defaultValue={City[0]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">State</label>
-                          <CommonSelect
-                            options={State}
-                            className="select"
-                            defaultValue={State[0]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">Country</label>
-                          <CommonSelect
-                            options={Country}
-                            className="select"
-                            defaultValue={Country[0]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">Pin Code</label>
-                          <input type="text" className="form-control" />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-12">
-                        <div className="form-check form-switch d-flex align-items-center justify-content-between gap-2 ps-0">
-                          <label className="form-label mb-0" htmlFor="status">
-                            Status
-                          </label>
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            role="switch"
-                            id="status"
-                            aria-checked="false"
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                    </div>
-                    {/* end row */}
-                  </div>
-                  {/* Item 2 */}
-                  <div className="tab-pane" id="salery-staff">
-                    <div>
-                      {/* start row */}
-                      <div className="row mb-3">
-                        <div className="col-md-12">
-                          <div>
-                            <label className="form-label">Net Salary</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                      </div>
-                      {/* end row */}
-                      <h6 className="mb-3">Earnings</h6>
-                      {/* start row */}
-                      <div className="row row-gap-3 mb-3">
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Basic</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">DA</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">HRA</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Conveyance</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Allowance</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">
-                              Medical Allowance
-                            </label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Others</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                      </div>
-                      {/* end row */}
-                      <h6 className="mb-3">Deductions</h6>
-                      {/* start row */}
-                      <div className="row row-gap-3">
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">TDS</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">PF</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Leave</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Prof . Tax</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Labour Welfare</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Others</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                      </div>
-                      {/* end row */}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-white me-2"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* Add Todo end */}
-      {/* Edit Staff */}
-      <div className="modal fade" id="edit_staff">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="text-dark modal-title fw-bold text-truncate">
-                Edit Staff
-              </h5>
-              <button
-                type="button"
-                className="btn-close btn-close-modal"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <i className="ti ti-circle-x-filled" />
-              </button>
-            </div>
-            <form>
-              <div className="modal-body">
-                <ul className="nav nav-tabs nav-item-dark nav-solid-primary mb-3 pb-3 border-bottom border-0 gap-3">
-                  <li className="nav-item">
-                    <Link
-                      className="nav-link rounded btn btn-md active"
-                      href="#basic-editstaff"
-                      data-bs-toggle="tab"
-                    >
-                      Basic Info
-                    </Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link
-                      className="nav-link rounded btn btn-md"
-                      href="#salery-editstaff"
-                      data-bs-toggle="tab"
-                    >
-                      Salary Info
-                    </Link>
-                  </li>
-                </ul>
-                <div className="tab-content">
-                  {/* Item 1 */}
-                  <div className="tab-pane show active" id="basic-editstaff">
-                    {/* start row */}
-                    <div className="row row-gap-3">
-                      <div className="col-md-12">
-                        <div>
-                          <label className="form-label">
-                            Profile Image
-                            <span className="text-danger ms-1">*</span>
-                          </label>
-                          <div className="d-flex align-items-center flex-wrap gap-3">
-                            <div className="flex-shrink-0">
-                              <div className="position-relative d-flex align-items-center border rounded">
-                                <ImageWithBasePath
-                                  src="assets/img/avatars/avatar-39.jpg"
-                                  className="avatar avatar-xxl"
-                                  alt="staff"
-                                />
-                              </div>
-                            </div>
-                            <div className="d-inline-flex flex-column align-items-start">
-                              <div className="d-inline-flex align-items-start gap-2">
-                                <div className="drag-upload-btn btn btn-dark position-relative mb-2">
-                                  <i className="ti ti-arrows-exchange-2 me-1" />
-                                  Change Image
-                                  <input
-                                    type="file"
-                                    className="form-control image-sign"
-                                    multiple
-                                  />
-                                </div>
-                                <div>
-                                  <Link
-                                    href="#"
-                                    className="btn btn-light d-flex align-items-center gap-1"
-                                  >
-                                    {" "}
-                                    <i className="ti ti-trash" /> Remove
-                                  </Link>
-                                </div>
-                              </div>
-                              <span className="fs-13 text-body">
-                                Use JPEG, PNG, or GIF. Best size: 200x200
-                                pixels. Keep it under 5MB
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">ID</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            defaultValue="#SF0025"
-                            disabled
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Name</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            defaultValue="Benjamin Clark"
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Gender</label>
-                          <CommonSelect
-                            options={Gender}
-                            className="select"
-                            defaultValue={Gender[1]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">DOB</label>
-                          <div className=" w-auto input-group-flat">
-                            <CommonDatePicker placeholder="dd/mm/yyyy" />
-                          </div>
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Mobile Number</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            name="phone"
-                            defaultValue="(819) 277-3810"
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Email</label>
-                          <input
-                            type="email"
-                            className="form-control"
-                            defaultValue="benjamin@example.com"
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Designation</label>
-                          <CommonSelect
-                            options={Designation}
-                            className="select"
-                            defaultValue={Designation[1]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Joining Date</label>
-                          <div className=" w-auto input-group-flat">
-                            <CommonDatePicker placeholder="dd/mm/yyyy" />
-                          </div>
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Staff Type</label>
-                          <CommonSelect
-                            options={StaffType}
-                            className="select"
-                            defaultValue={StaffType[1]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-6">
-                        <div>
-                          <label className="form-label">Job Type</label>
-                          <CommonSelect
-                            options={JobType}
-                            className="select"
-                            defaultValue={JobType[1]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">Address Line 1</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            defaultValue="10 Elizabeth town Plaza"
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">Address Line 2</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            defaultValue="Downer’s Grove"
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">City</label>
-                          <CommonSelect
-                            options={City}
-                            className="select"
-                            defaultValue={City[1]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">State</label>
-                          <CommonSelect
-                            options={State}
-                            className="select"
-                            defaultValue={State[1]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">Country</label>
-                          <CommonSelect
-                            options={Country}
-                            className="select"
-                            defaultValue={Country[1]}
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-4">
-                        <div>
-                          <label className="form-label">Pin Code</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            defaultValue="07202"
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                      <div className="col-md-12">
-                        <div className="form-check form-switch d-flex align-items-center justify-content-between gap-2 ps-0">
-                          <label
-                            className="form-label mb-0"
-                            htmlFor="statusone"
-                          >
-                            Status
-                          </label>
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            role="switch"
-                            id="statusone"
-                            defaultChecked
-                            aria-checked="true"
-                          />
-                        </div>
-                      </div>
-                      {/* end col */}
-                    </div>
-                    {/* end row */}
-                  </div>
-                  {/* Item 2 */}
-                  <div className="tab-pane" id="salery-editstaff">
-                    <div>
-                      {/* start row */}
-                      <div className="row mb-3">
-                        <div className="col-md-12">
-                          <div>
-                            <label className="form-label">Net Salary</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                      </div>
-                      {/* end row */}
-                      <h6 className="mb-3">Earnings</h6>
-                      {/* start row */}
-                      <div className="row row-gap-3 mb-3">
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Basic</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">DA</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">HRA</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Conveyance</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Allowance</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">
-                              Medical Allowance
-                            </label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Others</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                      </div>
-                      {/* end row */}
-                      <h6 className="mb-3">Deductions</h6>
-                      {/* start row */}
-                      <div className="row row-gap-3">
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">TDS</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">PF</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Leave</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Prof . Tax</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Labour Welfare</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                        <div className="col-md-3">
-                          <div>
-                            <label className="form-label">Others</label>
-                            <input type="text" className="form-control" />
-                          </div>
-                        </div>
-                        {/* end col */}
-                      </div>
-                      {/* end row */}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-white me-2"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* Edit end */}
-      {/* Staff Deatils */}
+interface BranchesResponse {
+  branches: Branch[];
+}
+
+const StaffsModal = ({ type, staff, onClose, onSuccess }: StaffsModalProps) => {
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+    role: UserRole.FRONT_DESK,
+    branchId: "",
+    specialization: "",
+    licenseNumber: "",
+    department: "",
+    bio: "",
+    profileImage: "",
+    isActive: true,
+  });
+
+  useEffect(() => {
+    fetchBranches();
+    if (staff && (type === "edit" || type === "view")) {
+      setFormData({
+        firstName: staff.firstName || "",
+        lastName: staff.lastName || "",
+        email: staff.email || "",
+        password: "",
+        phoneNumber: staff.phoneNumber || "",
+        role: staff.role || UserRole.FRONT_DESK,
+        branchId: typeof staff.branchId === 'string' ? staff.branchId : (staff.branchId as Branch)?._id || "",
+        specialization: staff.profile?.specialization || "",
+        licenseNumber: staff.profile?.licenseNumber || "",
+        department: staff.profile?.department || "",
+        bio: staff.profile?.bio || "",
+        profileImage: staff.profile?.profileImage || "",
+        isActive: staff.isActive !== undefined ? staff.isActive : true,
+      });
+    }
+  }, [staff, type]);
+
+  useEffect(() => {
+    if (type) {
+      const modalElement = document.getElementById(getModalId());
+      if (modalElement) {
+        const modal = new (window as any).bootstrap.Modal(modalElement);
+        modal.show();
+
+        const handleHidden = () => {
+          onClose();
+        };
+        modalElement.addEventListener('hidden.bs.modal', handleHidden);
+
+        return () => {
+          modalElement.removeEventListener('hidden.bs.modal', handleHidden);
+          modal.dispose();
+        };
+      }
+    }
+  }, [type, onClose]);
+
+  const fetchBranches = async () => {
+    try {
+      const response = await apiClient.get<BranchesResponse>("/api/branches", {
+        showErrorToast: false,
+      });
+      setBranches(response.branches || []);
+    } catch (error) {
+      console.error("Failed to fetch branches:", error);
+    }
+  };
+
+  const getModalId = () => {
+    switch (type) {
+      case "add": return "add_staff";
+      case "edit": return "edit_staff";
+      case "view": return "view_staff";
+      case "delete": return "delete_staff";
+      default: return "add_staff";
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === "checkbox") {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (type === "add") {
+        await apiClient.post("/api/staff", formData, {
+          successMessage: "Staff member created successfully",
+        });
+      } else if (type === "edit" && staff?._id) {
+        const updateData = { ...formData };
+        if (!updateData.password) {
+          delete (updateData as any).password;
+        }
+        
+        await apiClient.put(`/api/staff/${staff._id}`, updateData, {
+          successMessage: "Staff member updated successfully",
+        });
+      }
+      
+      onSuccess();
+      closeModal();
+    } catch (error) {
+      console.error("Failed to save staff:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!staff?._id) return;
+    
+    setLoading(true);
+    try {
+      await apiClient.delete(`/api/staff/${staff._id}`, {
+        successMessage: "Staff member deleted successfully",
+      });
+      onSuccess();
+      closeModal();
+    } catch (error) {
+      console.error("Failed to delete staff:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    const modalElement = document.getElementById(getModalId());
+    if (modalElement) {
+      const modal = (window as any).bootstrap.Modal.getInstance(modalElement);
+      if (modal) {
+        modal.hide();
+      }
+    }
+  };
+
+  const formatDate = (date: Date | string | undefined) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getBranchName = (branchId: string | Branch | undefined) => {
+    if (!branchId) return "N/A";
+    if (typeof branchId === 'string') {
+      const branch = branches.find(b => b._id === branchId);
+      return branch?.name || branchId;
+    }
+    return branchId.name || "N/A";
+  };
+
+  const getRoleDisplay = (role: UserRole) => {
+    const roleMap: Record<UserRole, string> = {
+      [UserRole.ADMIN]: "Admin",
+      [UserRole.FRONT_DESK]: "Front Desk",
+      [UserRole.NURSE]: "Nurse",
+      [UserRole.DOCTOR]: "Doctor",
+      [UserRole.LAB]: "Lab Technician",
+      [UserRole.PHARMACY]: "Pharmacy",
+      [UserRole.BILLING]: "Billing",
+      [UserRole.ACCOUNTING]: "Accounting",
+    };
+    return roleMap[role] || role;
+  };
+
+  if (type === "view" && staff) {
+    return (
       <div className="modal fade" id="view_staff">
         <div className="modal-dialog modal-dialog-centered modal-lg">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="text-dark modal-title fw-bold text-truncate">
-                Staff Details
-              </h5>
+              <h5 className="text-dark modal-title fw-bold">Staff Details</h5>
               <button
                 type="button"
-                className="btn-close btn-close-modal"
+                className="btn-close"
                 data-bs-dismiss="modal"
                 aria-label="Close"
+              />
+            </div>
+            <div className="modal-body">
+              <div className="row g-3">
+                <div className="col-12 text-center mb-3">
+                  <img
+                    src={staff.profile?.profileImage || "/assets/img/avatars/avatar-01.jpg"}
+                    alt={`${staff.firstName} ${staff.lastName}`}
+                    className="avatar avatar-xxl rounded-circle"
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">First Name</label>
+                  <p className="form-control-plaintext">{staff.firstName}</p>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Last Name</label>
+                  <p className="form-control-plaintext">{staff.lastName}</p>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Email</label>
+                  <p className="form-control-plaintext">{staff.email}</p>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Phone Number</label>
+                  <p className="form-control-plaintext">{staff.phoneNumber || "N/A"}</p>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Role</label>
+                  <p className="form-control-plaintext">
+                    <span className="badge bg-info-transparent">
+                      {getRoleDisplay(staff.role)}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Branch</label>
+                  <p className="form-control-plaintext">{getBranchName(staff.branchId)}</p>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Status</label>
+                  <p className="form-control-plaintext">
+                    <span className={`badge ${staff.isActive ? 'bg-success' : 'bg-danger'}`}>
+                      {staff.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </p>
+                </div>
+
+                {staff.profile?.specialization && (
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Specialization</label>
+                    <p className="form-control-plaintext">{staff.profile.specialization}</p>
+                  </div>
+                )}
+
+                {staff.profile?.licenseNumber && (
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">License Number</label>
+                    <p className="form-control-plaintext">{staff.profile.licenseNumber}</p>
+                  </div>
+                )}
+
+                {staff.profile?.department && (
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Department</label>
+                    <p className="form-control-plaintext">{staff.profile.department}</p>
+                  </div>
+                )}
+
+                {staff.profile?.bio && (
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">Bio</label>
+                    <p className="form-control-plaintext">{staff.profile.bio}</p>
+                  </div>
+                )}
+
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Created At</label>
+                  <p className="form-control-plaintext">{formatDate(staff.createdAt)}</p>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Last Updated</label>
+                  <p className="form-control-plaintext">{formatDate(staff.updatedAt)}</p>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-bs-dismiss="modal"
               >
-                <i className="ti ti-circle-x-filled" />
+                Close
               </button>
             </div>
-            <form>
-              <div className="modal-body">
-                <div className="d-flex align-items-center mb-4">
-                  <Link href="#" className="avatar avatar-xxl flex-shrink-0">
-                    <ImageWithBasePath
-                      src="assets/img/avatars/avatar-28.jpg"
-                      className="rounded"
-                      alt="staff"
-                    />
-                  </Link>
-                  <div className="ms-3">
-                    <div>
-                      <span className="badge badge-sm badge-soft-pink mb-2">
-                        #SF0025
-                      </span>
-                      <h6 className="fw-semibold text-truncate mb-1">
-                        <Link href="#">Benjamin Clark</Link>
-                      </h6>
-                      <p className="fs-13 mb-0">Date Joined : 17 Jun 2024</p>
-                    </div>
-                  </div>
-                </div>
-                <ul className="nav nav-tabs nav-item-dark nav-solid-primary mb-3 gap-3">
-                  <li className="nav-item">
-                    <Link
-                      className="nav-link rounded btn btn-md active"
-                      href="#basic-viewstaff"
-                      data-bs-toggle="tab"
-                    >
-                      Basic Info
-                    </Link>
-                  </li>
-                  <li className="nav-item">
-                    <Link
-                      className="nav-link rounded btn btn-md"
-                      href="#salery-viewstaff"
-                      data-bs-toggle="tab"
-                    >
-                      Salary Info
-                    </Link>
-                  </li>
-                </ul>
-                <div className="tab-content">
-                  {/* Item 1 */}
-                  <div className="tab-pane show active" id="basic-viewstaff">
-                    <h6 className="mb-3">Basic Information</h6>
-                    <div className="row row-gap-2">
-                      <div className="col-6 col-md-4">
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Job Type
-                        </h6>
-                        <p className="fs-13 mb-0 text-truncate">Full Time</p>
-                      </div>
-                      <div className="col-6 col-md-4">
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Mobile
-                        </h6>
-                        <p className="fs-13 mb-0 text-truncate">
-                          +1 48902 78194
-                        </p>
-                      </div>
-                      <div className="col-6 col-md-4">
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Email
-                        </h6>
-                        <p className="fs-13 mb-0 text-truncate">
-                          benjamin@example.com
-                        </p>
-                      </div>
-                      <div className="col-6 col-md-4">
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Gender
-                        </h6>
-                        <p className="fs-13 mb-0 text-truncate">Male</p>
-                      </div>
-                      <div className="col-6 col-md-4">
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          DOB
-                        </h6>
-                        <p className="fs-13 mb-0 text-truncate">01 Jan 1995</p>
-                      </div>
-                      <div className="col-6 col-md-4">
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Staff Type
-                        </h6>
-                        <p className="fs-13 mb-0 text-truncate">Permanent</p>
-                      </div>
-                      <div className="col-12 col-md-12">
-                        <h6 className="fw-semibold fs-14 mb-2">Address</h6>
-                        <p className="mb-0 fs13">
-                          10 Elizabethtown Plaza, Downers Grove, Elizabeth
-                          UK07202{" "}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Item 2 */}
-                  <div className="tab-pane" id="salery-viewstaff">
-                    {/* table start */}
-                    <div className="table-responsive table-nowrap">
-                      <table className="table mb-0 border">
-                        <thead>
-                          <tr>
-                            <th className="no-sort">Transaction ID</th>
-                            <th className="no-sort">Amount</th>
-                            <th className="no-sort">Credit On</th>
-                            <th className="no-sort">Salary For</th>
-                            <th className="no-sort" />
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td>
-                              <Link href="#">#TN578193</Link>
-                            </td>
-                            <td>$18600</td>
-                            <td>16 Feb 2025</td>
-                            <td>Jan 2025</td>
-                            <td className="text-end">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-outline-light"
-                                data-bs-toggle="dropdown"
-                                aria-label="more options"
-                              >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </Link>
-                              <ul className="dropdown-menu p-2">
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-trash me-1" />
-                                    Delete
-                                  </Link>
-                                </li>
-                              </ul>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <Link href="#">#TN578192</Link>
-                            </td>
-                            <td>$18600</td>
-                            <td>18 Jan 2025</td>
-                            <td>Dec 2024</td>
-                            <td className="text-end">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-outline-light"
-                                data-bs-toggle="dropdown"
-                                aria-label="more options"
-                              >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </Link>
-                              <ul className="dropdown-menu p-2">
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-trash me-1" />
-                                    Delete
-                                  </Link>
-                                </li>
-                              </ul>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <Link href="#">#TN578190</Link>
-                            </td>
-                            <td>$18600</td>
-                            <td>15 Dec 2024</td>
-                            <td>Nov 2024</td>
-                            <td className="text-end">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-outline-light"
-                                data-bs-toggle="dropdown"
-                                aria-label="more options"
-                              >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </Link>
-                              <ul className="dropdown-menu p-2">
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-trash me-1" />
-                                    Delete
-                                  </Link>
-                                </li>
-                              </ul>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <Link href="#">#TN578189</Link>
-                            </td>
-                            <td>$18600</td>
-                            <td>17 Nov 2024</td>
-                            <td> Oct 2024</td>
-                            <td className="text-end">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-outline-light"
-                                data-bs-toggle="dropdown"
-                                aria-label="more options"
-                              >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </Link>
-                              <ul className="dropdown-menu p-2">
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-trash me-1" />
-                                    Delete
-                                  </Link>
-                                </li>
-                              </ul>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <Link href="#">#TN578188</Link>
-                            </td>
-                            <td>$18600</td>
-                            <td>15 Oct 2024</td>
-                            <td>Sep 2024</td>
-                            <td className="text-end">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-outline-light"
-                                data-bs-toggle="dropdown"
-                                aria-label="more options"
-                              >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </Link>
-                              <ul className="dropdown-menu p-2">
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-trash me-1" />
-                                    Delete
-                                  </Link>
-                                </li>
-                              </ul>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <Link href="#">#TN578187</Link>
-                            </td>
-                            <td>$18600</td>
-                            <td>18 Sep 2024</td>
-                            <td>Aug 2024</td>
-                            <td className="text-end">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-outline-light"
-                                data-bs-toggle="dropdown"
-                                aria-label="more options"
-                              >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </Link>
-                              <ul className="dropdown-menu p-2">
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-trash me-1" />
-                                    Delete
-                                  </Link>
-                                </li>
-                              </ul>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <Link href="#">#TN578186</Link>
-                            </td>
-                            <td>$18600</td>
-                            <td>15 Aug 2024</td>
-                            <td>Jul 2024</td>
-                            <td className="text-end">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-outline-light"
-                                data-bs-toggle="dropdown"
-                                aria-label="more options"
-                              >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </Link>
-                              <ul className="dropdown-menu p-2">
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-trash me-1" />
-                                    Delete
-                                  </Link>
-                                </li>
-                              </ul>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <Link href="#">#TN578185</Link>
-                            </td>
-                            <td>$18600</td>
-                            <td>16 Jul 2024</td>
-                            <td>Jun 2024</td>
-                            <td className="text-end">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-outline-light"
-                                data-bs-toggle="dropdown"
-                                aria-label="more options"
-                              >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </Link>
-                              <ul className="dropdown-menu p-2">
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-trash me-1" />
-                                    Delete
-                                  </Link>
-                                </li>
-                              </ul>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    {/* table start */}
-                  </div>
-                </div>
-              </div>
-            </form>
           </div>
         </div>
       </div>
-      {/* Edit end */}
-      {/* Start Delete Modal  */}
-      <div className="modal fade" id="delete_modal">
-        <div className="modal-dialog modal-dialog-centered modal-sm">
+    );
+  }
+
+  if (type === "delete" && staff) {
+    return (
+      <div className="modal fade" id="delete_staff">
+        <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content">
-            <div className="modal-body text-center">
-              <div className="mb-2">
-                <span className="avatar avatar-md rounded-circle bg-danger">
-                  <i className="ti ti-trash fs-24" />
-                </span>
+            <div className="modal-header">
+              <h5 className="text-dark modal-title fw-bold">Delete Staff Member</h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              />
+            </div>
+            <div className="modal-body">
+              <div className="text-center mb-3">
+                <i className="ti ti-alert-circle text-danger" style={{ fontSize: '4rem' }} />
               </div>
-              <h6 className="fs-16 mb-1">Confirm Deletion</h6>
-              <p className="mb-3">Are you sure you want to delete this?</p>
-              <div className="d-flex justify-content-center gap-2">
-                <Link
-                  href="#"
-                  className="btn btn-white w-100"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </Link>
-                <Link href={all_routes.staff} className="btn btn-danger w-100">
-                  Yes, Delete
-                </Link>
-              </div>
+              <p className="text-center mb-0">
+                Are you sure you want to delete <strong>{staff.firstName} {staff.lastName}</strong>?
+                <br />
+                This action cannot be undone.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-bs-dismiss="modal"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleDelete}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </button>
             </div>
           </div>
         </div>
       </div>
-      {/* End Delete Modal  */}
-    </>
+    );
+  }
+
+  return (
+    <div className="modal fade" id={getModalId()}>
+      <div className="modal-dialog modal-dialog-centered modal-lg">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="text-dark modal-title fw-bold">
+              {type === "add" ? "Add New Staff" : "Edit Staff Member"}
+            </h5>
+            <button
+              type="button"
+              className="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            />
+          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="modal-body">
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label">
+                    First Name <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">
+                    Last Name <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">
+                    Email <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">
+                    Password {type === "add" && <span className="text-danger">*</span>}
+                    {type === "edit" && <span className="text-muted">(leave blank to keep current)</span>}
+                  </label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required={type === "add"}
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">
+                    Phone Number <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    className="form-control"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">
+                    Role <span className="text-danger">*</span>
+                  </label>
+                  <select
+                    className="form-select"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    required
+                    disabled={loading}
+                  >
+                    <option value={UserRole.ADMIN}>Admin</option>
+                    <option value={UserRole.FRONT_DESK}>Front Desk</option>
+                    <option value={UserRole.NURSE}>Nurse</option>
+                    <option value={UserRole.DOCTOR}>Doctor</option>
+                    <option value={UserRole.LAB}>Lab Technician</option>
+                    <option value={UserRole.PHARMACY}>Pharmacy</option>
+                    <option value={UserRole.BILLING}>Billing</option>
+                    <option value={UserRole.ACCOUNTING}>Accounting</option>
+                  </select>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">
+                    Branch <span className="text-danger">*</span>
+                  </label>
+                  <select
+                    className="form-select"
+                    name="branchId"
+                    value={formData.branchId}
+                    onChange={handleInputChange}
+                    required
+                    disabled={loading}
+                  >
+                    <option value="">Select Branch</option>
+                    {branches.map((branch) => (
+                      <option key={branch._id} value={branch._id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {type === "edit" && (
+                  <div className="col-md-6">
+                    <label className="form-label">Status</label>
+                    <div className="form-check form-switch">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        name="isActive"
+                        checked={formData.isActive}
+                        onChange={handleInputChange}
+                        disabled={loading}
+                      />
+                      <label className="form-check-label">
+                        {formData.isActive ? 'Active' : 'Inactive'}
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                <div className="col-12">
+                  <h6 className="mb-3 mt-2">Optional Profile Information</h6>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Specialization</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="specialization"
+                    value={formData.specialization}
+                    onChange={handleInputChange}
+                    disabled={loading}
+                    placeholder="e.g., Cardiology, Pediatrics"
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">License Number</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="licenseNumber"
+                    value={formData.licenseNumber}
+                    onChange={handleInputChange}
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Department</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="department"
+                    value={formData.department}
+                    onChange={handleInputChange}
+                    disabled={loading}
+                    placeholder="e.g., Emergency, ICU"
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label">Profile Image URL</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="profileImage"
+                    value={formData.profileImage}
+                    onChange={handleInputChange}
+                    disabled={loading}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="col-12">
+                  <label className="form-label">Bio</label>
+                  <textarea
+                    className="form-control"
+                    name="bio"
+                    rows={3}
+                    value={formData.bio}
+                    onChange={handleInputChange}
+                    disabled={loading}
+                    placeholder="Brief description about the staff member..."
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-bs-dismiss="modal"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" />
+                    {type === "add" ? "Creating..." : "Updating..."}
+                  </>
+                ) : (
+                  type === "add" ? "Create Staff" : "Update Staff"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 };
 
