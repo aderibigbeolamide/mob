@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Notification from '@/models/Notification';
-import { requireAuth } from '@/lib/middleware/auth';
+import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import mongoose from 'mongoose';
 
-export async function PUT(
+export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -13,8 +13,6 @@ export async function PUT(
       await dbConnect();
 
       const { id } = await params;
-      const body = await req.json();
-      const isRead = body.isRead !== undefined ? body.isRead : true;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json(
@@ -32,30 +30,23 @@ export async function PUT(
         );
       }
 
-      if (notification.recipient.toString() !== session.user.id) {
+      if (session.user.role !== UserRole.ADMIN && notification.recipient.toString() !== session.user.id) {
         return NextResponse.json(
-          { error: 'Forbidden. You can only update your own notifications.' },
+          { error: 'Forbidden. You can only delete your own notifications.' },
           { status: 403 }
         );
       }
 
-      notification.isRead = isRead;
-      notification.readAt = isRead ? new Date() : undefined;
-      await notification.save();
-
-      const populatedNotification = await Notification.findById(notification._id)
-        .populate('sender', 'firstName lastName email role')
-        .populate('recipient', 'firstName lastName email role');
+      await Notification.findByIdAndDelete(id);
 
       return NextResponse.json({
-        message: `Notification marked as ${isRead ? 'read' : 'unread'}`,
-        notification: populatedNotification
+        message: 'Notification deleted successfully'
       });
 
     } catch (error: any) {
-      console.error('Update notification status error:', error);
+      console.error('Delete notification error:', error);
       return NextResponse.json(
-        { error: 'Failed to update notification status', message: error.message },
+        { error: 'Failed to delete notification', message: error.message },
         { status: 500 }
       );
     }

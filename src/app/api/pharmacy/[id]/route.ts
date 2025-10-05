@@ -5,7 +5,7 @@ import { checkRole, UserRole } from '@/lib/middleware/auth';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return checkRole([UserRole.PHARMACY, UserRole.DOCTOR, UserRole.NURSE, UserRole.ADMIN])(
     req,
@@ -13,7 +13,8 @@ export async function GET(
       try {
         await dbConnect();
 
-        const product = await Pharmacy.findById(params.id)
+        const { id } = await params;
+        const product = await Pharmacy.findById(id)
           .populate('branchId', 'name code city state')
           .populate('createdBy', 'firstName lastName email');
 
@@ -39,7 +40,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return checkRole([UserRole.PHARMACY, UserRole.ADMIN])(
     req,
@@ -47,9 +48,10 @@ export async function PUT(
       try {
         await dbConnect();
 
+        const { id } = await params;
         const body = await req.json();
 
-        const product = await Pharmacy.findById(params.id);
+        const product = await Pharmacy.findById(id);
         if (!product) {
           return NextResponse.json(
             { error: 'Product not found' },
@@ -87,7 +89,7 @@ export async function PUT(
         });
 
         const updatedProduct = await Pharmacy.findByIdAndUpdate(
-          params.id,
+          id,
           updates,
           { new: true, runValidators: true }
         )
@@ -123,7 +125,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return checkRole([UserRole.PHARMACY, UserRole.ADMIN])(
     req,
@@ -131,7 +133,8 @@ export async function DELETE(
       try {
         await dbConnect();
 
-        const product = await Pharmacy.findById(params.id);
+        const { id } = await params;
+        const product = await Pharmacy.findById(id);
         if (!product) {
           return NextResponse.json(
             { error: 'Product not found' },
@@ -139,7 +142,7 @@ export async function DELETE(
           );
         }
 
-        await Pharmacy.findByIdAndDelete(params.id);
+        await Pharmacy.findByIdAndDelete(id);
 
         return NextResponse.json({
           message: 'Product deleted successfully'

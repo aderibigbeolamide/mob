@@ -2,9 +2,7 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
-const StartVisitsComponent = dynamic(() => import("@/components/visits/startVisits"), {
-  ssr: false
-});
+const StartVisitsComponent = dynamic(() => import("@/components/visits/startVisits"));
 
 export const metadata: Metadata = {
   title:

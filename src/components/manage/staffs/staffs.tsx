@@ -316,57 +316,41 @@ const StaffsComponent = () => {
                           <td>{staff.email}</td>
                           <td>{formatDate(staff.createdAt)}</td>
                           <td className="text-end">
-                            <Link
-                              href="#"
-                              className="btn btn-icon btn-outline-light"
-                              data-bs-toggle="dropdown"
-                              aria-label="Staff actions menu"
-                              aria-haspopup="true"
-                              aria-expanded="false"
-                            >
-                              <i className="ti ti-dots-vertical" aria-hidden="true" />
-                            </Link>
-                            <ul className="dropdown-menu dropdown-menu-end p-2" role="menu">
-                              <li>
-                                <button
-                                  className="dropdown-item d-flex align-items-center"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    openModal("view", staff);
-                                  }}
-                                  role="menuitem"
-                                >
-                                  <i className="ti ti-eye me-1" />
-                                  View Details
-                                </button>
-                              </li>
-                              <li>
-                                <button
-                                  className="dropdown-item d-flex align-items-center"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    openModal("edit", staff);
-                                  }}
-                                  role="menuitem"
-                                >
-                                  <i className="ti ti-edit me-1" />
-                                  Edit
-                                </button>
-                              </li>
-                              <li>
-                                <button
-                                  className="dropdown-item d-flex align-items-center text-danger"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    openModal("delete", staff);
-                                  }}
-                                  role="menuitem"
-                                >
-                                  <i className="ti ti-trash me-1" />
-                                  Delete
-                                </button>
-                              </li>
-                            </ul>
+                            <div className="d-flex gap-2 justify-content-end">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  openModal("view", staff);
+                                }}
+                                className="btn btn-sm btn-icon btn-light"
+                                data-bs-toggle="tooltip"
+                                title="View Details"
+                              >
+                                <i className="ti ti-eye" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  openModal("edit", staff);
+                                }}
+                                className="btn btn-sm btn-icon btn-light"
+                                data-bs-toggle="tooltip"
+                                title="Edit"
+                              >
+                                <i className="ti ti-edit" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  openModal("delete", staff);
+                                }}
+                                className="btn btn-sm btn-icon btn-light"
+                                data-bs-toggle="tooltip"
+                                title="Delete"
+                              >
+                                <i className="ti ti-trash" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))

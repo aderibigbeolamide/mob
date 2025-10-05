@@ -1,5 +1,8 @@
 "use client";
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { format } from "date-fns";
+import { apiClient } from "@/lib/services/api-client";
 
 import ChartOne from "./chart/chart1";
 import ChartTwo from "./chart/chart2";
@@ -14,21 +17,128 @@ import PredefinedDatePicker from "@/core/common-components/common-date-range-pic
 import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 
+interface PatientInfo {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  profileImage?: string;
+  patientId: string;
+}
+
+interface PendingAppointment {
+  _id: string;
+  patient: PatientInfo;
+  appointmentDate: string;
+  appointmentTime: string;
+  reasonForVisit: string;
+  type: string;
+}
+
+interface DashboardStats {
+  patients: {
+    total: number;
+    change: number;
+    isIncrease: boolean;
+  };
+  appointments: {
+    total: number;
+    change: number;
+    isIncrease: boolean;
+  };
+  doctors: {
+    total: number;
+    change: number;
+    isIncrease: boolean;
+  };
+  transactions: {
+    total: number;
+    change: number;
+    isIncrease: boolean;
+  };
+  visitsToday: number;
+  pendingAppointments: PendingAppointment[];
+}
+
 const DashboardComponent = () => {
+  const { data: session } = useSession();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [processingAppointmentId, setProcessingAppointmentId] = useState<string | null>(null);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await apiClient.get<DashboardStats>('/api/dashboard/stats', {
+        showErrorToast: false
+      });
+      setStats(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const handleApproveAppointment = async (appointmentId: string) => {
+    setProcessingAppointmentId(appointmentId);
+    try {
+      await apiClient.put(
+        `/api/appointments/${appointmentId}`,
+        { status: 'CONFIRMED' },
+        { successMessage: 'Appointment approved successfully' }
+      );
+      await fetchDashboardStats();
+    } catch (err) {
+    } finally {
+      setProcessingAppointmentId(null);
+    }
+  };
+
+  const handleRejectAppointment = async (appointmentId: string) => {
+    setProcessingAppointmentId(appointmentId);
+    try {
+      await apiClient.put(
+        `/api/appointments/${appointmentId}`,
+        { status: 'CANCELLED' },
+        { successMessage: 'Appointment rejected successfully' }
+      );
+      await fetchDashboardStats();
+    } catch (err) {
+    } finally {
+      setProcessingAppointmentId(null);
+    }
+  };
+
+  const formatAppointmentDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd MMM yyyy');
+    } catch {
+      return dateString;
+    }
+  };
+
+  const userName = session?.user?.name || 'Admin';
+
   return (
     <>
       {/* ========================
-			Start Page Content
-		========================= */}
+                        Start Page Content
+                ========================= */}
       <div className="page-wrapper" id="main-content">
         {/* Start Content */}
         <div className="content">
           {/* Page Header */}
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
             <div className="breadcrumb-arrow">
-              <h4 className="mb-1">Welcome, Admin</h4>
+              <h4 className="mb-1">Welcome, {userName}</h4>
               <p className="mb-0">
-                Today you have 10 visits,{" "}
+                Today you have {loading ? '...' : stats?.visitsToday || 0} visits,{" "}
                 <Link
                   href={all_routes.visits}
                   className="text-decoration-underline"
@@ -40,6 +150,13 @@ const DashboardComponent = () => {
             <PredefinedDatePicker />
           </div>
           {/* End Page Header */}
+
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
+
           {/* row start */}
           <div className="row">
             {/* col start */}
@@ -52,11 +169,17 @@ const DashboardComponent = () => {
                     </span>
                     <div className="ms-2 overflow-hidden">
                       <p className="mb-1 text-truncate">Patients</p>
-                      <h5 className="mb-0">108</h5>
+                      <h5 className="mb-0">
+                        {loading ? '...' : stats?.patients.total || 0}
+                      </h5>
                     </div>
                   </div>
                   <div className="text-end">
-                    <span className="badge badge-soft-success">+20%</span>
+                    {!loading && stats && (
+                      <span className={`badge badge-soft-${stats.patients.isIncrease ? 'success' : 'danger'}`}>
+                        {stats.patients.isIncrease ? '+' : ''}{stats.patients.change}%
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Suspense fallback={<div />}>
@@ -75,11 +198,17 @@ const DashboardComponent = () => {
                     </span>
                     <div className="ms-2 overflow-hidden">
                       <p className="mb-1 text-truncate">Appointments</p>
-                      <h5 className="mb-0">658</h5>
+                      <h5 className="mb-0">
+                        {loading ? '...' : stats?.appointments.total || 0}
+                      </h5>
                     </div>
                   </div>
                   <div className="text-end">
-                    <span className="badge badge-soft-danger">-15%</span>
+                    {!loading && stats && (
+                      <span className={`badge badge-soft-${stats.appointments.isIncrease ? 'success' : 'danger'}`}>
+                        {stats.appointments.isIncrease ? '+' : ''}{stats.appointments.change}%
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Suspense fallback={<div />}>
@@ -98,11 +227,17 @@ const DashboardComponent = () => {
                     </span>
                     <div className="ms-2 overflow-hidden">
                       <p className="mb-1 text-truncate">Doctors</p>
-                      <h5 className="mb-0">565</h5>
+                      <h5 className="mb-0">
+                        {loading ? '...' : stats?.doctors.total || 0}
+                      </h5>
                     </div>
                   </div>
                   <div className="text-end">
-                    <span className="badge badge-soft-success">+18%</span>
+                    {!loading && stats && (
+                      <span className={`badge badge-soft-${stats.doctors.isIncrease ? 'success' : 'danger'}`}>
+                        {stats.doctors.isIncrease ? '+' : ''}{stats.doctors.change}%
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Suspense fallback={<div />}>
@@ -121,11 +256,17 @@ const DashboardComponent = () => {
                     </span>
                     <div className="ms-2 overflow-hidden">
                       <p className="mb-1 text-truncate">Transactions</p>
-                      <h5 className="mb-0">$5,523.56</h5>
+                      <h5 className="mb-0">
+                        {loading ? '...' : `$${stats?.transactions.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}`}
+                      </h5>
                     </div>
                   </div>
                   <div className="text-end">
-                    <span className="badge badge-soft-success">+12%</span>
+                    {!loading && stats && (
+                      <span className={`badge badge-soft-${stats.transactions.isIncrease ? 'success' : 'danger'}`}>
+                        {stats.transactions.isIncrease ? '+' : ''}{stats.transactions.change}%
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Suspense fallback={<div />}>
@@ -151,309 +292,101 @@ const DashboardComponent = () => {
                   </Link>
                 </div>
                 <div className="card-body p-1 py-2">
-                  {/* table start */}
-                  <div className="table-responsive table-nowrap">
-                    <table className="table table-borderless mb-0">
-                      <tbody>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link
-                                href={all_routes.patientDetails}
-                                className="avatar me-2"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/profiles/avatar-23.jpg"
-                                  alt="patient"
-                                  className="rounded"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1 fw-semibold">
-                                  <Link href={all_routes.patientDetails}>
-                                    Dominic Foster
-                                  </Link>
-                                </h6>
+                  {loading ? (
+                    <div className="text-center py-4">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                  ) : stats?.pendingAppointments && stats.pendingAppointments.length > 0 ? (
+                    <div className="table-responsive table-nowrap">
+                      <table className="table table-borderless mb-0">
+                        <tbody>
+                          {stats.pendingAppointments.map((appointment) => (
+                            <tr key={appointment._id}>
+                              <td>
                                 <div className="d-flex align-items-center">
-                                  <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
-                                    <i className="ti ti-calendar me-1" />
-                                    12 Aug 2025
-                                  </p>
-                                  <span>
-                                    <i className="ti ti-minus-vertical text-light fs-14 mx-1" />
-                                  </span>
-                                  <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
-                                    <i className="ti ti-clock-hour-7 me-1" />
-                                    11:35 PM
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge badge-soft-success">
-                              Urology
-                            </span>
-                          </td>
-                          <td className="text-end border-0">
-                            <div className="d-flex align-items-center justify-content-end gap-2">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-light"
-                                aria-label="Reject appointment"
-                              >
-                                <i className="ti ti-xbox-x" />
-                              </Link>
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-light"
-                                aria-label="Accept appointment"
-                              >
-                                <i className="ti ti-check" />
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link
-                                href={all_routes.patientDetails}
-                                className="avatar me-2"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/profiles/avatar-08.jpg"
-                                  alt="patient"
-                                  className="rounded"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1 fw-semibold">
-                                  <Link href={all_routes.patientDetails}>
-                                    Charlotte Bennett
+                                  <Link
+                                    href={all_routes.patientDetails}
+                                    className="avatar me-2"
+                                  >
+                                    {appointment.patient.profileImage ? (
+                                      <ImageWithBasePath
+                                        src={appointment.patient.profileImage}
+                                        alt="patient"
+                                        className="rounded"
+                                      />
+                                    ) : (
+                                      <span className="avatar-text bg-primary rounded">
+                                        {appointment.patient.firstName?.[0]}{appointment.patient.lastName?.[0]}
+                                      </span>
+                                    )}
                                   </Link>
-                                </h6>
-                                <div className="d-flex align-items-center">
-                                  <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
-                                    <i className="ti ti-calendar me-1" />
-                                    06 Aug 2025
-                                  </p>
-                                  <span>
-                                    <i className="ti ti-minus-vertical text-light fs-14 mx-1" />
-                                  </span>
-                                  <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
-                                    <i className="ti ti-clock-hour-7 me-1" />
-                                    09:58 AM
-                                  </p>
+                                  <div>
+                                    <h6 className="fs-14 mb-1 fw-semibold">
+                                      <Link href={all_routes.patientDetails}>
+                                        {appointment.patient.firstName} {appointment.patient.lastName}
+                                      </Link>
+                                    </h6>
+                                    <div className="d-flex align-items-center">
+                                      <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
+                                        <i className="ti ti-calendar me-1" />
+                                        {formatAppointmentDate(appointment.appointmentDate)}
+                                      </p>
+                                      <span>
+                                        <i className="ti ti-minus-vertical text-light fs-14 mx-1" />
+                                      </span>
+                                      <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
+                                        <i className="ti ti-clock-hour-7 me-1" />
+                                        {appointment.appointmentTime}
+                                      </p>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge badge-soft-info">
-                              Cardiology
-                            </span>
-                          </td>
-                          <td className="text-end border-0">
-                            <div className="d-flex align-items-center justify-content-end gap-2">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-light"
-                                aria-label="Reject appointment"
-                              >
-                                <i className="ti ti-xbox-x" />
-                              </Link>
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-light"
-                                aria-label="Accept appointment"
-                              >
-                                <i className="ti ti-check" />
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link
-                                href={all_routes.patientDetails}
-                                className="avatar me-2"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/profiles/avatar-21.jpg"
-                                  alt="patient"
-                                  className="rounded"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1 fw-semibold">
-                                  <Link href={all_routes.patientDetails}>
-                                    Ethan Sullivan
-                                  </Link>
-                                </h6>
-                                <div className="d-flex align-items-center">
-                                  <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
-                                    <i className="ti ti-calendar me-1" />
-                                    01 Aug 2025
-                                  </p>
-                                  <span>
-                                    <i className="ti ti-minus-vertical text-light fs-14 mx-1" />
-                                  </span>
-                                  <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
-                                    <i className="ti ti-clock-hour-7 me-1" />
-                                    12:10 PM
-                                  </p>
+                              </td>
+                              <td>
+                                <span className="badge badge-soft-success">
+                                  {appointment.reasonForVisit || appointment.type}
+                                </span>
+                              </td>
+                              <td className="text-end border-0">
+                                <div className="d-flex align-items-center justify-content-end gap-2">
+                                  <button
+                                    onClick={() => handleRejectAppointment(appointment._id)}
+                                    className="btn btn-icon btn-light"
+                                    aria-label="Reject appointment"
+                                    disabled={processingAppointmentId === appointment._id}
+                                  >
+                                    {processingAppointmentId === appointment._id ? (
+                                      <span className="spinner-border spinner-border-sm" role="status" />
+                                    ) : (
+                                      <i className="ti ti-xbox-x" />
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => handleApproveAppointment(appointment._id)}
+                                    className="btn btn-icon btn-light"
+                                    aria-label="Accept appointment"
+                                    disabled={processingAppointmentId === appointment._id}
+                                  >
+                                    {processingAppointmentId === appointment._id ? (
+                                      <span className="spinner-border spinner-border-sm" role="status" />
+                                    ) : (
+                                      <i className="ti ti-check" />
+                                    )}
+                                  </button>
                                 </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge badge-soft-teal">
-                              Dermatology
-                            </span>
-                          </td>
-                          <td className="text-end border-0">
-                            <div className="d-flex align-items-center justify-content-end gap-2">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-light"
-                                aria-label="Reject appointment"
-                              >
-                                <i className="ti ti-xbox-x" />
-                              </Link>
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-light"
-                                aria-label="Accept appointment"
-                              >
-                                <i className="ti ti-check" />
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link
-                                href={all_routes.patientDetails}
-                                className="avatar me-2"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-37.jpg"
-                                  alt="patient"
-                                  className="rounded"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1 fw-semibold">
-                                  <Link href={all_routes.patientDetails}>
-                                    Brianna Thompson
-                                  </Link>
-                                </h6>
-                                <div className="d-flex align-items-center">
-                                  <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
-                                    <i className="ti ti-calendar me-1" />
-                                    26 Jul 2025
-                                  </p>
-                                  <span>
-                                    <i className="ti ti-minus-vertical text-light fs-14 mx-1" />
-                                  </span>
-                                  <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
-                                    <i className="ti ti-clock-hour-7 me-1" />
-                                    08:20 AM
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge badge-soft-purple">
-                              ENT Surgery
-                            </span>
-                          </td>
-                          <td className="text-end border-0">
-                            <div className="d-flex align-items-center justify-content-end gap-2">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-light"
-                                aria-label="Reject appointment"
-                              >
-                                <i className="ti ti-xbox-x" />
-                              </Link>
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-light"
-                                aria-label="Accept appointment"
-                              >
-                                <i className="ti ti-check" />
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link
-                                href={all_routes.patientDetails}
-                                className="avatar me-2"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-01.jpg"
-                                  alt="patient"
-                                  className="rounded"
-                                />
-                              </Link>
-                              <div>
-                                <h6 className="fs-14 mb-1 fw-semibold">
-                                  <Link href={all_routes.patientDetails}>
-                                    Braun Tucker
-                                  </Link>
-                                </h6>
-                                <div className="d-flex align-items-center">
-                                  <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
-                                    <i className="ti ti-calendar me-1" />
-                                    23 Jul 2025
-                                  </p>
-                                  <span>
-                                    <i className="ti ti-minus-vertical text-light fs-14 mx-1" />
-                                  </span>
-                                  <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
-                                    <i className="ti ti-clock-hour-7 me-1" />
-                                    10:30 AM
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge badge-soft-info">
-                              Radiology
-                            </span>
-                          </td>
-                          <td className="text-end border-0">
-                            <div className="d-flex align-items-center justify-content-end gap-2">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-light"
-                                aria-label="Reject appointment"
-                              >
-                                <i className="ti ti-xbox-x" />
-                              </Link>
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-light"
-                                aria-label="Accept appointment"
-                              >
-                                <i className="ti ti-check" />
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                  {/* table start */}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-muted mb-0">No pending appointment requests</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -473,7 +406,7 @@ const DashboardComponent = () => {
                 <div className="card-body pb-0">
                   <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
                     <h6 className="fs-14 fw-semibold mb-0">
-                      Total No of Patients : 480
+                      Total No of Patients : {loading ? '...' : stats?.patients.total || 0}
                     </h6>
                     <div className="d-flex align-items-center gap-3">
                       <p className="mb-0 text-dark">
@@ -776,7 +709,7 @@ const DashboardComponent = () => {
                         </p>
                       </div>
                     </div>
-                    <h6 className="mb-0">56%</h6>
+                    <h6 className="mb-0">31%</h6>
                   </div>
                 </div>
               </div>
@@ -784,163 +717,49 @@ const DashboardComponent = () => {
             {/* col end */}
             {/* col start */}
             <div className="col-xl-4 col-md-6 d-flex">
-              <div className="card shadow flex-fill w-100">
+              <div className="card flex-fill w-100">
                 <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-                  <h5 className="mb-0">Doctors</h5>
+                  <h5 className="mb-0">Doctors Availability</h5>
                   <Link
-                    href={all_routes.doctors}
+                    href={all_routes.allDoctorsList}
                     className="btn btn-sm btn-outline-light flex-shrink-0"
                   >
                     View All
                   </Link>
                 </div>
                 <div className="card-body">
-                  <div className="overflow-auto">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <div className="d-flex align-items-center">
-                        <Link
-                          href={all_routes.doctorDetails}
-                          className="avatar flex-shrink-0"
-                        >
-                          <ImageWithBasePath
-                            src="assets/img/doctors/doctor-01.jpg"
-                            className="rounded"
-                            alt="doctor"
-                          />
-                        </Link>
-                        <div className="ms-2">
-                          <div>
-                            <h6 className="fw-semibold fs-14 text-truncate mb-1">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. William Harrison
-                              </Link>
-                            </h6>
-                            <p className="fs-13 mb-0">Cardiology</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0 ms-2">
-                        <span className="badge badge-soft-success">
-                          Available
-                        </span>
+                  <Suspense fallback={<div />}>
+                    <SemiDonutChart />
+                  </Suspense>
+                  <div className="d-flex align-items-center justify-content-between mb-3">
+                    <div className="d-flex align-items-center">
+                      <span className="avatar bg-success rounded-circle flex-shrink-0">
+                        <i className="ti ti-check fs-20" />
+                      </span>
+                      <div className="ms-2">
+                        <h6 className="mb-1 fs-14 fw-semibold">Available</h6>
+                        <p className="mb-1 fs-13 text-truncate">
+                          <span className="text-success">-15%</span> Since Last
+                          Week
+                        </p>
                       </div>
                     </div>
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <div className="d-flex align-items-center">
-                        <Link
-                          href={all_routes.doctorDetails}
-                          className="avatar flex-shrink-0"
-                        >
-                          <ImageWithBasePath
-                            src="assets/img/doctors/doctor-11.jpg"
-                            className="rounded"
-                            alt="doctor"
-                          />
-                        </Link>
-                        <div className="ms-2">
-                          <div>
-                            <h6 className="fw-semibold fs-14 text-truncate mb-1">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Victoria Adams
-                              </Link>
-                            </h6>
-                            <p className="fs-13 mb-0">Urology</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0 ms-2">
-                        <span className="badge badge-soft-danger">
-                          Unavailable
-                        </span>
+                    <h6 className="mb-0">73%</h6>
+                  </div>
+                  <div className="d-flex align-items-center justify-content-between mb-0">
+                    <div className="d-flex align-items-center">
+                      <span className="avatar bg-danger rounded-circle flex-shrink-0">
+                        <i className="ti ti-xbox-x fs-20" />
+                      </span>
+                      <div className="ms-2">
+                        <h6 className="mb-1 fs-14 fw-semibold">On Leave</h6>
+                        <p className="mb-1 fs-13 text-truncate">
+                          <span className="text-danger">+5%</span> Since Last
+                          Week
+                        </p>
                       </div>
                     </div>
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <div className="d-flex align-items-center">
-                        <Link
-                          href={all_routes.doctorDetails}
-                          className="avatar flex-shrink-0"
-                        >
-                          <ImageWithBasePath
-                            src="assets/img/doctors/doctor-06.jpg"
-                            className="rounded"
-                            alt="doctor"
-                          />
-                        </Link>
-                        <div className="ms-2">
-                          <div>
-                            <h6 className="fw-semibold fs-14 text-truncate mb-1">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Jonathan Bennett
-                              </Link>
-                            </h6>
-                            <p className="fs-13 mb-0">Radiology</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0 ms-2">
-                        <span className="badge badge-soft-success">
-                          Available
-                        </span>
-                      </div>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <div className="d-flex align-items-center">
-                        <Link
-                          href={all_routes.doctorDetails}
-                          className="avatar flex-shrink-0"
-                        >
-                          <ImageWithBasePath
-                            src="assets/img/doctors/doctor-07.jpg"
-                            className="rounded"
-                            alt="doctor"
-                          />
-                        </Link>
-                        <div className="ms-2">
-                          <div>
-                            <h6 className="fw-semibold fs-14 text-truncate mb-1">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Natalie Brooks
-                              </Link>
-                            </h6>
-                            <p className="fs-13 mb-0">ENT Surgery</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0 ms-2">
-                        <span className="badge badge-soft-success">
-                          Available
-                        </span>
-                      </div>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center mb-0">
-                      <div className="d-flex align-items-center">
-                        <Link
-                          href={all_routes.doctorDetails}
-                          className="avatar flex-shrink-0"
-                        >
-                          <ImageWithBasePath
-                            src="assets/img/doctors/doctor-12.jpg"
-                            className="rounded"
-                            alt="doctor"
-                          />
-                        </Link>
-                        <div className="ms-2">
-                          <div>
-                            <h6 className="fw-semibold fs-14 text-truncate mb-1">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Samuel Reed
-                              </Link>
-                            </h6>
-                            <p className="fs-13 mb-0">Dermatology</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0 ms-2">
-                        <span className="badge badge-soft-success">
-                          Available
-                        </span>
-                      </div>
-                    </div>
+                    <h6 className="mb-0">27%</h6>
                   </div>
                 </div>
               </div>
@@ -951,531 +770,223 @@ const DashboardComponent = () => {
           {/* row start */}
           <div className="row">
             {/* col start */}
-            <div className="col-xl-5 d-flex">
-              <div className="card shadow flex-fill w-100">
-                <div className="card-header d-flex align-items-center justify-content-between">
-                  <h5 className="mb-0">Top Departments</h5>
-                  <Link
-                    href="#"
-                    className="btn btn-sm btn-outline-light flex-shrink-0"
-                  >
-                    View All
-                  </Link>
-                </div>
-                <div className="card-body">
-                  <div className="row row-gap-3 align-items-center mb-4">
-                    <div className="col-sm-6">
-                      <div className="position-relative">
-                        <Suspense fallback={<div />}>
-                          <SemiDonutChart />
-                        </Suspense>
-                        <div className="position-absolute text-center top-50 start-50 translate-middle">
-                          <p className="fs-13 mb-1">Appointments</p>
-                          <h3>3656</h3>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-sm-6">
-                      <div className="text-sm-start text-center">
-                        <p className="text-dark mb-2">
-                          <i className="ti ti-circle-filled text-info fs-13 me-1" />
-                          Cardiology
-                        </p>
-                        <p className="text-dark mb-2">
-                          <i className="ti ti-circle-filled text-cyan fs-13 me-1" />
-                          Neurology
-                        </p>
-                        <p className="text-dark mb-2">
-                          <i className="ti ti-circle-filled text-purple fs-13 me-1" />
-                          Dermatology
-                        </p>
-                        <p className="text-dark mb-2">
-                          <i className="ti ti-circle-filled text-orange fs-13 me-1" />
-                          Orthopedics
-                        </p>
-                        <p className="text-dark mb-2">
-                          <i className="ti ti-circle-filled text-warning fs-13 me-1" />
-                          Urology
-                        </p>
-                        <p className="text-dark mb-0">
-                          <i className="ti ti-circle-filled text-indigo fs-13 me-1" />
-                          Radiology
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="border rounded p-1">
-                    <div className="row g-0">
-                      <div className="col-6 p-2 border-end text-center">
-                        <h5 className="mb-1 ">$2512.32</h5>
-                        <p className="mb-0 ">Revenue Generated</p>
-                      </div>
-                      <div className="col-6 p-2 text-center">
-                        <h5 className="mb-1">3125+</h5>
-                        <p className="mb-0">Appointments last month</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* col end */}
-            {/* col start */}
-            <div className="col-xl-7 d-flex">
-              {/* card start */}
-              <div className="card shadow flex-fill w-100">
+            <div className="col-xl-12 d-flex">
+              <div className="card flex-fill w-100">
                 <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-                  <h5 className="mb-0">Patient Record</h5>
+                  <h5 className="mb-0">Recent Appointments</h5>
                   <Link
-                    href={all_routes.medicalResults}
+                    href={all_routes.appointments}
                     className="btn btn-sm btn-outline-light flex-shrink-0"
                   >
                     View All
                   </Link>
                 </div>
-                <div className="card-body">
-                  {/* table start */}
+                <div className="card-body p-1 py-2">
                   <div className="table-responsive table-nowrap">
-                    <table className="table border mb-0">
-                      <thead className="table-light">
+                    <table className="table table-borderless mb-0">
+                      <thead>
                         <tr>
+                          <th>Appt ID</th>
                           <th>Patient Name</th>
-                          <th>Diagnosis</th>
                           <th>Department</th>
-                          <th>Last Visit</th>
+                          <th>Consulting Doctor</th>
+                          <th>Date &amp; Time</th>
+                          <th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
                           <td>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                James Carter
-                              </Link>
-                            </h6>
+                            <Link
+                              href="#"
+                              className="link-muted"
+                              data-bs-toggle="modal"
+                              data-bs-target="#view_appointment_modal"
+                            >
+                              #PT0019
+                            </Link>
                           </td>
-                          <td>Male</td>
                           <td>
-                            <span className="badge badge-soft-info">
-                              Cardiology
+                            <div className="d-flex align-items-center">
+                              <Link
+                                href={all_routes.patientDetails}
+                                className="avatar avatar-xs me-2"
+                              >
+                                <ImageWithBasePath
+                                  src="assets/img/profiles/avatar-05.jpg"
+                                  alt="patient"
+                                  className="rounded"
+                                />
+                              </Link>
+                              <div>
+                                <h6 className="fs-14 mb-0 fw-medium">
+                                  <Link href={all_routes.patientDetails}>
+                                    Jessica Anderson
+                                  </Link>
+                                </h6>
+                              </div>
+                            </div>
+                          </td>
+                          <td>Consultation</td>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <Link
+                                href={all_routes.doctorDetails}
+                                className="avatar avatar-xs me-2"
+                              >
+                                <ImageWithBasePath
+                                  src="assets/img/doctors/doctor-01.jpg"
+                                  alt="doctor"
+                                  className="rounded"
+                                />
+                              </Link>
+                              <div>
+                                <h6 className="fs-14 mb-0 fw-medium">
+                                  <Link href={all_routes.doctorDetails}>
+                                    Dr. Ethan Williams
+                                  </Link>
+                                </h6>
+                              </div>
+                            </div>
+                          </td>
+                          <td>30 May 2025, 08:30 AM to 09:30 AM</td>
+                          <td>
+                            <span className="badge badge-soft-warning">
+                              Scheduled
                             </span>
                           </td>
-                          <td>17 Jun 2025</td>
                         </tr>
                         <tr>
                           <td>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Emily Davis
-                              </Link>
-                            </h6>
+                            <Link
+                              href="#"
+                              className="link-muted"
+                              data-bs-toggle="modal"
+                              data-bs-target="#view_appointment_modal"
+                            >
+                              #PT0020
+                            </Link>
                           </td>
-                          <td>Female</td>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <Link
+                                href={all_routes.patientDetails}
+                                className="avatar avatar-xs me-2"
+                              >
+                                <ImageWithBasePath
+                                  src="assets/img/profiles/avatar-25.jpg"
+                                  alt="patient"
+                                  className="rounded"
+                                />
+                              </Link>
+                              <div>
+                                <h6 className="fs-14 mb-0 fw-medium">
+                                  <Link href={all_routes.patientDetails}>
+                                    Olivia Miller
+                                  </Link>
+                                </h6>
+                              </div>
+                            </div>
+                          </td>
+                          <td>Consultation</td>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <Link
+                                href={all_routes.doctorDetails}
+                                className="avatar avatar-xs me-2"
+                              >
+                                <ImageWithBasePath
+                                  src="assets/img/doctors/doctor-03.jpg"
+                                  alt="doctor"
+                                  className="rounded"
+                                />
+                              </Link>
+                              <div>
+                                <h6 className="fs-14 mb-0 fw-medium">
+                                  <Link href={all_routes.doctorDetails}>
+                                    Dr. Laura Mitchell
+                                  </Link>
+                                </h6>
+                              </div>
+                            </div>
+                          </td>
+                          <td>15 May 2025, 11:30 AM to 12:30 PM</td>
                           <td>
                             <span className="badge badge-soft-success">
-                              Urology
+                              Completed
                             </span>
                           </td>
-                          <td>10 Jun 2025</td>
                         </tr>
                         <tr>
                           <td>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Michael John
-                              </Link>
-                            </h6>
+                            <Link
+                              href="#"
+                              className="link-muted"
+                              data-bs-toggle="modal"
+                              data-bs-target="#view_appointment_modal"
+                            >
+                              #PT0021
+                            </Link>
                           </td>
-                          <td>Male</td>
                           <td>
-                            <span className="badge badge-soft-info">
-                              Radiology
+                            <div className="d-flex align-items-center">
+                              <Link
+                                href={all_routes.patientDetails}
+                                className="avatar avatar-xs me-2"
+                              >
+                                <ImageWithBasePath
+                                  src="assets/img/users/user-14.jpg"
+                                  alt="patient"
+                                  className="rounded"
+                                />
+                              </Link>
+                              <div>
+                                <h6 className="fs-14 mb-0 fw-medium">
+                                  <Link href={all_routes.patientDetails}>
+                                    David Smith
+                                  </Link>
+                                </h6>
+                              </div>
+                            </div>
+                          </td>
+                          <td>Consultation</td>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <Link
+                                href={all_routes.doctorDetails}
+                                className="avatar avatar-xs me-2"
+                              >
+                                <ImageWithBasePath
+                                  src="assets/img/doctors/doctor-15.jpg"
+                                  alt="doctor"
+                                  className="rounded"
+                                />
+                              </Link>
+                              <div>
+                                <h6 className="fs-14 mb-0 fw-medium">
+                                  <Link href={all_routes.doctorDetails}>
+                                    Dr. Christopher Lewis
+                                  </Link>
+                                </h6>
+                              </div>
+                            </div>
+                          </td>
+                          <td>30 Apr 2025, 12:20 PM to 01:20 PM</td>
+                          <td>
+                            <span className="badge badge-soft-success">
+                              Completed
                             </span>
                           </td>
-                          <td>22 May 2025</td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Olivia Miller
-                              </Link>
-                            </h6>
-                          </td>
-                          <td>Female</td>
-                          <td>
-                            <span className="badge badge-soft-purple">
-                              ENT Surgery
-                            </span>
-                          </td>
-                          <td>15 May 2025</td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                David Smith
-                              </Link>
-                            </h6>
-                          </td>
-                          <td>Male</td>
-                          <td>
-                            <span className="badge badge-soft-teal">
-                              Dermatology
-                            </span>
-                          </td>
-                          <td>30 Apr 2025</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
-                  {/* table start */}
                 </div>
               </div>
-              {/* card end */}
             </div>
             {/* col end */}
           </div>
           {/* row end */}
-
-          {/* card start */}
-          <div className="card shadow flex-fill w-100 mb-0">
-            <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-              <h5 className="mb-0">Latest Appointments</h5>
-              <Link
-                href={all_routes.appointments}
-                className="btn btn-sm btn-outline-light flex-shrink-0"
-              >
-                View All
-              </Link>
-            </div>
-            <div className="card-body">
-              {/* table start */}
-              <div className="table-responsive table-nowrap">
-                <table className="table border mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Patient ID</th>
-                      <th>Patient Name</th>
-                      <th>Session Type</th>
-                      <th>Doctor Name</th>
-                      <th>Date &amp; Time</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          className="link-muted"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_appointment_modal"
-                        >
-                          #PT0025
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/users/user-04.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                James Carter
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Visit</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-01.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Andrew Clark
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>17 Jun 2025, 09:00 AM to 10:00 AM</td>
-                      <td>
-                        <span className="badge badge-soft-purple">
-                          Inprogress
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          className="link-muted"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_appointment_modal"
-                        >
-                          #PT0024
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/users/user-34.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Emily Davis
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Consultation</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-07.jpg"
-                              alt="doctor"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Katherine Brooks
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>10 Jun 2025, 10:30 AM to 11:30 AM</td>
-                      <td>
-                        <span className="badge badge-soft-purple">
-                          Inprogress
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          className="link-muted"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_appointment_modal"
-                        >
-                          #PT0023
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/users/user-11.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Michael Johnson
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Visit</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-12.jpg"
-                              alt="doctor"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Benjamin Harris
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>22 May 2025, 01:15 PM to 02:15 PM</td>
-                      <td>
-                        <span className="badge badge-soft-success">
-                          Completed
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          className="link-muted"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_appointment_modal"
-                        >
-                          #PT0022
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/users/user-16.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Olivia Miller
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Consultation</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-03.jpg"
-                              alt="doctor"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Laura Mitchell
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>15 May 2025, 11:30 AM to 12:30 PM</td>
-                      <td>
-                        <span className="badge badge-soft-success">
-                          Completed
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          className="link-muted"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_appointment_modal"
-                        >
-                          #PT0021
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/users/user-14.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                David Smith
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Consultation</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-15.jpg"
-                              alt="doctor"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Christopher Lewis
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>30 Apr 2025, 12:20 PM to 01:20 PM</td>
-                      <td>
-                        <span className="badge badge-soft-success">
-                          Completed
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              {/* table end */}
-            </div>
-          </div>
-          {/* card end */}
         </div>
         {/* End Content */}
         {/* Start Footer */}
@@ -1483,8 +994,8 @@ const DashboardComponent = () => {
         {/* End Footer */}
       </div>
       {/* ========================
-			End Page Content
-		========================= */}
+                        End Page Content
+                ========================= */}
     </>
   );
 };
