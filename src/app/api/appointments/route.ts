@@ -192,6 +192,7 @@ export async function GET(req: NextRequest) {
       const page = parseInt(searchParams.get('page') || '1');
       const limit = parseInt(searchParams.get('limit') || '20');
       const search = searchParams.get('search') || '';
+      const sortBy = searchParams.get('sortBy') || 'newest';
       const patientId = searchParams.get('patient');
       const doctorId = searchParams.get('doctor');
       const branchId = searchParams.get('branch');
@@ -249,13 +250,22 @@ export async function GET(req: NextRequest) {
 
       const skip = (page - 1) * limit;
 
+      const sortOptions: any = {};
+      if (sortBy === 'oldest') {
+        sortOptions.appointmentDate = 1;
+        sortOptions.appointmentTime = 1;
+      } else {
+        sortOptions.appointmentDate = -1;
+        sortOptions.appointmentTime = -1;
+      }
+
       const [appointments, totalCount] = await Promise.all([
         Appointment.find(query)
           .populate('patientId', 'patientId firstName lastName phoneNumber email dateOfBirth gender')
           .populate('doctorId', 'firstName lastName email phoneNumber role')
           .populate('branchId', 'name address city state')
           .populate('createdBy', 'firstName lastName email')
-          .sort({ appointmentDate: -1, appointmentTime: -1 })
+          .sort(sortOptions)
           .skip(skip)
           .limit(limit)
           .lean(),

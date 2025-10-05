@@ -60,6 +60,7 @@ const AppointmentComponent = () => {
     hasPreviousPage: false,
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
@@ -71,6 +72,7 @@ const AppointmentComponent = () => {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: "20",
+        sortBy: sortBy,
         ...(searchTerm && { search: searchTerm }),
       });
 
@@ -87,7 +89,7 @@ const AppointmentComponent = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, sortBy]);
 
   useEffect(() => {
     fetchAppointments();
@@ -295,16 +297,32 @@ const AppointmentComponent = () => {
                     aria-expanded="false"
                   >
                     <i className="ti ti-sort-descending-2 me-1" />
-                    <span className="me-1">Sort By : </span> Newest
+                    <span className="me-1">Sort By : </span> {sortBy === 'newest' ? 'Newest' : 'Oldest'}
                   </Link>
                   <ul className="dropdown-menu  dropdown-menu-end p-2">
                     <li>
-                      <Link href="#" className="dropdown-item rounded-1">
+                      <Link 
+                        href="#" 
+                        className={`dropdown-item rounded-1 ${sortBy === 'newest' ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSortBy('newest');
+                          setCurrentPage(1);
+                        }}
+                      >
                         Newest
                       </Link>
                     </li>
                     <li>
-                      <Link href="#" className="dropdown-item rounded-1">
+                      <Link 
+                        href="#" 
+                        className={`dropdown-item rounded-1 ${sortBy === 'oldest' ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSortBy('oldest');
+                          setCurrentPage(1);
+                        }}
+                      >
                         Oldest
                       </Link>
                     </li>
