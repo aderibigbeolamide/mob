@@ -10,7 +10,9 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ['mongoose', 'bcryptjs'],
   productionBrowserSourceMaps: false,
-  allowedDevOrigins: process.env.NODE_ENV === 'development' ? ['*'] : undefined,
+  devIndicators: {
+    buildActivityPosition: 'bottom-right',
+  },
   experimental: {
     serverActions: {
       allowedOrigins: process.env.NODE_ENV === 'development' ? ['*'] : [],

@@ -121,6 +121,7 @@ const LoginComponent = () => {
                                 onChange={handleInputChange}
                                 className="form-control pass-input"
                                 placeholder=""
+                                autoComplete="current-password"
                                 required
                               />
                               <span
