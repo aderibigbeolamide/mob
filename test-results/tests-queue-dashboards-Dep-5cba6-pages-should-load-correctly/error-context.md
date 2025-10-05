@@ -1,0 +1,168 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - region "Notifications Alt+T":
+    - alert [ref=e3] [cursor=pointer]:
+      - img [ref=e5] [cursor=pointer]
+      - text: Failed to fetch queue
+      - button "close" [ref=e7] [cursor=pointer]:
+        - img [ref=e8] [cursor=pointer]
+      - progressbar "notification timer" [ref=e12] [cursor=pointer]
+  - generic [ref=e14]:
+    - banner [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - text: 﫻 
+          - generic [ref=e19]:
+            - textbox "Search" [ref=e20]
+            - generic:
+              - generic: 
+        - generic [ref=e21]:
+          - text: 
+          - link "Toggle fullscreen" [ref=e24] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e25] [cursor=pointer]: 
+          - 'button "Current language: English" [ref=e28] [cursor=pointer]':
+            - img "English" [ref=e29] [cursor=pointer]
+          - generic [ref=e31]:
+            - button "Notifications" [ref=e32] [cursor=pointer]:
+              - generic [ref=e33] [cursor=pointer]: 
+            - text:        
+          - generic [ref=e35]:
+            - text: 
+            - button "Switch to dark mode" [ref=e36] [cursor=pointer]:
+              - generic [ref=e37] [cursor=pointer]: 
+          - generic [ref=e38]:
+            - button "User menu" [ref=e39] [cursor=pointer]:
+              - img "User avatar" [ref=e40] [cursor=pointer]
+              - generic [ref=e42] [cursor=pointer]: 
+            - text:   欄  
+    - generic [ref=e43]:
+      - generic [ref=e44]:
+        - link "Life Point Medical Centre" [ref=e46] [cursor=pointer]:
+          - /url: /dashboard
+          - img "Life Point Medical Centre" [ref=e47] [cursor=pointer]
+        - button "" [ref=e48] [cursor=pointer]:
+          - generic [ref=e49] [cursor=pointer]: 
+        - text: 
+      - list [ref=e54]:
+        - listitem [ref=e55]:
+          - generic [ref=e56]: Main
+        - listitem [ref=e57]:
+          - link " Dashboard" [ref=e58] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e59] [cursor=pointer]: 
+            - generic [ref=e60] [cursor=pointer]: Dashboard
+        - listitem [ref=e61]:
+          - link " Applications " [ref=e62] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e63] [cursor=pointer]: 
+            - generic [ref=e64] [cursor=pointer]: Applications
+            - generic [ref=e65] [cursor=pointer]: 
+          - text:  
+        - listitem [ref=e66]:
+          - generic [ref=e67]: Healthcare
+        - listitem [ref=e68]:
+          - link " Patients" [ref=e69] [cursor=pointer]:
+            - /url: /patients
+            - generic [ref=e70] [cursor=pointer]: 
+            - generic [ref=e71] [cursor=pointer]: Patients
+        - listitem [ref=e72]:
+          - link " Doctors" [ref=e73] [cursor=pointer]:
+            - /url: /doctors
+            - generic [ref=e74] [cursor=pointer]: 
+            - generic [ref=e75] [cursor=pointer]: Doctors
+        - listitem [ref=e76]:
+          - link " Appointments" [ref=e77] [cursor=pointer]:
+            - /url: /appointments
+            - generic [ref=e78] [cursor=pointer]: 
+            - generic [ref=e79] [cursor=pointer]: Appointments
+        - listitem [ref=e80]:
+          - link " Visits" [ref=e81] [cursor=pointer]:
+            - /url: /visits
+            - generic [ref=e82] [cursor=pointer]: 
+            - generic [ref=e83] [cursor=pointer]: Visits
+        - listitem [ref=e84]:
+          - link " Laboratory " [ref=e85] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e86] [cursor=pointer]: 
+            - generic [ref=e87] [cursor=pointer]: Laboratory
+            - generic [ref=e88] [cursor=pointer]: 
+        - listitem [ref=e89]:
+          - link " Pharmacy" [ref=e90] [cursor=pointer]:
+            - /url: /pharmacy
+            - generic [ref=e91] [cursor=pointer]: 
+            - generic [ref=e92] [cursor=pointer]: Pharmacy
+        - listitem [ref=e93]:
+          - generic [ref=e94]: Manage
+        - listitem [ref=e95]:
+          - link "﨡 Staff" [ref=e96] [cursor=pointer]:
+            - /url: /staffs
+            - generic [ref=e97] [cursor=pointer]: 﨡
+            - generic [ref=e98] [cursor=pointer]: Staff
+        - listitem [ref=e99]:
+          - link " Accounting" [ref=e100] [cursor=pointer]:
+            - /url: /accounting
+            - generic [ref=e101] [cursor=pointer]: 
+            - generic [ref=e102] [cursor=pointer]: Accounting
+        - listitem [ref=e103]:
+          - link " Branch Management" [ref=e104] [cursor=pointer]:
+            - /url: /branch-management
+            - generic [ref=e105] [cursor=pointer]: 
+            - generic [ref=e106] [cursor=pointer]: Branch Management
+        - listitem [ref=e107]:
+          - link " Notifications" [ref=e108] [cursor=pointer]:
+            - /url: /notifications
+            - generic [ref=e109] [cursor=pointer]: 
+            - generic [ref=e110] [cursor=pointer]: Notifications
+        - listitem [ref=e111]:
+          - link " Settings" [ref=e112] [cursor=pointer]:
+            - /url: /general-settings
+            - generic [ref=e113] [cursor=pointer]: 
+            - generic [ref=e114] [cursor=pointer]: Settings
+    - generic [ref=e116]:
+      - generic [ref=e117]:
+        - generic [ref=e118]:
+          - heading "Nurse Queue" [level=4] [ref=e119]
+          - list [ref=e121]:
+            - listitem [ref=e122]:
+              - link "Home" [ref=e123] [cursor=pointer]:
+                - /url: /dashboard
+            - listitem [ref=e124]:
+              - text: 
+              - link "Visits" [ref=e125] [cursor=pointer]:
+                - /url: /visits
+            - listitem [ref=e126]:  Nurse Queue
+        - generic [ref=e127]:
+          - generic [ref=e129]:
+            - checkbox "Auto-refresh" [ref=e130]
+            - generic [ref=e131]: Auto-refresh
+          - button "Refresh" [ref=e132] [cursor=pointer]:
+            - generic [ref=e133] [cursor=pointer]: 
+      - generic [ref=e137]:
+        - heading "Patients in Queue 0" [level=5] [ref=e139]:
+          - text: Patients in Queue
+          - generic [ref=e140]: "0"
+        - generic [ref=e142]:
+          - textbox "Search by patient name, ID, visit number..." [ref=e143]
+          - button "" [ref=e144] [cursor=pointer]:
+            - generic [ref=e145] [cursor=pointer]: 
+      - generic [ref=e147]:
+        - table [ref=e150]:
+          - rowgroup [ref=e151]:
+            - row "Visit Number Patient Patient ID Current Stage Time Waiting Actions" [ref=e152]:
+              - cell "Visit Number" [ref=e153]
+              - cell "Patient" [ref=e154]
+              - cell "Patient ID" [ref=e155]
+              - cell "Current Stage" [ref=e156]
+              - cell "Time Waiting" [ref=e157]
+              - cell "Actions" [ref=e158]
+          - rowgroup [ref=e159]:
+            - row " No patients in queue" [ref=e160]:
+              - cell " No patients in queue" [ref=e161]:
+                - generic [ref=e162]: 
+                - paragraph [ref=e163]: No patients in queue
+        - text: 
+  - alert [ref=e164]
+```

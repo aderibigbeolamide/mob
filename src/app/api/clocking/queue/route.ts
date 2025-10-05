@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
       const userBranchId = session.user.branch?._id || session.user.branch;
       if (userRole !== UserRole.ADMIN && userBranchId) {
-        query.branch = userBranchId;
+        query.branchId = userBranchId;
       }
 
       if (search) {
@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
         PatientVisit.find(query)
           .populate('patient', 'patientId firstName lastName phoneNumber email dateOfBirth gender')
           .populate('appointment', 'appointmentNumber reasonForVisit')
-          .populate('branch', 'name address city state')
+          .populate('branchId', 'name address city state')
           .populate('stages.frontDesk.clockedInBy', 'firstName lastName email role')
           .populate('stages.nurse.clockedInBy', 'firstName lastName email role')
           .populate('stages.doctor.clockedInBy', 'firstName lastName email role')
