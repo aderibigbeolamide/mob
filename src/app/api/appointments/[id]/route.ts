@@ -278,8 +278,13 @@ export async function DELETE(
           );
         }
 
-        const body = await req.json();
-        const cancelReason = body.cancelReason || 'No reason provided';
+        let cancelReason = 'No reason provided';
+        try {
+          const body = await req.json();
+          cancelReason = body.cancelReason || 'No reason provided';
+        } catch (error) {
+          // No body provided, use default cancel reason
+        }
 
         const updatedAppointment = await Appointment.findByIdAndUpdate(
           id,
