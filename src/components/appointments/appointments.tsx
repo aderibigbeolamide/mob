@@ -93,6 +93,17 @@ const AppointmentComponent = () => {
     fetchAppointments();
   }, [fetchAppointments]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).bootstrap && appointments.length > 0) {
+      const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+      dropdownElementList.forEach((dropdownToggleEl) => {
+        if (!(window as any).bootstrap.Dropdown.getInstance(dropdownToggleEl)) {
+          new (window as any).bootstrap.Dropdown(dropdownToggleEl);
+        }
+      });
+    }
+  }, [appointments]);
+
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setCurrentPage(1);
@@ -406,7 +417,7 @@ const AppointmentComponent = () => {
                             <div className="dropdown">
                               <Link
                                 href="#"
-                                className="btn btn-icon btn-outline-light"
+                                className="btn btn-icon btn-outline-light border-0"
                                 data-bs-toggle="dropdown"
                                 aria-label="Appointment actions menu"
                               >
