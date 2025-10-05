@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient } from '@/lib/services/api-client';
 import { PatientVisit, PaginationInfo } from '@/types/emr';
 
@@ -28,8 +28,19 @@ export function useQueue() {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
+  const [countdown, setCountdown] = useState(30);
+  
+  const autoRefreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isFetchingRef = useRef(false);
 
   const fetchQueue = useCallback(async () => {
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -57,6 +68,7 @@ export function useQueue() {
       setQueue([]);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, [currentPage, searchTerm]);
 
@@ -81,6 +93,53 @@ export function useQueue() {
     }));
   };
 
+  const toggleAutoRefresh = () => {
+    setAutoRefreshEnabled(prev => {
+      const newValue = !prev;
+      if (newValue) {
+        fetchQueue();
+      }
+      return newValue;
+    });
+    setCountdown(30);
+  };
+
+  useEffect(() => {
+    if (autoRefreshEnabled && !searchTerm) {
+      setCountdown(30);
+      
+      countdownIntervalRef.current = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            return 30;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      autoRefreshIntervalRef.current = setInterval(() => {
+        fetchQueue();
+      }, 30000);
+
+      return () => {
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+        }
+        if (autoRefreshIntervalRef.current) {
+          clearInterval(autoRefreshIntervalRef.current);
+        }
+      };
+    } else {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+      if (autoRefreshIntervalRef.current) {
+        clearInterval(autoRefreshIntervalRef.current);
+      }
+      setCountdown(30);
+    }
+  }, [autoRefreshEnabled, searchTerm, fetchQueue]);
+
   return {
     queue,
     loading,
@@ -91,5 +150,8 @@ export function useQueue() {
     handleSearch,
     handlePageChange,
     removeFromQueue,
+    autoRefreshEnabled,
+    countdown,
+    toggleAutoRefresh,
   };
 }

@@ -27,6 +27,9 @@ export default function QueuePage({ requiredRole, pageTitle, stageName }: QueueP
     handleSearch,
     handlePageChange,
     removeFromQueue,
+    autoRefreshEnabled,
+    countdown,
+    toggleAutoRefresh,
   } = useQueue();
 
   useEffect(() => {
@@ -170,6 +173,31 @@ export default function QueuePage({ requiredRole, pageTitle, stageName }: QueueP
             </div>
           </div>
           <div className="gap-2 d-flex align-items-center flex-wrap">
+            <div className="d-flex align-items-center gap-2 me-2">
+              <div className="form-check form-switch">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="autoRefreshToggle"
+                  checked={autoRefreshEnabled}
+                  onChange={toggleAutoRefresh}
+                  disabled={!!searchTerm}
+                />
+                <label className="form-check-label" htmlFor="autoRefreshToggle">
+                  Auto-refresh
+                </label>
+              </div>
+              {autoRefreshEnabled && !searchTerm && (
+                <span className="badge bg-success">
+                  ON (refreshing in {countdown}s)
+                </span>
+              )}
+              {searchTerm && (
+                <span className="badge bg-warning text-dark">
+                  Disabled while searching
+                </span>
+              )}
+            </div>
             <button
               onClick={fetchQueue}
               className="btn btn-icon btn-white"
