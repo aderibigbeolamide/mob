@@ -4,8 +4,9 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PatientDetailsHeader from "./PatientDetailsHeader";
 import { all_routes } from "@/router/all_routes";
-import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import { visitService } from "@/lib/services/visitService";
+import { IPatientVisit } from "@/models/PatientVisit";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 
@@ -13,7 +14,7 @@ const PatientDetailsVisitHistoryComponent = () => {
   const searchParams = useSearchParams();
   const patientId = searchParams.get("id");
 
-  const [visits, setVisits] = useState<any[]>([]);
+  const [visits, setVisits] = useState<IPatientVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -30,21 +31,19 @@ const PatientDetailsVisitHistoryComponent = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(
-        `/api/visits?patient=${patientId}&page=${currentPage}&limit=${limit}`
-      );
+      const response = await visitService.getAll({
+        patient: patientId,
+        page: currentPage,
+        limit: limit,
+      });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch visits");
-      }
-
-      const data = await response.json();
-      setVisits(data.visits || []);
-      setTotalPages(data.pagination?.totalPages || 1);
-      setTotalCount(data.pagination?.totalCount || 0);
-    } catch (error: any) {
+      setVisits(response.visits || []);
+      setTotalPages(response.pagination?.totalPages || 1);
+      setTotalCount(response.pagination?.totalCount || 0);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch visits";
       console.error("Error fetching visits:", error);
-      toast.error(error.message || "Failed to fetch visits");
+      toast.error(errorMessage);
       setVisits([]);
     } finally {
       setLoading(false);
@@ -86,6 +85,31 @@ const PatientDetailsVisitHistoryComponent = () => {
 
   const getStatusLabel = (status: string) => {
     return status.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+  };
+
+  const getStageBadgeClass = (stage: string) => {
+    switch (stage) {
+      case "front_desk":
+        return "badge badge-soft-primary";
+      case "nurse":
+        return "badge badge-soft-info";
+      case "doctor":
+        return "badge badge-soft-warning";
+      case "lab":
+        return "badge badge-soft-purple";
+      case "pharmacy":
+        return "badge badge-soft-teal";
+      case "billing":
+        return "badge badge-soft-danger";
+      case "completed":
+        return "badge badge-soft-success";
+      default:
+        return "badge badge-soft-secondary";
+    }
+  };
+
+  const getStageLabel = (stage: string) => {
+    return stage.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
   };
 
   const renderPagination = () => {
@@ -286,61 +310,61 @@ const PatientDetailsVisitHistoryComponent = () => {
                       <thead className="table-light">
                         <tr>
                           <th>Visit Number</th>
-                          <th>Date</th>
-                          <th>Doctor</th>
+                          <th>Visit Date</th>
                           <th>Current Stage</th>
                           <th>Status</th>
-                          <th>Notes</th>
+                          <th className="no-sort" />
                         </tr>
                       </thead>
                       <tbody>
                         {visits.map((visit) => (
-                          <tr key={visit._id}>
+                          <tr key={visit._id?.toString()}>
                             <td>
-                              <Link href="#" className="text-primary">
-                                {visit.visitNumber || "N/A"}
+                              <Link
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  toast.info("View visit details will be implemented soon");
+                                }}
+                              >
+                                {visit.visitNumber}
                               </Link>
                             </td>
-                            <td>{formatDate(visit.visitDate)}</td>
+                            <td>{formatDateTime(visit.visitDate)}</td>
                             <td>
-                              <div className="d-flex align-items-center">
-                                {visit.doctor && (
-                                  <>
-                                    <div className="avatar avatar-xs me-2">
-                                      <ImageWithBasePath
-                                        src={
-                                          visit.doctor.profileImage ||
-                                          "assets/img/doctors/doctor-01.jpg"
-                                        }
-                                        alt="doctor"
-                                        className="rounded"
-                                      />
-                                    </div>
-                                    <div>
-                                      <h6 className="fs-14 mb-0 fw-medium">
-                                        Dr. {visit.doctor.firstName}{" "}
-                                        {visit.doctor.lastName}
-                                      </h6>
-                                    </div>
-                                  </>
-                                )}
-                                {!visit.doctor && <span>N/A</span>}
-                              </div>
-                            </td>
-                            <td>
-                              {visit.currentStage
-                                ? getStatusLabel(visit.currentStage)
-                                : "N/A"}
+                              <span className={getStageBadgeClass(visit.currentStage)}>
+                                {getStageLabel(visit.currentStage)}
+                              </span>
                             </td>
                             <td>
                               <span className={getStatusBadgeClass(visit.status)}>
                                 {getStatusLabel(visit.status)}
                               </span>
                             </td>
-                            <td>
-                              {visit.stages?.doctor?.notes ||
-                                visit.stages?.nurse?.notes ||
-                                "N/A"}
+                            <td className="text-end">
+                              <Link
+                                href="#"
+                                className="btn btn-icon btn-outline-light"
+                                data-bs-toggle="dropdown"
+                                aria-label="Visit actions menu"
+                              >
+                                <i className="ti ti-dots-vertical" aria-hidden="true" />
+                              </Link>
+                              <ul className="dropdown-menu dropdown-menu-end p-2">
+                                <li>
+                                  <Link
+                                    href="#"
+                                    className="dropdown-item d-flex align-items-center"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      toast.info("View visit details will be implemented soon");
+                                    }}
+                                  >
+                                    <i className="ti ti-eye me-1" />
+                                    View Details
+                                  </Link>
+                                </li>
+                              </ul>
                             </td>
                           </tr>
                         ))}

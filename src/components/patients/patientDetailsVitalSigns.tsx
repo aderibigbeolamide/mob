@@ -5,16 +5,22 @@ import Link from "next/link";
 import PatientDetailsHeader from "./PatientDetailsHeader";
 import { all_routes } from "@/router/all_routes";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import { vitalSignService, VitalSignRecord } from "@/lib/services/vitalSignService";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import VitalSignsModal from "./modals/vitalSignsModal";
 
 const PatientDetailsVitalSignsComponent = () => {
   const searchParams = useSearchParams();
   const patientId = searchParams.get("id");
 
-  const [visits, setVisits] = useState<any[]>([]);
+  const [vitalSigns, setVitalSigns] = useState<VitalSignRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+
+  const [showModal, setShowModal] = useState(false);
+  const [selectedVisit, setSelectedVisit] = useState<any | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const fetchVitalSigns = async () => {
     if (!patientId) {
@@ -25,21 +31,21 @@ const PatientDetailsVitalSignsComponent = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/visits?patient=${patientId}&limit=100`);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch vital signs");
+      const response = await vitalSignService.getByPatient(patientId);
+      
+      let sortedSigns = [...response.vitalSigns];
+      if (sortOrder === "newest") {
+        sortedSigns.sort((a, b) => new Date(b.visitDate).getTime() - new Date(a.visitDate).getTime());
+      } else {
+        sortedSigns.sort((a, b) => new Date(a.visitDate).getTime() - new Date(b.visitDate).getTime());
       }
-
-      const data = await response.json();
-      const visitsWithVitalSigns = (data.visits || []).filter(
-        (visit: any) => visit.stages?.nurse?.vitalSigns
-      );
-      setVisits(visitsWithVitalSigns);
-    } catch (error: any) {
+      
+      setVitalSigns(sortedSigns);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch vital signs";
       console.error("Error fetching vital signs:", error);
-      toast.error(error.message || "Failed to fetch vital signs");
-      setVisits([]);
+      toast.error(errorMessage);
+      setVitalSigns([]);
     } finally {
       setLoading(false);
     }
@@ -62,6 +68,18 @@ const PatientDetailsVitalSignsComponent = () => {
     const heightInMeters = height / 100;
     const bmi = weight / (heightInMeters * heightInMeters);
     return bmi.toFixed(1);
+  };
+
+  const handleRecordVitalSigns = () => {
+    setSelectedVisit(null);
+    setIsEditing(false);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedVisit(null);
+    setIsEditing(false);
   };
 
   return (
@@ -95,9 +113,9 @@ const PatientDetailsVitalSignsComponent = () => {
             <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
               <h5 className="d-inline-flex align-items-center mb-0">
                 Vital Signs
-                <span className="badge bg-danger ms-2">{visits.length}</span>
+                <span className="badge bg-danger ms-2">{vitalSigns.length}</span>
               </h5>
-              <div className="d-flex align-items-center flex-wrap">
+              <div className="d-flex align-items-center flex-wrap gap-2">
                 <div className="dropdown">
                   <Link
                     href="#"
@@ -138,6 +156,13 @@ const PatientDetailsVitalSignsComponent = () => {
                     </li>
                   </ul>
                 </div>
+                <button
+                  className="btn btn-md btn-primary d-inline-flex align-items-center"
+                  onClick={handleRecordVitalSigns}
+                >
+                  <i className="ti ti-plus me-1" />
+                  Record Vital Signs
+                </button>
               </div>
             </div>
 
@@ -149,7 +174,7 @@ const PatientDetailsVitalSignsComponent = () => {
                   </div>
                   <p className="mt-2 text-muted">Loading vital signs...</p>
                 </div>
-              ) : visits.length === 0 ? (
+              ) : vitalSigns.length === 0 ? (
                 <div className="text-center py-5">
                   <div className="mb-3">
                     <i
@@ -158,9 +183,16 @@ const PatientDetailsVitalSignsComponent = () => {
                     />
                   </div>
                   <h5 className="text-muted">No Vital Signs Found</h5>
-                  <p className="text-muted mb-0">
+                  <p className="text-muted mb-3">
                     No vital signs have been recorded for this patient yet.
                   </p>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleRecordVitalSigns}
+                  >
+                    <i className="ti ti-plus me-1" />
+                    Record First Vital Signs
+                  </button>
                 </div>
               ) : (
                 <div className="table-responsive table-nowrap">
@@ -168,6 +200,7 @@ const PatientDetailsVitalSignsComponent = () => {
                     <thead className="table-light">
                       <tr>
                         <th>Date</th>
+                        <th>Visit #</th>
                         <th>Blood Pressure</th>
                         <th>Temperature (°C)</th>
                         <th>Pulse (bpm)</th>
@@ -178,32 +211,42 @@ const PatientDetailsVitalSignsComponent = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {visits.map((visit) => {
-                        const vitalSigns = visit.stages?.nurse?.vitalSigns || {};
-                        const bmi = calculateBMI(vitalSigns.weight, vitalSigns.height);
+                      {vitalSigns.map((record) => {
+                        const vs = record.vitalSigns || {};
+                        const bmi = record.vitalSigns?.bmi 
+                          ? record.vitalSigns.bmi.toFixed(1)
+                          : calculateBMI(vs.weight, vs.height);
                         
                         return (
-                          <tr key={visit._id}>
-                            <td>{formatDate(visit.visitDate)}</td>
-                            <td>{vitalSigns.bloodPressure || "N/A"}</td>
+                          <tr key={record.visitId}>
+                            <td>{formatDate(record.visitDate)}</td>
                             <td>
-                              {vitalSigns.temperature
-                                ? `${vitalSigns.temperature}°C`
+                              <Link
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  toast.info("View visit details will be implemented soon");
+                                }}
+                              >
+                                {record.visitNumber}
+                              </Link>
+                            </td>
+                            <td>{vs.bloodPressure || "N/A"}</td>
+                            <td>
+                              {vs.temperature
+                                ? `${vs.temperature}°C`
                                 : "N/A"}
                             </td>
-                            <td>{vitalSigns.pulse || "N/A"}</td>
+                            <td>{vs.pulse || "N/A"}</td>
                             <td>
-                              {vitalSigns.weight ? `${vitalSigns.weight} kg` : "N/A"}
+                              {vs.weight ? `${vs.weight} kg` : "N/A"}
                             </td>
                             <td>
-                              {vitalSigns.height ? `${vitalSigns.height} cm` : "N/A"}
+                              {vs.height ? `${vs.height} cm` : "N/A"}
                             </td>
                             <td>{bmi}</td>
                             <td>
-                              {visit.stages?.nurse?.recordedBy?.firstName &&
-                              visit.stages?.nurse?.recordedBy?.lastName
-                                ? `${visit.stages.nurse.recordedBy.firstName} ${visit.stages.nurse.recordedBy.lastName}`
-                                : "N/A"}
+                              {record.recordedBy?.name || "N/A"}
                             </td>
                           </tr>
                         );
@@ -217,6 +260,17 @@ const PatientDetailsVitalSignsComponent = () => {
         </div>
       </div>
       <CommonFooter />
+      
+      {showModal && (
+        <VitalSignsModal
+          patientId={patientId}
+          selectedVisit={selectedVisit}
+          isEditing={isEditing}
+          onVitalSignsCreated={fetchVitalSigns}
+          onVitalSignsUpdated={fetchVitalSigns}
+          onClose={handleCloseModal}
+        />
+      )}
     </>
   );
 };
