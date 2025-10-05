@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import crypto from 'crypto';
 
 export enum InvoiceStatus {
   PENDING = 'PENDING',
@@ -85,7 +86,9 @@ const InvoiceSchema = new Schema<IInvoice>({
   },
   encounterId: { 
     type: Schema.Types.ObjectId, 
-    ref: 'Encounter'
+    ref: 'Encounter',
+    unique: true,
+    sparse: true
   },
   branchId: { 
     type: Schema.Types.ObjectId, 
@@ -152,9 +155,9 @@ const InvoiceSchema = new Schema<IInvoice>({
 
 InvoiceSchema.pre('save', async function(next) {
   if (!this.invoiceNumber) {
-    const count = await mongoose.model('Invoice').countDocuments();
-    const timestamp = Date.now().toString().slice(-6);
-    this.invoiceNumber = `INV-${timestamp}-${(count + 1).toString().padStart(4, '0')}`;
+    const timestamp = Date.now().toString();
+    const randomSuffix = crypto.randomBytes(4).toString('hex').toUpperCase();
+    this.invoiceNumber = `INV-${timestamp}-${randomSuffix}`;
   }
   
   this.balance = this.grandTotal - this.paidAmount;
@@ -172,5 +175,6 @@ InvoiceSchema.index({ patientId: 1 });
 InvoiceSchema.index({ branchId: 1 });
 InvoiceSchema.index({ status: 1 });
 InvoiceSchema.index({ createdAt: -1 });
+InvoiceSchema.index({ encounterId: 1 }, { unique: true, sparse: true });
 
 export default mongoose.models.Invoice || mongoose.model<IInvoice>('Invoice', InvoiceSchema);

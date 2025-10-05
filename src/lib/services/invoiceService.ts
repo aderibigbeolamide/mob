@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 import Invoice, { InvoiceStatus, IInvoiceItem } from '@/models/Invoice';
 import PatientVisit from '@/models/PatientVisit';
 import Prescription from '@/models/Prescription';
@@ -103,7 +104,12 @@ export async function generateInvoiceFromVisit(
     };
   }
 
+  const timestamp = Date.now().toString();
+  const randomSuffix = crypto.randomBytes(4).toString('hex').toUpperCase();
+  const invoiceNumber = `INV-${timestamp}-${randomSuffix}`;
+
   const invoiceData = {
+    invoiceNumber,
     patientId: visit.patient,
     encounterId: visitId,
     branchId: visit.branchId,
@@ -119,7 +125,15 @@ export async function generateInvoiceFromVisit(
     generatedBy: new mongoose.Types.ObjectId(generatedBy)
   };
 
-  const invoice = await Invoice.create(invoiceData);
+  const invoice = await Invoice.findOneAndUpdate(
+    { encounterId: visitId },
+    { $setOnInsert: invoiceData },
+    { 
+      upsert: true, 
+      new: true,
+      setDefaultsOnInsert: true
+    }
+  );
 
   const populatedInvoice = await Invoice.findById(invoice._id)
     .populate('patientId', 'patientId firstName lastName phoneNumber email insurance')
