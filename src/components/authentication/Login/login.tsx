@@ -12,7 +12,7 @@ type PasswordField = "password" | "confirmPassword";
 const LoginComponent = () => {
   const navigate = useRouter();
   const [formData, setFormData] = useState({
-    email: "admin@dreamsemr.com",
+    email: "admin@lifepointmedical.com",
     password: "admin123"
   });
   const [passwordVisibility, setPasswordVisibility] = useState({
@@ -39,7 +39,7 @@ const LoginComponent = () => {
     e.preventDefault();
     
     // Fake authentication - check if credentials match
-    if (formData.email === "admin@dreamsemr.com" && formData.password === "admin123") {
+    if (formData.email === "admin@lifepointmedical.com" && formData.password === "admin123") {
       // Simulate loading state
       if (typeof window !== "undefined") {
         const loginButton = document.querySelector('.btn-login') as HTMLButtonElement;
@@ -59,7 +59,7 @@ const LoginComponent = () => {
         navigate.push(all_routes.dashboard);
       }, 1500);
     } else {
-      alert('Invalid credentials. Please use admin@dreamsemr.com / admin123');
+      alert('Invalid credentials. Please use admin@lifepointmedical.com / admin123');
     }
   };
   return (
