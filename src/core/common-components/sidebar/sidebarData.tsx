@@ -234,6 +234,14 @@ export const SidebarData = [
         roles: ["ADMIN", "ACCOUNTING", "BILLING"],
       },
       {
+        label: "Billing Department",
+        link: route.billingDepartment,
+        submenu: false,
+        icon: "file-invoice",
+        submenuItems: [],
+        roles: ["ADMIN", "ACCOUNTING", "BILLING"],
+      },
+      {
         label: "Branch Management",
         link: route.branchManagement,
         submenu: false,

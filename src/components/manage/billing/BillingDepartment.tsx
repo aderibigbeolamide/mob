@@ -7,17 +7,18 @@ import { apiClient } from "@/lib/services/api-client";
 import { toast } from "react-toastify";
 import { Suspense, lazy } from "react";
 
-const InvoiceModal = lazy(() => import("./InvoiceModal"));
-const InvoiceViewModal = lazy(() => import("./InvoiceViewModal"));
+const BillingModal = lazy(() => import("./BillingModal"));
+const BillingViewModal = lazy(() => import("./BillingViewModal"));
 
-interface InvoiceItem {
+interface BillingItem {
   description: string;
   quantity: number;
   unitPrice: number;
   total: number;
+  category: 'consultation' | 'procedure' | 'medication' | 'lab_test' | 'other';
 }
 
-interface Invoice {
+interface BillingRecord {
   _id: string;
   invoiceNumber: string;
   patient: {
@@ -27,6 +28,10 @@ interface Invoice {
     lastName: string;
     phoneNumber: string;
     email?: string;
+    insurance?: {
+      provider: string;
+      policyNumber: string;
+    };
   };
   branch: {
     _id: string;
@@ -34,24 +39,25 @@ interface Invoice {
     address: string;
     city: string;
     state: string;
-    code?: string;
   };
-  encounterId?: string;
-  items: InvoiceItem[];
+  items: BillingItem[];
   subtotal: number;
   tax: number;
   discount: number;
-  grandTotal: number;
-  paidAmount: number;
+  totalAmount: number;
+  amountPaid: number;
   balance: number;
-  status: 'pending' | 'partially_paid' | 'paid' | 'cancelled' | 'overdue';
-  paymentMethod?: string;
+  status: 'pending' | 'partially_paid' | 'paid' | 'cancelled';
+  paymentStatus: 'unpaid' | 'partially_paid' | 'paid';
   insurance?: {
     provider: string;
-    claimNumber: string;
+    policyNumber: string;
     claimAmount: number;
+    claimStatus: 'pending' | 'approved' | 'rejected';
+    approvalNumber?: string;
   };
   dueDate: Date;
+  notes?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -65,9 +71,9 @@ interface PaginationInfo {
   hasPreviousPage: boolean;
 }
 
-const ManageInvoices = () => {
+const BillingDepartmentComponent = () => {
   const { data: session } = useSession();
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [billingRecords, setBillingRecords] = useState<BillingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -79,14 +85,14 @@ const ManageInvoices = () => {
     hasNextPage: false,
     hasPreviousPage: false,
   });
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<BillingRecord | null>(null);
   const [modalType, setModalType] = useState<"add" | "edit" | "view" | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const userRole = session?.user?.role as string;
   const hasAccess = ["ADMIN", "ACCOUNTING", "BILLING"].includes(userRole);
 
-  const fetchInvoices = async () => {
+  const fetchBillingRecords = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -96,16 +102,16 @@ const ManageInvoices = () => {
         ...(filterStatus !== "all" && { status: filterStatus }),
       });
 
-      const response = await apiClient.get<{ invoices: Invoice[]; pagination: PaginationInfo }>(
-        `/api/billing/invoices?${params.toString()}`,
+      const response = await apiClient.get<{ billingRecords: BillingRecord[]; pagination: PaginationInfo }>(
+        `/api/billing/records?${params.toString()}`,
         { showErrorToast: true }
       );
 
-      setInvoices(response.invoices || []);
+      setBillingRecords(response.billingRecords || []);
       setPagination(response.pagination);
     } catch (error) {
-      console.error("Failed to fetch invoices:", error);
-      setInvoices([]);
+      console.error("Failed to fetch billing records:", error);
+      setBillingRecords([]);
     } finally {
       setLoading(false);
     }
@@ -117,7 +123,7 @@ const ManageInvoices = () => {
 
   useEffect(() => {
     if (hasAccess) {
-      fetchInvoices();
+      fetchBillingRecords();
     }
   }, [pagination.currentPage, filterStatus, searchTerm]);
 
@@ -126,34 +132,34 @@ const ManageInvoices = () => {
   };
 
   const handleRefresh = () => {
-    fetchInvoices();
+    fetchBillingRecords();
   };
 
-  const openModal = (type: "add" | "edit" | "view", invoice?: Invoice) => {
+  const openModal = (type: "add" | "edit" | "view", record?: BillingRecord) => {
     setModalType(type);
-    setSelectedInvoice(invoice || null);
+    setSelectedRecord(record || null);
   };
 
   const closeModal = () => {
     setModalType(null);
-    setSelectedInvoice(null);
+    setSelectedRecord(null);
   };
 
   const handleSuccess = () => {
     closeModal();
-    fetchInvoices();
+    fetchBillingRecords();
   };
 
   const handleDelete = async (id: string) => {
     if (deleteConfirmId === id) {
       try {
-        await apiClient.delete(`/api/billing/invoices/${id}`, {
-          successMessage: "Invoice deleted successfully",
+        await apiClient.delete(`/api/billing/records/${id}`, {
+          successMessage: "Billing record deleted successfully",
         });
-        fetchInvoices();
+        fetchBillingRecords();
         setDeleteConfirmId(null);
       } catch (error) {
-        console.error("Failed to delete invoice:", error);
+        console.error("Failed to delete billing record:", error);
       }
     } else {
       setDeleteConfirmId(id);
@@ -180,14 +186,12 @@ const ManageInvoices = () => {
     switch (status.toLowerCase()) {
       case 'paid':
         return 'badge-soft-success';
-      case 'sent':
+      case 'pending':
+        return 'badge-soft-warning';
+      case 'partially_paid':
         return 'badge-soft-info';
-      case 'draft':
-        return 'badge-soft-secondary';
-      case 'overdue':
-        return 'badge-soft-danger';
       case 'cancelled':
-        return 'badge-soft-dark';
+        return 'badge-soft-danger';
       default:
         return 'badge-soft-secondary';
     }
@@ -195,14 +199,12 @@ const ManageInvoices = () => {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
+      case 'partially_paid':
+        return 'Partially Paid';
       case 'paid':
         return 'Paid';
-      case 'sent':
-        return 'Sent';
-      case 'draft':
-        return 'Draft';
-      case 'overdue':
-        return 'Overdue';
+      case 'pending':
+        return 'Pending';
       case 'cancelled':
         return 'Cancelled';
       default:
@@ -211,12 +213,13 @@ const ManageInvoices = () => {
   };
 
   const calculateStats = () => {
-    const totalAmount = invoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
-    const paidAmount = invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.grandTotal, 0);
-    const pendingAmount = invoices.filter(i => i.status === 'pending').reduce((sum, i) => sum + i.balance, 0);
-    const overdueAmount = invoices.filter(i => i.status === 'overdue').reduce((sum, i) => sum + i.balance, 0);
+    const totalRevenue = billingRecords.reduce((sum, record) => sum + record.totalAmount, 0);
+    const pendingAmount = billingRecords.filter(r => r.status === 'pending').reduce((sum, r) => sum + r.balance, 0);
+    const paidAmount = billingRecords.filter(r => r.status === 'paid').reduce((sum, r) => sum + r.totalAmount, 0);
+    const pendingCount = billingRecords.filter(r => r.status === 'pending').length;
+    const paidCount = billingRecords.filter(r => r.status === 'paid').length;
 
-    return { totalAmount, paidAmount, pendingAmount, overdueAmount };
+    return { totalRevenue, pendingAmount, paidAmount, pendingCount, paidCount };
   };
 
   const stats = calculateStats();
@@ -240,13 +243,14 @@ const ManageInvoices = () => {
         <div className="content">
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
             <div className="breadcrumb-arrow">
-              <h4 className="mb-1">Invoices</h4>
+              <h4 className="mb-1">Billing Department</h4>
               <div className="text-end">
                 <ol className="breadcrumb m-0 py-0">
                   <li className="breadcrumb-item">
                     <Link href={all_routes.dashboard}>Home</Link>
                   </li>
-                  <li className="breadcrumb-item active">Invoices</li>
+                  <li className="breadcrumb-item">Manage</li>
+                  <li className="breadcrumb-item active">Billing Department</li>
                 </ol>
               </div>
             </div>
@@ -262,9 +266,6 @@ const ManageInvoices = () => {
                 <i className={`ti ti-refresh ${loading ? 'spin' : ''}`} />
               </button>
               <button className="btn btn-icon btn-white">
-                <i className="ti ti-printer" />
-              </button>
-              <button className="btn btn-icon btn-white">
                 <i className="ti ti-download" />
               </button>
               <button
@@ -272,88 +273,53 @@ const ManageInvoices = () => {
                 className="btn btn-primary"
               >
                 <i className="ti ti-square-rounded-plus me-1" />
-                New Invoice
+                New Billing Record
               </button>
             </div>
           </div>
 
           <div className="row mb-4">
-            <div className="col-xl-3 col-md-6 col-12 mb-3 mb-xl-0">
+            <div className="col-lg-4 col-md-6 col-12 mb-3 mb-lg-0">
               <div className="card">
                 <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
+                  <div className="d-flex align-items-center justify-content-between">
                     <div>
-                      <p className="mb-1 text-muted">Total Invoices</p>
-                      <h4 className="mb-0">{formatCurrency(stats.totalAmount)}</h4>
-                    </div>
-                    <span className="avatar rounded-circle bg-soft-primary text-primary">
-                      <i className="ti ti-file-invoice fs-24" />
-                    </span>
-                  </div>
-                  <div>
-                    <p className="d-flex align-items-center fs-13 mb-0 text-muted">
-                      {pagination.totalCount} invoices
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-3 col-md-6 col-12 mb-3 mb-xl-0">
-              <div className="card">
-                <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
-                    <div>
-                      <p className="mb-1 text-muted">Paid</p>
-                      <h4 className="mb-0">{formatCurrency(stats.paidAmount)}</h4>
+                      <p className="mb-1 text-muted">Total Revenue</p>
+                      <h4 className="mb-0">{formatCurrency(stats.totalRevenue)}</h4>
                     </div>
                     <span className="avatar rounded-circle bg-soft-success text-success">
-                      <i className="ti ti-checks fs-24" />
+                      <i className="ti ti-currency-dollar fs-24" />
                     </span>
-                  </div>
-                  <div>
-                    <p className="d-flex align-items-center fs-13 mb-0 text-muted">
-                      {invoices.filter(i => i.status === 'paid').length} paid
-                    </p>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="col-xl-3 col-md-6 col-12 mb-3 mb-md-0">
+            <div className="col-lg-4 col-md-6 col-12 mb-3 mb-lg-0">
               <div className="card">
                 <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
+                  <div className="d-flex align-items-center justify-content-between">
                     <div>
-                      <p className="mb-1 text-muted">Pending</p>
+                      <p className="mb-1 text-muted">Pending ({stats.pendingCount})</p>
                       <h4 className="mb-0">{formatCurrency(stats.pendingAmount)}</h4>
                     </div>
                     <span className="avatar rounded-circle bg-soft-warning text-warning">
                       <i className="ti ti-clock fs-24" />
                     </span>
                   </div>
-                  <div>
-                    <p className="d-flex align-items-center fs-13 mb-0 text-muted">
-                      {invoices.filter(i => i.status === 'pending').length} pending
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
-            <div className="col-xl-3 col-md-6 col-12">
+            <div className="col-lg-4 col-md-6 col-12">
               <div className="card">
                 <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
+                  <div className="d-flex align-items-center justify-content-between">
                     <div>
-                      <p className="mb-1 text-muted">Overdue</p>
-                      <h4 className="mb-0">{formatCurrency(stats.overdueAmount)}</h4>
+                      <p className="mb-1 text-muted">Paid ({stats.paidCount})</p>
+                      <h4 className="mb-0">{formatCurrency(stats.paidAmount)}</h4>
                     </div>
-                    <span className="avatar rounded-circle bg-soft-danger text-danger">
-                      <i className="ti ti-calendar-exclamation fs-24" />
+                    <span className="avatar rounded-circle bg-soft-primary text-primary">
+                      <i className="ti ti-checks fs-24" />
                     </span>
-                  </div>
-                  <div>
-                    <p className="d-flex align-items-center fs-13 mb-0 text-muted">
-                      {invoices.filter(i => i.status === 'overdue').length} overdue
-                    </p>
                   </div>
                 </div>
               </div>
@@ -363,7 +329,7 @@ const ManageInvoices = () => {
           <div className="card mb-0">
             <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
               <h5 className="d-inline-flex align-items-center mb-0">
-                Invoices
+                Billing Records
                 <span className="badge bg-primary ms-2">{pagination.totalCount}</span>
               </h5>
               <div className="d-flex align-items-center flex-wrap gap-2">
@@ -391,9 +357,8 @@ const ManageInvoices = () => {
                 >
                   <option value="all">All Status</option>
                   <option value="paid">Paid</option>
-                  <option value="sent">Sent</option>
-                  <option value="draft">Draft</option>
-                  <option value="overdue">Overdue</option>
+                  <option value="unpaid">Unpaid</option>
+                  <option value="partial">Partially Paid</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
@@ -405,9 +370,8 @@ const ManageInvoices = () => {
                     <tr>
                       <th>Invoice #</th>
                       <th>Patient</th>
-                      <th>Created Date</th>
+                      <th>Date</th>
                       <th>Amount</th>
-                      <th>Due Date</th>
                       <th>Status</th>
                       <th className="text-end">Actions</th>
                     </tr>
@@ -415,85 +379,81 @@ const ManageInvoices = () => {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={7} className="text-center py-4">
+                        <td colSpan={6} className="text-center py-4">
                           <div className="spinner-border text-primary" role="status">
                             <span className="visually-hidden">Loading...</span>
                           </div>
                         </td>
                       </tr>
-                    ) : invoices.length === 0 ? (
+                    ) : billingRecords.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="text-center py-4">
+                        <td colSpan={6} className="text-center py-4">
                           <div className="text-muted">
                             <i className="ti ti-file-invoice fs-48 mb-2 d-block" />
-                            <p className="mb-0">No invoices found</p>
+                            <p className="mb-0">No billing records found</p>
                           </div>
                         </td>
                       </tr>
                     ) : (
-                      invoices.map((invoice) => (
-                        <tr key={invoice._id}>
+                      billingRecords.map((record) => (
+                        <tr key={record._id}>
                           <td>
                             <Link 
                               href="#" 
                               onClick={(e) => {
                                 e.preventDefault();
-                                openModal("view", invoice);
+                                openModal("view", record);
                               }}
                               className="text-primary fw-medium"
                             >
-                              {invoice.invoiceNumber}
+                              {record.invoiceNumber}
                             </Link>
                           </td>
                           <td>
                             <div>
-                              <div className="fw-medium">
-                                {invoice.patient.firstName} {invoice.patient.lastName}
-                              </div>
-                              <div className="text-muted small">
-                                {invoice.patient.patientId}
-                              </div>
+                              <p className="mb-0 fw-medium">
+                                {record.patient?.firstName} {record.patient?.lastName}
+                              </p>
+                              <span className="text-muted fs-13">
+                                ID: {record.patient?.patientId}
+                              </span>
                             </div>
                           </td>
-                          <td>{formatDate(invoice.createdAt)}</td>
-                          <td>
-                            <div className="fw-medium">{formatCurrency(invoice.grandTotal)}</div>
-                            {invoice.balance > 0 && (
-                              <div className="text-muted small">
-                                Balance: {formatCurrency(invoice.balance)}
-                              </div>
-                            )}
+                          <td>{formatDate(record.createdAt)}</td>
+                          <td className="fw-semibold text-success">
+                            {formatCurrency(record.totalAmount)}
                           </td>
-                          <td>{formatDate(invoice.dueDate)}</td>
                           <td>
-                            <span className={`badge ${getStatusBadge(invoice.status)}`}>
-                              {getStatusLabel(invoice.status)}
+                            <span className={`badge ${getStatusBadge(record.status)}`}>
+                              {getStatusLabel(record.status)}
                             </span>
                           </td>
                           <td>
-                            <div className="d-flex justify-content-end gap-1">
+                            <div className="d-flex align-items-center justify-content-end gap-2">
                               <button
-                                onClick={() => openModal("view", invoice)}
-                                className="btn btn-icon btn-sm btn-outline-light"
+                                onClick={() => openModal("view", record)}
+                                className="btn btn-icon btn-sm btn-white"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
                                 title="View"
                               >
                                 <i className="ti ti-eye" />
                               </button>
                               <button
-                                onClick={() => openModal("edit", invoice)}
-                                className="btn btn-icon btn-sm btn-outline-light"
+                                onClick={() => openModal("edit", record)}
+                                className="btn btn-icon btn-sm btn-white"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
                                 title="Edit"
                               >
                                 <i className="ti ti-edit" />
                               </button>
                               <button
-                                onClick={() => handleDelete(invoice._id)}
-                                className={`btn btn-icon btn-sm ${
-                                  deleteConfirmId === invoice._id
-                                    ? 'btn-danger'
-                                    : 'btn-outline-light'
-                                }`}
-                                title={deleteConfirmId === invoice._id ? 'Click again to confirm' : 'Delete'}
+                                onClick={() => handleDelete(record._id)}
+                                className={`btn btn-icon btn-sm ${deleteConfirmId === record._id ? 'btn-danger' : 'btn-white'}`}
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title={deleteConfirmId === record._id ? "Click again to confirm" : "Delete"}
                               >
                                 <i className="ti ti-trash" />
                               </button>
@@ -508,41 +468,48 @@ const ManageInvoices = () => {
             </div>
             {pagination.totalPages > 1 && (
               <div className="card-footer">
-                <nav>
-                  <ul className="pagination justify-content-center mb-0">
-                    <li className={`page-item ${!pagination.hasPreviousPage ? 'disabled' : ''}`}>
-                      <button
-                        className="page-link"
-                        onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
-                        disabled={!pagination.hasPreviousPage}
-                      >
-                        <i className="ti ti-chevron-left" />
-                      </button>
-                    </li>
-                    {[...Array(pagination.totalPages)].map((_, i) => (
-                      <li
-                        key={i}
-                        className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}
-                      >
+                <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                  <p className="mb-0 text-muted">
+                    Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to{' '}
+                    {Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of{' '}
+                    {pagination.totalCount} records
+                  </p>
+                  <nav>
+                    <ul className="pagination mb-0">
+                      <li className={`page-item ${!pagination.hasPreviousPage ? 'disabled' : ''}`}>
                         <button
                           className="page-link"
-                          onClick={() => setPagination(prev => ({ ...prev, currentPage: i + 1 }))}
+                          onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+                          disabled={!pagination.hasPreviousPage}
                         >
-                          {i + 1}
+                          Previous
                         </button>
                       </li>
-                    ))}
-                    <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
-                      <button
-                        className="page-link"
-                        onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
-                        disabled={!pagination.hasNextPage}
-                      >
-                        <i className="ti ti-chevron-right" />
-                      </button>
-                    </li>
-                  </ul>
-                </nav>
+                      {[...Array(pagination.totalPages)].map((_, index) => (
+                        <li
+                          key={index}
+                          className={`page-item ${pagination.currentPage === index + 1 ? 'active' : ''}`}
+                        >
+                          <button
+                            className="page-link"
+                            onClick={() => setPagination(prev => ({ ...prev, currentPage: index + 1 }))}
+                          >
+                            {index + 1}
+                          </button>
+                        </li>
+                      ))}
+                      <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
+                        <button
+                          className="page-link"
+                          onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+                          disabled={!pagination.hasNextPage}
+                        >
+                          Next
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
               </div>
             )}
           </div>
@@ -552,14 +519,14 @@ const ManageInvoices = () => {
       {modalType && (
         <Suspense fallback={<div>Loading...</div>}>
           {modalType === "view" ? (
-            <InvoiceViewModal
-              invoice={selectedInvoice}
+            <BillingViewModal
+              record={selectedRecord}
               onClose={closeModal}
             />
           ) : (
-            <InvoiceModal
-              type={modalType as "add" | "edit"}
-              invoice={modalType === "edit" ? selectedInvoice : null}
+            <BillingModal
+              type={modalType}
+              record={selectedRecord}
               onClose={closeModal}
               onSuccess={handleSuccess}
             />
@@ -570,4 +537,4 @@ const ManageInvoices = () => {
   );
 };
 
-export default ManageInvoices;
+export default BillingDepartmentComponent;

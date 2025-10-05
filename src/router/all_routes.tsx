@@ -67,6 +67,10 @@ export const all_routes = {
   // MANAGE
   staff: "/staffs",
   accounting: "/accounting",
+  billingDepartment: "/billing-department",
+  addBillingRecord: "/add-billing-record",
+  editBillingRecord: "/edit-billing-record",
+  billingRecordDetails: "/billing-record-details",
   branchManagement: "/branch-management",
   notifications: "/notifications",
   messages: "/messages",

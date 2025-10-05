@@ -11,6 +11,7 @@ import i18n from "@/i18n";
 import { all_routes } from "@/router/all_routes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 
 
 // Function to load/unload RTL CSS
@@ -37,10 +38,30 @@ const Header = () => {
   const dispatch = useDispatch();
   const themeSettings = useSelector((state: any) => state.theme.themeSettings);
   const hiddenLayout = useSelector((state: any) => state.sidebarSlice.hiddenLayout);
+  const { data: session } = useSession();
 
   const mobileSidebar = useSelector(
     (state: any) => state.sidebarSlice.mobileSidebar
   );
+
+  const getUserInitials = useCallback(() => {
+    if (!session?.user?.firstName || !session?.user?.lastName) {
+      return "U";
+    }
+    return `${session.user.firstName.charAt(0)}${session.user.lastName.charAt(0)}`.toUpperCase();
+  }, [session]);
+
+  const getUserRoleDisplay = useCallback(() => {
+    if (!session?.user?.role) return "User";
+    return session.user.role
+      .split('_')
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }, [session]);
+
+  const handleLogout = useCallback(() => {
+    signOut({ callbackUrl: '/login' });
+  }, []);
 
   // Check if current page is a layout page
   const isLayoutPage = () => {
@@ -601,45 +622,42 @@ const Header = () => {
                 aria-expanded="false"
                 aria-label="User menu"
               >
-                <ImageWithBasePath
-                  src="assets/img/avatars/avatar-31.jpg"
-                  width={32}
-                  className="rounded-2 d-flex"
-                  alt="User avatar"
-                />
+                {session?.user?.profileImage ? (
+                  <ImageWithBasePath
+                    src={session.user.profileImage}
+                    width={32}
+                    className="rounded-2 d-flex"
+                    alt="User avatar"
+                  />
+                ) : (
+                  <div className="avatar rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: 32, height: 32, fontSize: 14 }}>
+                    {getUserInitials()}
+                  </div>
+                )}
                 <span className="online text-success">
                   <i className="ti ti-circle-filled d-flex bg-white rounded-circle border border-1 border-white" aria-hidden="true" />
                 </span>
               </button>
               <div className="dropdown-menu dropdown-menu-end dropdown-menu-md p-2">
                 <div className="d-flex align-items-center bg-light rounded-3 p-2 mb-2">
-                  <ImageWithBasePath
-                    src="assets/img/avatars/avatar-31.jpg"
-                    className="rounded-circle"
-                    width={42}
-                    height={42}
-                    alt="User avatar"
-                  />
+                  {session?.user?.profileImage ? (
+                    <ImageWithBasePath
+                      src={session.user.profileImage}
+                      className="rounded-circle"
+                      width={42}
+                      height={42}
+                      alt="User avatar"
+                    />
+                  ) : (
+                    <div className="avatar rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: 42, height: 42, fontSize: 16 }}>
+                      {getUserInitials()}
+                    </div>
+                  )}
                   <div className="ms-2">
-                    <p className="fw-medium text-dark mb-0">Jimmy Anderson</p>
-                    <span className="d-block fs-13">Administrator</span>
+                    <p className="fw-medium text-dark mb-0">{session?.user?.name || "User"}</p>
+                    <span className="d-block fs-13">{getUserRoleDisplay()}</span>
                   </div>
                 </div>
-                {/* Item*/}
-                <Link href={all_routes.generalSettings} className="dropdown-item">
-                  <i className="ti ti-user-circle me-2 align-middle" aria-hidden="true" />
-                  <span className="align-middle">Profile Settings</span>
-                </Link>
-                {/* item */}
-                <Link href={all_routes.notifications} className="dropdown-item">
-                  <i className="ti ti-bell me-2 align-middle" aria-hidden="true" />
-                  <span className="align-middle">Notifications</span>
-                </Link>
-                {/* Item*/}
-                <Link href="#" className="dropdown-item">
-                  <i className="ti ti-help-circle me-2 align-middle" aria-hidden="true" />
-                  <span className="align-middle">Help &amp; Support</span>
-                </Link>
                 {/* Item*/}
                 <Link href={all_routes.generalSettings} className="dropdown-item">
                   <i className="ti ti-settings me-2 align-middle" aria-hidden="true" />
@@ -647,10 +665,10 @@ const Header = () => {
                 </Link>
                 {/* Item*/}
                 <div className="pt-2 mt-2 border-top">
-                  <Link href={all_routes.login} className="dropdown-item text-danger">
+                  <button onClick={handleLogout} className="dropdown-item text-danger border-0 bg-transparent w-100 text-start" type="button">
                     <i className="ti ti-logout me-2 fs-17 align-middle" aria-hidden="true" />
-                    <span className="align-middle">Sign Out</span>
-                  </Link>
+                    <span className="align-middle">Logout</span>
+                  </button>
                 </div>
               </div>
             </div>
