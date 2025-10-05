@@ -34,6 +34,22 @@ const AccountingComponent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
+  const userRole = session?.user?.role as string;
+  const hasAccess = ["ADMIN", "ACCOUNTING", "BILLING"].includes(userRole);
+
+  if (!hasAccess) {
+    return (
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="text-center py-5">
+            <h4>Access Denied</h4>
+            <p>You don't have permission to access this page.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const fetchPayments = async () => {
     try {
       setLoading(true);

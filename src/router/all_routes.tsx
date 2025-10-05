@@ -66,6 +66,8 @@ export const all_routes = {
 
   // MANAGE
   staff: "/staffs",
+  accounting: "/accounting",
+  branchManagement: "/branch-management",
   notifications: "/notifications",
   messages: "/messages",
   manageInvoices: "/manage-invoices",

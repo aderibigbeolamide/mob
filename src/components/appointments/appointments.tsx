@@ -369,43 +369,55 @@ const AppointmentComponent = () => {
                           </td>
                           <td>
                             <div className="d-flex align-items-center">
-                              <Link
-                                href={`${all_routes.patientDetails}?id=${appointment.patientId._id}`}
-                                className="avatar avatar-xs me-2"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/avatars/avatar-31.jpg"
-                                  alt="patient"
-                                  className="rounded"
-                                />
-                              </Link>
+                              {appointment.patientId?._id && (
+                                <Link
+                                  href={`${all_routes.patientDetails}?id=${appointment.patientId._id}`}
+                                  className="avatar avatar-xs me-2"
+                                >
+                                  <ImageWithBasePath
+                                    src="assets/img/avatars/avatar-31.jpg"
+                                    alt="patient"
+                                    className="rounded"
+                                  />
+                                </Link>
+                              )}
                               <div>
                                 <h6 className="fs-14 mb-0 fw-medium">
-                                  <Link href={`${all_routes.patientDetails}?id=${appointment.patientId._id}`}>
-                                    {appointment.patientId.firstName} {appointment.patientId.lastName}
-                                  </Link>
+                                  {appointment.patientId?._id ? (
+                                    <Link href={`${all_routes.patientDetails}?id=${appointment.patientId._id}`}>
+                                      {appointment.patientId?.firstName} {appointment.patientId?.lastName}
+                                    </Link>
+                                  ) : (
+                                    <span>N/A</span>
+                                  )}
                                 </h6>
-                                <span className="fs-12 text-muted">{appointment.patientId.patientId}</span>
+                                <span className="fs-12 text-muted">{appointment.patientId?.patientId || 'N/A'}</span>
                               </div>
                             </div>
                           </td>
                           <td>
                             <div className="d-flex align-items-center">
-                              <Link
-                                href={`${all_routes.doctorDetails}?id=${appointment.doctorId._id}`}
-                                className="avatar avatar-xs me-2"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/doctors/doctor-01.jpg"
-                                  alt="doctor"
-                                  className="rounded"
-                                />
-                              </Link>
+                              {appointment.doctorId?._id && (
+                                <Link
+                                  href={`${all_routes.doctorDetails}?id=${appointment.doctorId._id}`}
+                                  className="avatar avatar-xs me-2"
+                                >
+                                  <ImageWithBasePath
+                                    src="assets/img/doctors/doctor-01.jpg"
+                                    alt="doctor"
+                                    className="rounded"
+                                  />
+                                </Link>
+                              )}
                               <div>
                                 <h6 className="fs-14 mb-0 fw-medium">
-                                  <Link href={`${all_routes.doctorDetails}?id=${appointment.doctorId._id}`}>
-                                    Dr. {appointment.doctorId.firstName} {appointment.doctorId.lastName}
-                                  </Link>
+                                  {appointment.doctorId?._id ? (
+                                    <Link href={`${all_routes.doctorDetails}?id=${appointment.doctorId._id}`}>
+                                      Dr. {appointment.doctorId?.firstName} {appointment.doctorId?.lastName}
+                                    </Link>
+                                  ) : (
+                                    <span>N/A</span>
+                                  )}
                                 </h6>
                               </div>
                             </div>

@@ -226,8 +226,16 @@ export const SidebarData = [
         submenuItems: [],
       },
       {
+        label: "Accounting",
+        link: route.accounting,
+        submenu: false,
+        icon: "calculator",
+        submenuItems: [],
+        roles: ["ADMIN", "ACCOUNTING", "BILLING"],
+      },
+      {
         label: "Branch Management",
-        link: "/branch-management",
+        link: route.branchManagement,
         submenu: false,
         icon: "building",
         submenuItems: [],
