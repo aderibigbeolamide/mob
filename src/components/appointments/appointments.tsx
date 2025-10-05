@@ -432,61 +432,51 @@ const AppointmentComponent = () => {
                             </td>
                           )}
                           <td className="text-end">
-                            <div className="dropdown">
+                            <div className="d-flex gap-2 justify-content-end">
                               <Link
                                 href="#"
-                                className="btn btn-icon btn-outline-light border-0"
-                                data-bs-toggle="dropdown"
-                                aria-label="Appointment actions menu"
+                                className="btn btn-sm btn-icon btn-light"
+                                data-bs-toggle="modal"
+                                data-bs-target="#view_modal"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleViewAppointment(appointment);
+                                }}
+                                title="View Details"
                               >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
+                                <i className="ti ti-eye" />
                               </Link>
-                              <ul className="dropdown-menu dropdown-menu-end p-2">
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#view_modal"
-                                    onClick={() => handleViewAppointment(appointment)}
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#edit_modal"
-                                    onClick={() => handleEditAppointment(appointment._id)}
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href={all_routes.appointmentConsultation}
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-stethoscope me-1" />
-                                    Start Consultation
-                                  </Link>
-                                </li>
-                                <li>
-                                  <button
-                                    onClick={() => setDeleteConfirmId(appointment._id)}
-                                    className="dropdown-item d-flex align-items-center text-danger"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#delete_modal"
-                                  >
-                                    <i className="ti ti-trash me-1" />
-                                    Cancel
-                                  </button>
-                                </li>
-                              </ul>
+                              <Link
+                                href="#"
+                                className="btn btn-sm btn-icon btn-light"
+                                data-bs-toggle="modal"
+                                data-bs-target="#edit_modal"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleEditAppointment(appointment._id);
+                                }}
+                                title="Edit"
+                              >
+                                <i className="ti ti-edit" />
+                              </Link>
+                              <Link
+                                href={all_routes.appointmentConsultation}
+                                className="btn btn-sm btn-icon btn-light"
+                                title="Start Consultation"
+                              >
+                                <i className="ti ti-stethoscope" />
+                              </Link>
+                              {isAdmin && (
+                                <button
+                                  onClick={() => setDeleteConfirmId(appointment._id)}
+                                  className="btn btn-sm btn-icon btn-light"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#delete_modal"
+                                  title="Delete"
+                                >
+                                  <i className="ti ti-trash" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
