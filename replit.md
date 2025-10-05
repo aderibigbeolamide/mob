@@ -25,6 +25,16 @@ The EMR system utilizes Next.js 15 with the App Router, TypeScript, and React 19
 
 **User Roles:** Eight distinct role-based access levels are supported: ADMIN, FRONT_DESK, NURSE, DOCTOR, LAB, PHARMACY, BILLING, and ACCOUNTING, each with specific permissions.
 
+**Department Queue Dashboards (Completed - October 2025):**
+-   **Real-Time Queue Management**: Each department (Nurse, Doctor, Lab, Pharmacy, Billing) has a dedicated queue dashboard showing patients waiting at their stage.
+-   **Auto-Refresh System**: Configurable 30-second auto-refresh with countdown timer, toggle control, and automatic disabling during search operations to prevent data conflicts.
+-   **Role-Based Queue Filtering**: Staff members see only patients in their department's queue from their branch; admins can view all queues across all branches with optional stage filtering.
+-   **Mobile-Responsive Design**: Queue dashboards feature responsive table views for desktop and card-based layouts for mobile devices, ensuring accessibility across all screen sizes.
+-   **Real-Time Patient Tracking**: Displays visit number, patient information, current stage, waiting time, and action buttons for seamless patient handoffs between departments.
+-   **Search & Pagination**: Built-in search functionality for patient names, IDs, and visit numbers with paginated results for efficient queue management.
+-   **Testing**: Comprehensive Playwright test suite covering authentication, navigation, auto-refresh, mobile responsiveness, and data display for all queue types.
+-   **Technical Stack**: React hooks (`useQueue`), custom components (`QueuePage`, `QueueTable`), API endpoint (`/api/clocking/queue`), and type-safe interval management for performance.
+
 **UI/UX Decisions:**
 -   **Branding**: "Life Point Medical Centre" with a navy blue (`#003366`), red (`#CC0000`), and white (`#FFFFFF`) color scheme.
 -   **Components**: Leverages Ant Design and React Bootstrap.
