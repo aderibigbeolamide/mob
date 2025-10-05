@@ -108,11 +108,19 @@ export async function POST(req: NextRequest) {
       }
 
       const currentStage = visit.currentStage;
-      const nextStage = STAGE_WORKFLOW[currentStage as keyof typeof STAGE_WORKFLOW];
+      let nextStage = body.targetStage || STAGE_WORKFLOW[currentStage as keyof typeof STAGE_WORKFLOW];
       
       if (!nextStage) {
         return NextResponse.json(
           { error: 'Invalid current stage or workflow' },
+          { status: 400 }
+        );
+      }
+
+      const validStages = ['nurse', 'doctor', 'lab', 'pharmacy', 'billing', 'returned_to_front_desk'];
+      if (body.targetStage && !validStages.includes(body.targetStage)) {
+        return NextResponse.json(
+          { error: 'Invalid target stage' },
           { status: 400 }
         );
       }
