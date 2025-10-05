@@ -26,9 +26,9 @@ const PharmacySchema = new Schema<IPharmacy>({
   productId: {
     type: String,
     required: [true, 'Product ID is required'],
-    unique: true,
     uppercase: true,
-    trim: true
+    trim: true,
+    index: true
   },
   productName: {
     type: String,
@@ -106,7 +106,7 @@ const PharmacySchema = new Schema<IPharmacy>({
   timestamps: true
 });
 
-PharmacySchema.index({ productId: 1 });
+PharmacySchema.index({ productId: 1 }, { unique: true });
 PharmacySchema.index({ branchId: 1 });
 PharmacySchema.index({ expiryDate: 1 });
 PharmacySchema.index({ stock: 1 });
