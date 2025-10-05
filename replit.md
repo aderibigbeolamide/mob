@@ -45,6 +45,19 @@ The EMR system utilizes Next.js 15 with the App Router, TypeScript, and React 19
 -   **Components**: `HandoffButton` (src/components/visits/handoff/), `VisitTimeline` (src/components/visits/), enhanced API endpoint (`/api/clocking/handoff`).
 -   **Integration Points**: Visit details page, queue dashboards, notification service with database persistence.
 
+**Automatic Invoice Generation System (Completed - October 2025):**
+-   **Auto-Generation on Visit Completion**: When a visit is handed off to the billing stage (after Lab/Pharmacy services), the system automatically generates an invoice combining all charges from consultation, lab tests, and prescriptions.
+-   **Atomic Invoice Creation**: Utilizes MongoDB's findOneAndUpdate with upsert to ensure exactly one invoice per visit, preventing duplicate invoices even under concurrent requests.
+-   **Unique Invoice Numbers**: Each invoice receives a unique identifier generated from timestamp + cryptographically secure random suffix (format: `INV-{timestamp}-{random}`).
+-   **Intelligent Pricing**: Automatically aggregates charges including consultation fees (default ₦5,000), lab tests (default ₦3,000 per test), and medications with configurable pharmacy markup (default 1.2x).
+-   **Insurance Support**: Automatically applies insurance deductions when patient has active insurance coverage, generating insurance claims with pending status.
+-   **Manual Invoice Access**: Billing staff and front desk can manually generate or view invoices through the API endpoint `/api/billing/generate-from-visit`.
+-   **Role-Based Access**: Invoice generation restricted to BILLING, FRONT_DESK, and ADMIN roles; viewing allowed for ACCOUNTING role as well.
+-   **Non-Blocking Handoffs**: Invoice generation failures don't block patient handoffs; errors are logged and staff can manually generate invoices later.
+-   **Duplicate Prevention**: Unique sparse index on `encounterId` ensures one invoice per visit; subsequent generation attempts return existing invoice.
+-   **Components**: Invoice generation service (`src/lib/services/invoiceService.ts`), API endpoint (`/api/billing/generate-from-visit`), integrated handoff logic (`/api/clocking/handoff`).
+-   **Testing**: Comprehensive Playwright test suite covering automatic generation, concurrent requests, and invoice uniqueness validation.
+
 **UI/UX Decisions:**
 -   **Branding**: "Life Point Medical Centre" with a navy blue (`#003366`), red (`#CC0000`), and white (`#FFFFFF`) color scheme.
 -   **Components**: Leverages Ant Design and React Bootstrap.
