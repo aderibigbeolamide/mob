@@ -1,487 +1,441 @@
 "use client";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Frequency, Timing, YesNo } from "../../core/json/selectOption";
 import { all_routes } from "@/router/all_routes";
 import ImageWithBasePath from "@/core/common-components/image-with-base-path";
-import CommonSelect from "@/core/common-components/common-select/commonSelect";
-import CommonDatePicker from "@/core/common-components/common-date-picker/commonDatePicker";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import { apiClient } from "@/lib/services/api-client";
+import { PatientVisit } from "@/types/emr";
 
-const StartVisitsComponennt = () => {
+interface VisitDetailsResponse {
+  visit: PatientVisit;
+  labTests?: any[];
+  prescriptions?: any[];
+}
+
+const StartVisitsComponent = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { data: session } = useSession();
+  const visitId = searchParams.get('id');
+  const isEditMode = searchParams.get('edit') === 'true';
+
+  const [visit, setVisit] = useState<PatientVisit | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    visitDate: '',
+    currentStage: '',
+    status: '',
+  });
+
+  useEffect(() => {
+    if (visitId) {
+      fetchVisitDetails();
+    } else {
+      setLoading(false);
+    }
+  }, [visitId]);
+
+  useEffect(() => {
+    if (visit) {
+      setFormData({
+        visitDate: visit.visitDate ? new Date(visit.visitDate).toISOString().split('T')[0] : '',
+        currentStage: visit.currentStage || '',
+        status: visit.status || '',
+      });
+    }
+  }, [visit]);
+
+  const fetchVisitDetails = async () => {
+    if (!visitId) return;
+    
+    setLoading(true);
+    try {
+      const response = await apiClient.get<VisitDetailsResponse>(
+        `/api/visits/${visitId}`,
+        { showErrorToast: true }
+      );
+      setVisit(response.visit);
+    } catch (error) {
+      console.error("Failed to fetch visit details:", error);
+      router.push(all_routes.visits);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!visitId) return;
+
+    setSaving(true);
+    try {
+      await apiClient.put(
+        `/api/visits/${visitId}`,
+        formData,
+        { successMessage: "Visit updated successfully" }
+      );
+      await fetchVisitDetails();
+      router.push(`${all_routes.startVisits}?id=${visitId}`);
+    } catch (error) {
+      console.error("Failed to update visit:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const formatDate = (date: Date | string | undefined) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'badge-soft-success';
+      case 'in_progress':
+        return 'badge-soft-info';
+      case 'cancelled':
+        return 'badge-soft-danger';
+      default:
+        return 'badge-soft-warning';
+    }
+  };
+
+  const getStageBadgeClass = (stage: string) => {
+    switch (stage) {
+      case 'completed':
+        return 'badge-soft-success';
+      case 'doctor':
+        return 'badge-soft-primary';
+      case 'nurse':
+        return 'badge-soft-info';
+      case 'lab':
+        return 'badge-soft-warning';
+      case 'pharmacy':
+        return 'badge-soft-purple';
+      case 'billing':
+        return 'badge-soft-danger';
+      default:
+        return 'badge-soft-secondary';
+    }
+  };
+
+  const renderStageInfo = (stageName: string, stageData: any) => {
+    if (!stageData || !stageData.clockedInAt) return null;
+
+    const clockedInBy = typeof stageData.clockedInBy === 'object' 
+      ? `${stageData.clockedInBy?.firstName} ${stageData.clockedInBy?.lastName}` 
+      : 'N/A';
+    const clockedOutBy = typeof stageData.clockedOutBy === 'object'
+      ? `${stageData.clockedOutBy?.firstName} ${stageData.clockedOutBy?.lastName}`
+      : null;
+
+    return (
+      <div className="card mb-3">
+        <div className="card-body">
+          <h6 className="card-title text-capitalize mb-3">
+            <i className="ti ti-circle-check me-2"></i>
+            {stageName.replace(/([A-Z])/g, ' $1').trim()}
+          </h6>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <p className="mb-1 text-muted">Clocked In By:</p>
+              <p className="mb-0 fw-medium">{clockedInBy}</p>
+              <p className="mb-0 small text-muted">{formatDate(stageData.clockedInAt)}</p>
+            </div>
+            {stageData.clockedOutAt && (
+              <div className="col-md-6">
+                <p className="mb-1 text-muted">Clocked Out By:</p>
+                <p className="mb-0 fw-medium">{clockedOutBy || 'N/A'}</p>
+                <p className="mb-0 small text-muted">{formatDate(stageData.clockedOutAt)}</p>
+              </div>
+            )}
+            {stageData.vitalSigns && (
+              <div className="col-12">
+                <h6 className="mt-2 mb-2">Vital Signs:</h6>
+                <div className="row g-2">
+                  {stageData.vitalSigns.bloodPressure && (
+                    <div className="col-md-4">
+                      <div className="border p-2 rounded">
+                        <small className="text-muted">Blood Pressure</small>
+                        <p className="mb-0 fw-medium">{stageData.vitalSigns.bloodPressure}</p>
+                      </div>
+                    </div>
+                  )}
+                  {stageData.vitalSigns.temperature && (
+                    <div className="col-md-4">
+                      <div className="border p-2 rounded">
+                        <small className="text-muted">Temperature</small>
+                        <p className="mb-0 fw-medium">{stageData.vitalSigns.temperature}°F</p>
+                      </div>
+                    </div>
+                  )}
+                  {stageData.vitalSigns.pulse && (
+                    <div className="col-md-4">
+                      <div className="border p-2 rounded">
+                        <small className="text-muted">Pulse</small>
+                        <p className="mb-0 fw-medium">{stageData.vitalSigns.pulse} bpm</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {stageData.diagnosis && (
+              <div className="col-12">
+                <p className="mb-1 text-muted">Diagnosis:</p>
+                <p className="mb-0">{stageData.diagnosis}</p>
+              </div>
+            )}
+            {stageData.notes && (
+              <div className="col-12">
+                <p className="mb-1 text-muted">Notes:</p>
+                <p className="mb-0">{stageData.notes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!visit && visitId) {
+    return (
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="text-center py-5">
+            <p className="text-muted">Visit not found</p>
+            <Link href={all_routes.visits} className="btn btn-primary">
+              Back to Visits
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const patient = typeof visit?.patient === 'object' ? visit.patient : null;
+  const branch = typeof visit?.branchId === 'object' ? visit.branchId : null;
+
   return (
     <>
-      {/* ========================
-              Start Page Content
-          ========================= */}
       <div className="page-wrapper">
-        {/* Start Content */}
         <div className="content">
-          {/* Page Header */}
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
             <div className="breadcrumb-arrow">
-              <h4 className="mb-1">Visits</h4>
+              <h4 className="mb-1">{isEditMode ? 'Edit Visit' : 'Visit Details'}</h4>
               <div className="text-end">
                 <ol className="breadcrumb m-0 py-0">
                   <li className="breadcrumb-item">
                     <Link href={all_routes.dashboard}>Home</Link>
                   </li>
-                  <li className="breadcrumb-item active">Visits</li>
+                  <li className="breadcrumb-item">
+                    <Link href={all_routes.visits}>Visits</Link>
+                  </li>
+                  <li className="breadcrumb-item active">
+                    {isEditMode ? 'Edit' : 'Details'}
+                  </li>
                 </ol>
               </div>
             </div>
             <div className="gap-2 d-flex align-items-center flex-wrap">
+              {!isEditMode && visit?.status !== 'completed' && visit?.status !== 'cancelled' && (
+                <Link
+                  href={`${all_routes.startVisits}?id=${visitId}&edit=true`}
+                  className="btn btn-primary"
+                >
+                  <i className="ti ti-edit me-1" />
+                  Edit Visit
+                </Link>
+              )}
               <Link
                 href={all_routes.visits}
-                className="fw-medium d-flex align-items-center"
+                className="btn btn-outline-primary"
               >
                 <i className="ti ti-arrow-left me-1" />
                 Back to Visits
               </Link>
             </div>
           </div>
-          {/* End Page Header */}
-          {/* start basic information */}
-          <div className="card">
-            <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
-              <h5 className="d-inline-flex align-items-center mb-0">
-                Basic Information
-              </h5>
-            </div>
-            <div className="card-body">
-              {/* start row */}
-              <div className="row row-gap-3 align-items-center">
-                <div className="col-lg-6">
-                  <div className="d-sm-flex align-items-center">
-                    <Link
-                      href="#"
-                      className="avatar avatar-xxl me-3 flex-shrink-0"
-                    >
-                      <ImageWithBasePath
-                        src="assets/img/avatars/avatar-05.jpg"
-                        alt="img"
-                        className="rounded"
+
+          {isEditMode ? (
+            <div className="card">
+              <div className="card-body">
+                <form onSubmit={handleSubmit}>
+                  <div className="row g-3">
+                    <div className="col-md-6">
+                      <label className="form-label">Visit Date</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={formData.visitDate}
+                        onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
+                        required
                       />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Current Stage</label>
+                      <select
+                        className="form-select"
+                        value={formData.currentStage}
+                        onChange={(e) => setFormData({ ...formData, currentStage: e.target.value })}
+                        required
+                      >
+                        <option value="">Select Stage</option>
+                        <option value="front_desk">Front Desk</option>
+                        <option value="nurse">Nurse</option>
+                        <option value="doctor">Doctor</option>
+                        <option value="lab">Lab</option>
+                        <option value="pharmacy">Pharmacy</option>
+                        <option value="billing">Billing</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label">Status</label>
+                      <select
+                        className="form-select"
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        required
+                      >
+                        <option value="">Select Status</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <button
+                      type="submit"
+                      className="btn btn-primary me-2"
+                      disabled={saving}
+                    >
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <Link
+                      href={`${all_routes.startVisits}?id=${visitId}`}
+                      className="btn btn-outline-secondary"
+                    >
+                      Cancel
                     </Link>
-                    <div>
-                      <span className="badge badge-soft-primary">
-                        Out Patient
-                      </span>
-                      <h6 className="mb-1 mt-1">
-                        <Link
-                          href="#"
-                          aria-label="View patient James Carter details"
-                        >
-                          James Carter
-                        </Link>
-                      </h6>
-                      <p className="mb-0">Consultation ID : #C243546</p>
-                    </div>
                   </div>
-                </div>
-                <div className="col-lg-6">
-                  <div className="p-3 bg-light rounded">
-                    <div className="row row-gap-2">
-                      <div className="col-6 col-md-4">
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Age / Gender
-                        </h6>
-                        <p className="fs-13 mb-0 text-truncate">
-                          28 Years / Male
-                        </p>
+                </form>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="card mb-4">
+                <div className="card-body">
+                  <div className="row g-3">
+                    <div className="col-md-8">
+                      <div className="d-flex align-items-center mb-3">
+                        <span className="avatar avatar-xl me-3">
+                          <ImageWithBasePath
+                            src={patient?.profileImage || "assets/img/users/user-01.jpg"}
+                            alt="patient"
+                            className="rounded"
+                          />
+                        </span>
+                        <div>
+                          <h5 className="mb-1">
+                            {patient ? `${patient.firstName} ${patient.lastName}` : 'N/A'}
+                          </h5>
+                          <p className="text-muted mb-0">{patient?.patientId || 'N/A'}</p>
+                        </div>
                       </div>
-                      <div className="col-6 col-md-4">
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Department
-                        </h6>
-                        <p className="fs-13 mb-0 text-truncate">Cardiology</p>
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <p className="mb-1 text-muted">Visit Number:</p>
+                          <p className="mb-0 fw-medium">{visit?.visitNumber}</p>
+                        </div>
+                        <div className="col-md-6">
+                          <p className="mb-1 text-muted">Visit Date:</p>
+                          <p className="mb-0 fw-medium">{formatDate(visit?.visitDate)}</p>
+                        </div>
+                        <div className="col-md-6">
+                          <p className="mb-1 text-muted">Branch:</p>
+                          <p className="mb-0 fw-medium">{branch?.name || 'N/A'}</p>
+                        </div>
+                        <div className="col-md-6">
+                          <p className="mb-1 text-muted">Contact:</p>
+                          <p className="mb-0 fw-medium">{patient?.phoneNumber || 'N/A'}</p>
+                        </div>
                       </div>
-                      <div className="col-6 col-md-4">
-                        <h6 className="fs-14 fw-semibold mb-1">Date</h6>
-                        <p className="fs-13 mb-0 text-truncate">
-                          25 Jan 2024, 07:00
-                        </p>
+                    </div>
+                    <div className="col-md-4">
+                      <div className="border rounded p-3 h-100">
+                        <h6 className="mb-3">Visit Status</h6>
+                        <div className="mb-3">
+                          <p className="mb-1 text-muted">Current Stage:</p>
+                          <span className={`badge ${getStageBadgeClass(visit?.currentStage || '')}`}>
+                            {visit?.currentStage?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="mb-1 text-muted">Status:</p>
+                          <span className={`badge ${getStatusBadgeClass(visit?.status || '')}`}>
+                            {visit?.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              {/* end row */}
-            </div>
-          </div>
-          {/* end basic information */}
-          {/* start vitals information */}
-          <div className="card">
-            <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
-              <h5 className="d-inline-flex align-items-center mb-0">Vitals</h5>
-            </div>
-            <div className="card-body">
-              {/* start row */}
-              <div className="row row-gap-3">
-                <div className="col-xl-4 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Temperature<span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">F</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-4 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Pulse<span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">mmHg</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-4 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Respiratory Rate
-                      <span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">rpm</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-4 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      SPO2<span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">%</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-4 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Height<span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">cm</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-4 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Weight<span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">Kg</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-4 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      BMI<span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">kg/cm</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-4 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Waist<span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">cm</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-4 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      BSA<span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">M</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* end row */}
-            </div>
-          </div>
-          {/* end vitals information */}
-          {/* start complaint information */}
-          <div className="card">
-            <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
-              <h5 className="d-inline-flex align-items-center mb-0">
-                Complaint
-              </h5>
-            </div>
-            <div className="card-body">
-              {/* start row */}
-              <div className="row row-gap-3">
-                <div className="col-xl-12 col-md-12 col-sm-12">
-                  <div>
-                    <input type="text" className="form-control" />
-                    <p className="mb-0 mt-1 fs-13">
-                      Enter value separated by comma{" "}
+
+              <h5 className="mb-3">Visit Timeline</h5>
+              {visit?.stages?.frontDesk && renderStageInfo('Front Desk', visit.stages.frontDesk)}
+              {visit?.stages?.nurse && renderStageInfo('Nurse', visit.stages.nurse)}
+              {visit?.stages?.doctor && renderStageInfo('Doctor', visit.stages.doctor)}
+              {visit?.stages?.lab && renderStageInfo('Lab', visit.stages.lab)}
+              {visit?.stages?.pharmacy && renderStageInfo('Pharmacy', visit.stages.pharmacy)}
+              {visit?.stages?.billing && renderStageInfo('Billing', visit.stages.billing)}
+              {visit?.finalClockOut && (
+                <div className="card mb-3">
+                  <div className="card-body">
+                    <h6 className="card-title text-success mb-3">
+                      <i className="ti ti-check-circle me-2"></i>
+                      Visit Completed
+                    </h6>
+                    <p className="mb-0 text-muted">
+                      Completed on {formatDate(visit.finalClockOut.clockedOutAt)}
                     </p>
                   </div>
                 </div>
-              </div>
-              {/* end row */}
-            </div>
-          </div>
-          {/* end complaint information */}
-          {/* start assessment information */}
-          <div className="card">
-            <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
-              <h5 className="d-inline-flex align-items-center mb-0">
-                Assessment
-              </h5>
-            </div>
-            <div className="card-body">
-              {/* start row */}
-              <div className="row row-gap-3">
-                <div className="col-xl-12 col-md-12 col-sm-12">
-                  <div>
-                    <input type="text" className="form-control" />
-                  </div>
-                </div>
-              </div>
-              {/* end row */}
-            </div>
-          </div>
-          {/* end assessment information */}
-          {/* start medications information */}
-          <div className="card">
-            <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
-              <h5 className="d-inline-flex align-items-center mb-0">
-                Medications
-              </h5>
-            </div>
-            <div className="card-body">
-              {/* start row */}
-              <div className="row row-gap-3 mb-3">
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Medicine Name<span className="text-danger ms-1">*</span>
-                    </label>
-                    <input className="form-control" />
-                  </div>
-                </div>
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Dosage<span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">mg</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Duration<span className="text-danger ms-1">*</span>
-                    </label>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">M</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Frequency<span className="text-danger ms-1">*</span>
-                    </label>
-                    <CommonSelect
-                      options={Frequency}
-                      className="select"
-                      defaultValue={Frequency[0]}
-                    />
-                  </div>
-                </div>
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Timing<span className="text-danger ms-1">*</span>
-                    </label>
-                    <CommonSelect
-                      options={Timing}
-                      className="select"
-                      defaultValue={Timing[0]}
-                    />
-                  </div>
-                </div>
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <label className="form-label">
-                      Instructions<span className="text-danger ms-1">*</span>
-                    </label>
-                    <input className="form-control" />
-                  </div>
-                </div>
-              </div>
-              {/* end row */}
-              {/* start row */}
-              <div className="row row-gap-3 mb-3">
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <input className="form-control" />
-                  </div>
-                </div>
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">mg</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <div className="input-group">
-                      <input type="text" className="form-control" />
-                      <span className="input-group-text">M</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <CommonSelect
-                      options={Frequency}
-                      className="select"
-                      defaultValue={Frequency[0]}
-                    />
-                  </div>
-                </div>
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div>
-                    <CommonSelect
-                      options={Timing}
-                      className="select"
-                      defaultValue={Timing[0]}
-                    />
-                  </div>
-                </div>
-                <div className="col-xl-2 col-md-4 col-sm-6">
-                  <div className="d-flex align-items-center gap-2">
-                    <input className="form-control" />
-                    <Link
-                      href="#"
-                      className="btn btn-icon btn-soft-danger border-0 flex-shrink-0 rounded-circle d-linline-flex align-items-center gap-1"
-                    >
-                      {" "}
-                      <i className="ti ti-trash" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              {/* end row */}
-              <Link
-                href="#"
-                className="text-primary d-linline-flex align-items-center gap-1 fw-medium"
-              >
-                {" "}
-                <i className="ti ti-plus" /> Add More
-              </Link>
-            </div>
-          </div>
-          {/* end medications information */}
-          {/* start advice information */}
-          <div className="card">
-            <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
-              <h5 className="d-inline-flex align-items-center mb-0">Advice</h5>
-            </div>
-            <div className="card-body">
-              {/* start row */}
-              <div className="row row-gap-3">
-                <div className="col-xl-12 col-md-12 col-sm-12">
-                  <div>
-                    <input type="text" className="form-control" />
-                  </div>
-                </div>
-              </div>
-              {/* end row */}
-            </div>
-          </div>
-          {/* end advice information */}
-          {/* start follow Up information */}
-          <div className="card mb-3">
-            <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
-              <h5 className="d-inline-flex align-items-center mb-0">
-                Follow Up
-              </h5>
-            </div>
-            <div className="card-body">
-              {/* start row */}
-              <div className="row row-gap-3 align-items-center">
-                <div className="col-xl-6 col-md-6 col-sm-12">
-                  <div>
-                    <label className="form-label mb-0">Next Visit</label>
-                  </div>
-                </div>
-                <div className="col-xl-6 col-md-6 col-sm-12">
-                  <div className=" w-auto input-group-flat">
-                    <CommonDatePicker placeholder="dd/mm/yyyy" />
-                  </div>
-                </div>
-                <div className="col-xl-6 col-md-6 col-sm-12">
-                  <div>
-                    <label className="form-label">
-                      Whether to Come on Empty Stomach?
-                    </label>
-                  </div>
-                </div>
-                <div className="col-xl-6 col-md-6 col-sm-12">
-                  <div>
-                    <CommonSelect
-                      options={YesNo}
-                      className="select"
-                      defaultValue={YesNo[0]}
-                    />
-                  </div>
-                </div>
-              </div>
-              {/* end row */}
-            </div>
-          </div>
-          {/* end follow Up information */}
-          <div className="d-flex justify-content-end flex-wrap align-items-center gap-2">
-            <button type="button" className="btn btn-white">
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary next-tab-btn">
-              End Visit
-            </button>
-          </div>
+              )}
+            </>
+          )}
         </div>
-        {/* End Content */}
-        {/* Start Footer */}
         <CommonFooter />
-        {/* End Footer */}
       </div>
-      {/* ========================
-              End Page Content
-          ========================= */}
     </>
   );
 };
 
-export default StartVisitsComponennt;
+export default StartVisitsComponent;
