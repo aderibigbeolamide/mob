@@ -197,34 +197,6 @@ const VisitsModal = ({ onVisitCreated }: VisitsModalProps) => {
           </div>
         </div>
       </div>
-
-      <div className="modal fade" id="delete_modal">
-        <div className="modal-dialog modal-dialog-centered modal-sm">
-          <div className="modal-content">
-            <div className="modal-body text-center">
-              <div className="mb-2">
-                <span className="avatar avatar-md rounded-circle bg-danger">
-                  <i className="ti ti-trash fs-24" />
-                </span>
-              </div>
-              <h6 className="fs-16 mb-1">Confirm Deletion</h6>
-              <p className="mb-3">Are you sure you want to delete this?</p>
-              <div className="d-flex justify-content-center gap-2">
-                <button
-                  type="button"
-                  className="btn btn-outline-light w-100"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button type="button" className="btn btn-danger w-100">
-                  Yes, Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </>
   );
 };

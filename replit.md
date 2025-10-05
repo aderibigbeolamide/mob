@@ -147,8 +147,33 @@ The EMR system is built on Next.js 15 with the App Router, TypeScript, and React
   - Added data-scroll-behavior="smooth" to <html> element for future Next.js compatibility
 - **Build Verification**: Production build successful with no errors, only minor linting warnings
 
+### Visit Management Complete Implementation (October 5, 2025)
+- **Visit Creation Modal**: Fully functional modal integrated into visits list page
+  - Fetches real patient data from API (/api/patients)
+  - Fetches branch data for branch selection (/api/branches)
+  - Creates visits via POST /api/visits
+  - Auto-refreshes visit list after successful creation
+  - Form validation with required fields
+- **Visit List View**: Icon-based actions matching patients pattern
+  - Eye icon (ti-eye) for viewing visit details
+  - Edit icon (ti-edit) for editing visits (hidden for completed/cancelled)
+  - Trash icon (ti-trash) for cancelling visits (admin-only access)
+- **Visit Details Page**: Comprehensive view/edit functionality
+  - Displays patient information with avatar
+  - Shows complete visit timeline with all stages (front desk, nurse, doctor, lab, pharmacy, billing)
+  - Displays vital signs, diagnosis, and notes for each stage
+  - Edit mode allows updating visit date, current stage, and status
+  - Proper API integration with GET/PUT /api/visits/[id]
+- **Access Control**: Admin-only delete functionality properly implemented
+- **Mobile Responsive**: Bootstrap grid classes ensure proper display on all screen sizes
+- **CRUD Operations**: All visit CRUD operations verified and working:
+  - CREATE: Modal form with API integration
+  - READ: Cross-branch viewing enabled, proper pagination
+  - UPDATE: Edit mode with form validation, branch-level access control
+  - DELETE: Admin-only cancellation with confirmation modal
+
 ### Known Issues
-- Production build completed successfully (79s) - no blocking issues
+- Production build requires high memory allocation (8GB) due to large codebase
 - ESLint warnings present (unused variables) - non-blocking, for future cleanup
 
 ## External Dependencies
