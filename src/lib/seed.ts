@@ -193,6 +193,18 @@ export async function seedDatabase(force: boolean = false) {
       isActive: true,
     });
 
+    // Create accounting staff
+    const accountingStaff = await User.create({
+      firstName: 'Elizabeth',
+      lastName: 'Thompson',
+      email: 'accounting@lifepointmedical.com',
+      password: 'accounting123',
+      phoneNumber: '+234-808-9012345',
+      role: 'ACCOUNTING',
+      branchId: mainBranch._id,
+      isActive: true,
+    });
+
     // Create sample patients
     const patient1 = await Patient.create({
       patientId: 'LP-2024-001',
@@ -624,20 +636,182 @@ export async function seedDatabase(force: boolean = false) {
       'stages.doctor.prescription': prescription3._id
     });
 
+    // Create appointments for doctors and front desk
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    await Appointment.create({
+      appointmentId: 'APP-2024-001',
+      patientId: patient1._id,
+      doctorId: doctor1._id,
+      branchId: mainBranch._id,
+      appointmentDate: now,
+      appointmentTime: '10:00 AM',
+      reasonForVisit: 'Follow-up consultation',
+      type: 'Follow-up',
+      status: 'CONFIRMED',
+      createdBy: frontDesk._id,
+    });
+
+    await Appointment.create({
+      appointmentId: 'APP-2024-002',
+      patientId: patient2._id,
+      doctorId: doctor2._id,
+      branchId: mainBranch._id,
+      appointmentDate: now,
+      appointmentTime: '11:30 AM',
+      reasonForVisit: 'Allergy consultation',
+      type: 'Consultation',
+      status: 'CONFIRMED',
+      createdBy: frontDesk._id,
+    });
+
+    await Appointment.create({
+      appointmentId: 'APP-2024-003',
+      patientId: patient3._id,
+      doctorId: doctor1._id,
+      branchId: mainBranch._id,
+      appointmentDate: tomorrow,
+      appointmentTime: '09:00 AM',
+      reasonForVisit: 'Hypertension follow-up',
+      type: 'Follow-up',
+      status: 'SCHEDULED',
+      createdBy: frontDesk._id,
+    });
+
+    await Appointment.create({
+      appointmentId: 'APP-2024-004',
+      patientId: patient1._id,
+      doctorId: doctor2._id,
+      branchId: mainBranch._id,
+      appointmentDate: tomorrow,
+      appointmentTime: '02:00 PM',
+      reasonForVisit: 'General checkup',
+      type: 'Checkup',
+      status: 'SCHEDULED',
+      createdBy: frontDesk._id,
+    });
+
+    // Create billing records
+    const billing1 = await Billing.create({
+      billingNumber: 'BILL-2024-001',
+      patient: patient1._id,
+      branchId: mainBranch._id,
+      visit: visit1._id,
+      services: [
+        { description: 'Consultation Fee', quantity: 1, unitPrice: 5000, total: 5000 },
+        { description: 'Complete Blood Count', quantity: 1, unitPrice: 3000, total: 3000 },
+        { description: 'Medications', quantity: 1, unitPrice: 4500, total: 4500 }
+      ],
+      subtotal: 12500,
+      tax: 0,
+      discount: 0,
+      total: 12500,
+      amountPaid: 12500,
+      balance: 0,
+      status: 'paid',
+      createdBy: billingStaff._id,
+    });
+
+    const billing2 = await Billing.create({
+      billingNumber: 'BILL-2024-002',
+      patient: patient2._id,
+      branchId: mainBranch._id,
+      visit: visit2._id,
+      services: [
+        { description: 'Consultation Fee', quantity: 1, unitPrice: 5000, total: 5000 },
+        { description: 'Allergy Panel Test', quantity: 1, unitPrice: 8000, total: 8000 },
+        { description: 'Medications', quantity: 1, unitPrice: 2000, total: 2000 }
+      ],
+      subtotal: 15000,
+      tax: 0,
+      discount: 1500,
+      total: 13500,
+      amountPaid: 7000,
+      balance: 6500,
+      status: 'partial',
+      createdBy: billingStaff._id,
+    });
+
+    const billing3 = await Billing.create({
+      billingNumber: 'BILL-2024-003',
+      patient: patient3._id,
+      branchId: mainBranch._id,
+      visit: visit3._id,
+      services: [
+        { description: 'Consultation Fee', quantity: 1, unitPrice: 5000, total: 5000 },
+        { description: 'ECG Test', quantity: 1, unitPrice: 4000, total: 4000 },
+        { description: 'Lipid Profile', quantity: 1, unitPrice: 5000, total: 5000 }
+      ],
+      subtotal: 14000,
+      tax: 0,
+      discount: 0,
+      total: 14000,
+      amountPaid: 0,
+      balance: 14000,
+      status: 'pending',
+      createdBy: billingStaff._id,
+    });
+
+    // Create payment records
+    await Payment.create({
+      paymentNumber: 'PAY-2024-001',
+      patient: patient1._id,
+      branchId: mainBranch._id,
+      billing: billing1._id,
+      amount: 12500,
+      paymentMethod: 'Cash',
+      status: 'completed',
+      processedBy: billingStaff._id,
+      notes: 'Full payment received',
+      createdAt: new Date(twoDaysAgo.getTime() + 10 * 60 * 60 * 1000 + 35 * 60 * 1000),
+    });
+
+    await Payment.create({
+      paymentNumber: 'PAY-2024-002',
+      patient: patient2._id,
+      branchId: mainBranch._id,
+      billing: billing2._id,
+      amount: 7000,
+      paymentMethod: 'Card',
+      status: 'completed',
+      processedBy: billingStaff._id,
+      notes: 'Partial payment - balance to be paid later',
+      createdAt: new Date(yesterday.getTime() + 10 * 60 * 60 * 1000 + 45 * 60 * 1000),
+    });
+
+    await Payment.create({
+      paymentNumber: 'PAY-2024-003',
+      patient: patient1._id,
+      branchId: mainBranch._id,
+      billing: billing1._id,
+      amount: 5000,
+      paymentMethod: 'Cash',
+      status: 'completed',
+      processedBy: billingStaff._id,
+      notes: 'Additional consultation payment',
+      createdAt: new Date(yesterday.getTime() + 14 * 60 * 60 * 1000 + 60 * 60 * 1000),
+    });
+
     console.log('✅ Database seeded successfully!');
     console.log('\n📊 Sample Data Created:');
     console.log('- 3 Patients');
     console.log('- 4 Patient Visits (2 completed, 2 in progress)');
     console.log('- 5 Lab Tests (2 completed, 1 in progress, 2 pending)');
     console.log('- 3 Prescriptions (1 dispensed, 2 active)');
+    console.log('- 4 Appointments (2 today, 2 tomorrow)');
+    console.log('- 3 Billing Records (1 paid, 1 partial, 1 pending)');
+    console.log('- 3 Payment Records');
     console.log('\n📝 Login Credentials:');
     console.log('Admin: admin@lifepointmedical.com / admin123');
-    console.log('Doctor: dr.sarah@lifepointmedical.com / doctor123');
+    console.log('Doctor (Dr. Sarah): dr.sarah@lifepointmedical.com / doctor123');
+    console.log('Doctor (Dr. Michael): dr.michael@lifepointmedical.com / doctor123');
     console.log('Front Desk: frontdesk@lifepointmedical.com / desk123');
     console.log('Nurse: nurse@lifepointmedical.com / nurse123');
     console.log('Lab: lab@lifepointmedical.com / lab123');
     console.log('Pharmacy: pharmacy@lifepointmedical.com / pharmacy123');
     console.log('Billing: billing@lifepointmedical.com / billing123');
+    console.log('Accounting: accounting@lifepointmedical.com / accounting123');
 
     return {
       success: true,
