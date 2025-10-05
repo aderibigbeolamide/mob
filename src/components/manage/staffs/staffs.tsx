@@ -303,53 +303,70 @@ const StaffsComponent = () => {
                             </div>
                           </td>
                           <td>
-                            <span className="badge bg-info-transparent">
-                              {getRoleDisplay(staff.role)}
-                            </span>
+                            {staff.role ? (
+                              <span className="badge bg-info-transparent">
+                                {getRoleDisplay(staff.role)}
+                              </span>
+                            ) : (
+                              <span className="text-muted">No Role</span>
+                            )}
                           </td>
                           <td>{getBranchName(staff.branchId)}</td>
                           <td>{staff.phoneNumber || "N/A"}</td>
                           <td>{staff.email}</td>
                           <td>{formatDate(staff.createdAt)}</td>
                           <td className="text-end">
-                            <div className="dropdown">
-                              <button
-                                className="btn btn-icon btn-outline-light"
-                                data-bs-toggle="dropdown"
-                                aria-label="Staff actions menu"
-                              >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </button>
-                              <ul className="dropdown-menu dropdown-menu-end p-2">
-                                <li>
-                                  <button
-                                    className="dropdown-item d-flex align-items-center"
-                                    onClick={() => openModal("view", staff)}
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </button>
-                                </li>
-                                <li>
-                                  <button
-                                    className="dropdown-item d-flex align-items-center"
-                                    onClick={() => openModal("edit", staff)}
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </button>
-                                </li>
-                                <li>
-                                  <button
-                                    className="dropdown-item d-flex align-items-center text-danger"
-                                    onClick={() => openModal("delete", staff)}
-                                  >
-                                    <i className="ti ti-trash me-1" />
-                                    Delete
-                                  </button>
-                                </li>
-                              </ul>
-                            </div>
+                            <Link
+                              href="#"
+                              className="btn btn-icon btn-outline-light"
+                              data-bs-toggle="dropdown"
+                              aria-label="Staff actions menu"
+                              aria-haspopup="true"
+                              aria-expanded="false"
+                            >
+                              <i className="ti ti-dots-vertical" aria-hidden="true" />
+                            </Link>
+                            <ul className="dropdown-menu dropdown-menu-end p-2" role="menu">
+                              <li>
+                                <button
+                                  className="dropdown-item d-flex align-items-center"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    openModal("view", staff);
+                                  }}
+                                  role="menuitem"
+                                >
+                                  <i className="ti ti-eye me-1" />
+                                  View Details
+                                </button>
+                              </li>
+                              <li>
+                                <button
+                                  className="dropdown-item d-flex align-items-center"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    openModal("edit", staff);
+                                  }}
+                                  role="menuitem"
+                                >
+                                  <i className="ti ti-edit me-1" />
+                                  Edit
+                                </button>
+                              </li>
+                              <li>
+                                <button
+                                  className="dropdown-item d-flex align-items-center text-danger"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    openModal("delete", staff);
+                                  }}
+                                  role="menuitem"
+                                >
+                                  <i className="ti ti-trash me-1" />
+                                  Delete
+                                </button>
+                              </li>
+                            </ul>
                           </td>
                         </tr>
                       ))
