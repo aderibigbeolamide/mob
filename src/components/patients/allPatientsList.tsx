@@ -255,25 +255,25 @@ const AllPatientsListComponent = () => {
                             </div>
                           </td>
                           <td>{patient.gender}</td>
-                          <td>{patient.phone}</td>
+                          <td>{patient.phoneNumber || patient.phone || "N/A"}</td>
                           <td>{patient.bloodGroup || "N/A"}</td>
                           <td>{formatDate(patient.dateOfBirth)}</td>
                           {isAdmin && (
                             <td>
-                              {typeof patient.branch === 'object' && patient.branch
-                                ? patient.branch.name
+                              {typeof patient.branchId === 'object' && patient.branchId
+                                ? patient.branchId.name
                                 : 'N/A'}
                             </td>
                           )}
                           <td className="text-end">
-                            <Link
-                              href="#"
+                            <button
+                              type="button"
                               className="btn btn-icon btn-outline-light"
                               data-bs-toggle="dropdown"
                               aria-label="Patient actions menu"
                             >
                               <i className="ti ti-dots-vertical" aria-hidden="true" />
-                            </Link>
+                            </button>
                             <ul className="dropdown-menu p-2">
                               <li>
                                 <Link

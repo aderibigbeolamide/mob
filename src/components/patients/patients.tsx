@@ -221,8 +221,8 @@ const PatientsComponent = () => {
                         <span className="badge badge-soft-primary">
                           {patient.bloodGroup || "N/A"}
                         </span>
-                        <Link
-                          href="#"
+                        <button
+                          type="button"
                           className="btn btn-icon btn-outline-light border-0"
                           data-bs-toggle="dropdown"
                           aria-label="Patient actions menu"
@@ -230,7 +230,7 @@ const PatientsComponent = () => {
                           aria-expanded="false"
                         >
                           <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
+                        </button>
                         <ul className="dropdown-menu p-2">
                           <li>
                             <Link
