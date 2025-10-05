@@ -246,6 +246,31 @@ export interface PatientVisit {
   updatedAt?: Date;
 }
 
+export interface Pharmacy {
+  _id?: string;
+  productId: string;
+  productName: string;
+  genericName?: string;
+  category?: string;
+  manufacturer?: string;
+  description?: string;
+  price: number;
+  offerPrice?: number;
+  purchaseDate: Date | string;
+  expiryDate: Date | string;
+  stock: number;
+  unit: string;
+  minStockLevel?: number;
+  batchNumber?: string;
+  branchId: string | Branch;
+  isActive: boolean;
+  createdBy?: string | any;
+  isExpired?: boolean;
+  isLowStock?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export interface PaginationInfo {
   currentPage: number;
   totalPages: number;
