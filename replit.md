@@ -35,6 +35,16 @@ The EMR system utilizes Next.js 15 with the App Router, TypeScript, and React 19
 -   **Testing**: Comprehensive Playwright test suite covering authentication, navigation, auto-refresh, mobile responsiveness, and data display for all queue types.
 -   **Technical Stack**: React hooks (`useQueue`), custom components (`QueuePage`, `QueueTable`), API endpoint (`/api/clocking/queue`), and type-safe interval management for performance.
 
+**Patient Handoff System (Completed - October 2025):**
+-   **Flexible Stage Transfers**: Enhanced handoff API supports flexible routing - doctors can send patients directly to pharmacy (bypassing lab) or billing based on clinical needs.
+-   **Interactive Handoff UI**: Reusable `HandoffButton` component with modal interface for adding notes, specifying next actions, and selecting target department.
+-   **Visual Patient Timeline**: Enhanced `VisitTimeline` component with animated progress indicators, color-coded stages, and comprehensive display of vitals, diagnosis, and timestamps.
+-   **In-App Notifications**: Automatic notification creation in database when patients are handed off, alerting next department staff with patient details and visit information.
+-   **One-Click Handoffs**: Staff can transfer patients with a single click from visit details page or queue dashboards, with automatic page refresh on success.
+-   **Stage-Specific Options**: Doctors see options to send to Lab, Pharmacy, or Billing; other departments follow sequential workflow unless admin overrides.
+-   **Components**: `HandoffButton` (src/components/visits/handoff/), `VisitTimeline` (src/components/visits/), enhanced API endpoint (`/api/clocking/handoff`).
+-   **Integration Points**: Visit details page, queue dashboards, notification service with database persistence.
+
 **UI/UX Decisions:**
 -   **Branding**: "Life Point Medical Centre" with a navy blue (`#003366`), red (`#CC0000`), and white (`#FFFFFF`) color scheme.
 -   **Components**: Leverages Ant Design and React Bootstrap.
