@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense, lazy } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { all_routes } from "@/router/all_routes";
@@ -7,6 +7,8 @@ import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import { apiClient } from "@/lib/services/api-client";
 import { PatientVisit, PaginationInfo } from "@/types/emr";
+
+const VisitsModal = lazy(() => import("./modal/visitsModal"));
 
 interface VisitsResponse {
   visits: PatientVisit[];
@@ -156,13 +158,15 @@ const VisitsComponent = () => {
               >
                 <i className="ti ti-refresh" />
               </button>
-              <Link
-                href={all_routes.startVisits}
+              <button
+                type="button"
                 className="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#add_visit"
               >
                 <i className="ti ti-square-rounded-plus me-1" />
                 New Visit
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -393,6 +397,10 @@ const VisitsComponent = () => {
           </div>
         </div>
       </div>
+
+      <Suspense fallback={<div />}>
+        <VisitsModal onVisitCreated={fetchVisits} />
+      </Suspense>
     </>
   );
 };

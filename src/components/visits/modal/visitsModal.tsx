@@ -1,23 +1,104 @@
 "use client";
-import CommonSelect from "@/core/common-components/common-select/commonSelect";
-import {
-  Department,
-  Doctor,
-  ModePayment,
-  Patient,
-  PatientType,
-} from "../../../core/json/selectOption";
-import CommonDatePicker from "@/core/common-components/common-date-picker/commonDatePicker";
-import CommonTimePicker from "@/core/common-components/common-time-pickers/CommonTimePicker";
-import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { apiClient } from "@/lib/services/api-client";
+import { Patient, Branch } from "@/types/emr";
 
+interface VisitsModalProps {
+  onVisitCreated?: () => void;
+}
 
-const VisitsModal = () => {
+interface PatientsResponse {
+  patients: Patient[];
+}
 
+interface BranchesResponse {
+  branches: Branch[];
+}
+
+const VisitsModal = ({ onVisitCreated }: VisitsModalProps) => {
+  const { data: session } = useSession();
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    patient: '',
+    branchId: '',
+    visitDate: new Date().toISOString().split('T')[0],
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [patientsRes, branchesRes] = await Promise.all([
+        apiClient.get<PatientsResponse>('/api/patients?limit=1000', { showErrorToast: false }),
+        apiClient.get<BranchesResponse>('/api/branches', { showErrorToast: false })
+      ]);
+
+      setPatients(patientsRes.patients || []);
+      setBranches(branchesRes.branches || []);
+      
+      if (branchesRes.branches && branchesRes.branches.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          branchId: branchesRes.branches[0]._id || ''
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.patient || !formData.branchId) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await apiClient.post(
+        '/api/visits',
+        {
+          patient: formData.patient,
+          branchId: formData.branchId,
+          visitDate: formData.visitDate,
+        },
+        { successMessage: "Visit created successfully" }
+      );
+
+      const modalElement = document.getElementById('add_visit');
+      if (modalElement) {
+        const modal = (window as any).bootstrap?.Modal?.getInstance(modalElement);
+        modal?.hide();
+      }
+
+      setFormData({
+        patient: '',
+        branchId: branches[0]?._id || '',
+        visitDate: new Date().toISOString().split('T')[0],
+      });
+
+      if (onVisitCreated) {
+        onVisitCreated();
+      }
+    } catch (error) {
+      console.error("Failed to create visit:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <>
-      {/* Start Add Modal */}
       <div id="add_visit" className="modal fade">
         <div className="modal-dialog modal-dialog-centered modal-lg">
           <div className="modal-content">
@@ -34,78 +115,62 @@ const VisitsModal = () => {
                 <i className="ti ti-circle-x-filled" />
               </button>
             </div>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="modal-body pb-0">
                 <div className="row">
                   <div className="col-lg-6">
                     <div className="mb-3">
-                      <label className="form-label">Select Patient</label>
-                      <CommonSelect
-                        options={Patient}
-                        className="select"
-                        defaultValue={Patient[0]}
-                      />
+                      <label className="form-label">
+                        Select Patient <span className="text-danger">*</span>
+                      </label>
+                      <select
+                        className="form-select"
+                        value={formData.patient}
+                        onChange={(e) => setFormData({ ...formData, patient: e.target.value })}
+                        required
+                        disabled={loading}
+                      >
+                        <option value="">Choose Patient</option>
+                        {patients.map((patient) => (
+                          <option key={patient._id} value={patient._id}>
+                            {patient.firstName} {patient.lastName} ({patient.patientId})
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   <div className="col-lg-6">
                     <div className="mb-3">
-                      <label className="form-label">Patient Type</label>
-                      <CommonSelect
-                        options={PatientType}
-                        className="select"
-                        defaultValue={PatientType[0]}
-                      />
+                      <label className="form-label">
+                        Select Branch <span className="text-danger">*</span>
+                      </label>
+                      <select
+                        className="form-select"
+                        value={formData.branchId}
+                        onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
+                        required
+                        disabled={loading}
+                      >
+                        <option value="">Choose Branch</option>
+                        {branches.map((branch) => (
+                          <option key={branch._id} value={branch._id}>
+                            {branch.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   <div className="col-lg-6">
                     <div className="mb-3">
-                      <label className="form-label">Select Department</label>
-                      <CommonSelect
-                        options={Department}
-                        className="select"
-                        defaultValue={Department[0]}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6">
-                    <div className="mb-3">
-                      <label className="form-label">Select Doctor</label>
-                      <CommonSelect
-                        options={Doctor}
-                        className="select"
-                        defaultValue={Doctor[0]}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6">
-                    <div className="mb-3">
-                      <label className="form-label">Date of Visit</label>
-                      <div className=" w-auto input-group-flat">
-                        <CommonDatePicker placeholder="dd/mm/yyyy" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-lg-6">
-                    <div className="mb-3">
-                      <label className="form-label">Time of Visit</label>
-                      <div className=" position-relative">
-                        <CommonTimePicker />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-lg-12">
-                    <div className="mb-3">
-                      <label className="form-label">Reason</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-lg-12">
-                    <div className="mb-3">
-                      <label className="form-label">Mode of Payment</label>
-                      <CommonSelect
-                        options={ModePayment}
-                        className="select"
-                        defaultValue={ModePayment[0]}
+                      <label className="form-label">
+                        Date of Visit <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={formData.visitDate}
+                        onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
+                        required
                       />
                     </div>
                   </div>
@@ -116,130 +181,23 @@ const VisitsModal = () => {
                   type="button"
                   className="btn btn-white"
                   data-bs-dismiss="modal"
+                  disabled={submitting}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Add Visit
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={submitting || loading}
+                >
+                  {submitting ? 'Creating...' : 'Create Visit'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
-      {/* End Add Modal */}
-      {/* Start Edit Modal */}
-      <div id="edit_visit" className="modal fade">
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="text-dark modal-title fw-bold text-truncate">
-                Edit Visit
-              </h5>
-              <button
-                type="button"
-                className="btn-close btn-close-modal"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <i className="ti ti-circle-x-filled" />
-              </button>
-            </div>
-            <form>
-              <div className="modal-body pb-0">
-                <div className="row">
-                  <div className="col-lg-6">
-                    <div className="mb-3">
-                      <label className="form-label">Select Patient</label>
-                      <CommonSelect
-                        options={Patient}
-                        className="select"
-                        defaultValue={Patient[1]}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6">
-                    <div className="mb-3">
-                      <label className="form-label">Patient Type</label>
-                      <CommonSelect
-                        options={PatientType}
-                        className="select"
-                        defaultValue={PatientType[1]}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6">
-                    <div className="mb-3">
-                      <label className="form-label">Select Department</label>
-                      <CommonSelect
-                        options={Department}
-                        className="select"
-                        defaultValue={Department[1]}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6">
-                    <div className="mb-3">
-                      <label className="form-label">Select Doctor</label>
-                      <CommonSelect
-                        options={Doctor}
-                        className="select"
-                        defaultValue={Doctor[1]}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-lg-6">
-                    <div className="mb-3">
-                      <label className="form-label">Date of Visit</label>
-                      <div className=" w-auto input-group-flat">
-                        <CommonDatePicker placeholder="dd/mm/yyyy" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-lg-6">
-                    <div className="mb-3">
-                      <label className="form-label">Time of Visit</label>
-                      <div className=" position-relative">
-                        <CommonTimePicker />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-lg-12">
-                    <div className="mb-3">
-                      <label className="form-label">Reason</label>
-                      <input type="text" className="form-control" />
-                    </div>
-                  </div>
-                  <div className="col-lg-12">
-                    <div className="mb-3">
-                      <label className="form-label">Mode of Payment</label>
-                      <CommonSelect
-                        options={ModePayment}
-                        className="select"
-                        defaultValue={ModePayment[1]}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer d-flex align-items-center gap-1">
-                <button
-                  type="button"
-                  className="btn btn-white"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      {/* End Edit Modal */}
-      {/* Start Delete Modal  */}
+
       <div className="modal fade" id="delete_modal">
         <div className="modal-dialog modal-dialog-centered modal-sm">
           <div className="modal-content">
@@ -252,22 +210,21 @@ const VisitsModal = () => {
               <h6 className="fs-16 mb-1">Confirm Deletion</h6>
               <p className="mb-3">Are you sure you want to delete this?</p>
               <div className="d-flex justify-content-center gap-2">
-                <Link
-                  href="#"
+                <button
+                  type="button"
                   className="btn btn-outline-light w-100"
                   data-bs-dismiss="modal"
                 >
                   Cancel
-                </Link>
-                <Link href="#" className="btn btn-danger w-100">
+                </button>
+                <button type="button" className="btn btn-danger w-100">
                   Yes, Delete
-                </Link>
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
-      {/* End Delete Modal  */}
     </>
   );
 };
