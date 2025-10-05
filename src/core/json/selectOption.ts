@@ -53,10 +53,12 @@ export const Doctor = [
   { value: "Dr. Victoria Evans", label: "Dr. Victoria Evans" },
 ];
 export const Consultation = [
-  { value: "Select", label: "Select" },
-  { value: "In-Person", label: "In-Person" },
-  { value: "Video", label: "Video" },
-  { value: "Phone", label: "Phone" },
+  { value: "CONSULTATION", label: "Consultation" },
+  { value: "FOLLOW_UP", label: "Follow-up" },
+  { value: "EMERGENCY", label: "Emergency" },
+  { value: "ROUTINE_CHECKUP", label: "Routine Checkup" },
+  { value: "VACCINATION", label: "Vaccination" },
+  { value: "PROCEDURE", label: "Procedure" },
 ];
 export const ModePayment = [
   { value: "Select", label: "Select" },
