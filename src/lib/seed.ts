@@ -157,6 +157,42 @@ export async function seedDatabase(force: boolean = false) {
       isActive: true,
     });
 
+    // Create lab technician
+    const labTech = await User.create({
+      firstName: 'James',
+      lastName: 'Anderson',
+      email: 'lab@lifepointmedical.com',
+      password: 'lab123',
+      phoneNumber: '+234-805-6789012',
+      role: 'LAB',
+      branchId: mainBranch._id,
+      isActive: true,
+    });
+
+    // Create pharmacy staff
+    const pharmacist = await User.create({
+      firstName: 'Patricia',
+      lastName: 'Brown',
+      email: 'pharmacy@lifepointmedical.com',
+      password: 'pharmacy123',
+      phoneNumber: '+234-806-7890123',
+      role: 'PHARMACY',
+      branchId: mainBranch._id,
+      isActive: true,
+    });
+
+    // Create billing staff
+    const billingStaff = await User.create({
+      firstName: 'Robert',
+      lastName: 'Davis',
+      email: 'billing@lifepointmedical.com',
+      password: 'billing123',
+      phoneNumber: '+234-807-8901234',
+      role: 'BILLING',
+      branchId: mainBranch._id,
+      isActive: true,
+    });
+
     // Create sample patients
     const patient1 = await Patient.create({
       patientId: 'LP-2024-001',
@@ -599,6 +635,9 @@ export async function seedDatabase(force: boolean = false) {
     console.log('Doctor: dr.sarah@lifepointmedical.com / doctor123');
     console.log('Front Desk: frontdesk@lifepointmedical.com / desk123');
     console.log('Nurse: nurse@lifepointmedical.com / nurse123');
+    console.log('Lab: lab@lifepointmedical.com / lab123');
+    console.log('Pharmacy: pharmacy@lifepointmedical.com / pharmacy123');
+    console.log('Billing: billing@lifepointmedical.com / billing123');
 
     return {
       success: true,
