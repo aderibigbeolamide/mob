@@ -161,8 +161,8 @@ export async function GET(req: NextRequest) {
 
       const [labTests, totalCount] = await Promise.all([
         LabTest.find(query)
-          .populate('patient', 'firstName lastName patientId phoneNumber')
-          .populate('doctor', 'firstName lastName')
+          .populate('patient', 'firstName lastName patientId phoneNumber gender profileImage')
+          .populate('doctor', 'firstName lastName profileImage')
           .populate('branchId', 'name')
           .populate('requestedBy', 'firstName lastName')
           .populate('result.performedBy', 'firstName lastName')

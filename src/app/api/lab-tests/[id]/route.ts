@@ -24,8 +24,8 @@ export async function GET(
       }
 
       const labTest = await LabTest.findById(id)
-        .populate('patient', 'firstName lastName patientId phoneNumber email')
-        .populate('doctor', 'firstName lastName')
+        .populate('patient', 'firstName lastName patientId phoneNumber email gender profileImage')
+        .populate('doctor', 'firstName lastName profileImage')
         .populate('branch', 'name address city state')
         .populate('visit')
         .populate('requestedBy', 'firstName lastName')
@@ -134,8 +134,8 @@ export async function PUT(
           { $set: updateData },
           { new: true, runValidators: true }
         )
-          .populate('patient', 'firstName lastName patientId')
-          .populate('doctor', 'firstName lastName')
+          .populate('patient', 'firstName lastName patientId gender profileImage')
+          .populate('doctor', 'firstName lastName profileImage')
           .populate('branch', 'name')
           .populate('requestedBy', 'firstName lastName')
           .populate('result.performedBy', 'firstName lastName');

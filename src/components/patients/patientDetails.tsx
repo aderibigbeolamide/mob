@@ -1,11 +1,130 @@
 "use client";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "react-toastify";
+import { format } from "date-fns";
 import PatientDetailsHeader from "./PatientDetailsHeader";
 import { all_routes } from "@/router/all_routes";
 import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import { patientService } from "@/lib/services/patientService";
 
 const PatientDetailsCompoent = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const patientId = searchParams.get('id');
+
+  const [patient, setPatient] = useState<any>(null);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!patientId) {
+      toast.error('No patient ID provided');
+      router.push(all_routes.patients);
+      return;
+    }
+
+    fetchPatientData();
+  }, [patientId]);
+
+  const fetchPatientData = async () => {
+    try {
+      setLoading(true);
+      
+      const [patientData, appointmentsData] = await Promise.all([
+        patientService.getById(patientId!),
+        fetch(`/api/appointments?patient=${patientId}&limit=2`).then(res => res.json())
+      ]);
+
+      setPatient(patientData.patient);
+      setAppointments(appointmentsData.appointments || []);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to fetch patient data');
+      console.error('Error fetching patient:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateAge = (dateOfBirth: Date) => {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
+  const formatDate = (date: Date | string | undefined) => {
+    if (!date) return 'N/A';
+    try {
+      return format(new Date(date), 'dd MMM yyyy');
+    } catch {
+      return 'N/A';
+    }
+  };
+
+  const formatDateTime = (date: Date | string | undefined) => {
+    if (!date) return 'N/A';
+    try {
+      return format(new Date(date), 'dd MMM yyyy, hh:mm a');
+    } catch {
+      return 'N/A';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="alert alert-danger">Patient not found</div>
+        </div>
+      </div>
+    );
+  }
+
+  const getLastVisitDate = () => {
+    if (patient.recentVisits && patient.recentVisits.length > 0) {
+      return formatDateTime(patient.recentVisits[0].visitDate);
+    }
+    return 'No visits yet';
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case 'SCHEDULED':
+        return 'badge-soft-purple';
+      case 'CONFIRMED':
+        return 'badge-soft-info';
+      case 'COMPLETED':
+        return 'badge-soft-success';
+      case 'CANCELLED':
+        return 'badge-soft-danger';
+      default:
+        return 'badge-soft-secondary';
+    }
+  };
+
   return (
     <>
     {/* ========================
@@ -48,64 +167,63 @@ const PatientDetailsCompoent = () => {
                     className="avatar avatar-xxl me-3"
                   >
                     <ImageWithBasePath
-                      src="assets/img/profiles/avatar-03.jpg"
+                      src={patient.profileImage || "assets/img/profiles/avatar-03.jpg"}
                       alt="patient"
                       className="rounded"
                     />
                   </Link>
                   <div>
-                    <span className="badge badge-soft-primary">#PT001</span>
+                    <span className="badge badge-soft-primary">#{patient.patientId}</span>
                     <h5 className="mb-1 mt-2">
-                      <Link href="#">Reyan Verol</Link>
+                      <Link href="#">{patient.firstName} {patient.lastName}</Link>
                     </h5>
-                    <p className="fs-13 mb-0">Last Visited : 24 Jan 2025</p>
+                    <p className="fs-13 mb-0">Last Visited: {getLastVisitDate()}</p>
                   </div>
                 </div>
                 <h6 className="mb-2">Basic Information</h6>
                 <p className="mb-3">
                   Added On{" "}
-                  <span className="float-end text-dark">24 May 2024</span>
+                  <span className="float-end text-dark">{formatDate(patient.createdAt)}</span>
                 </p>
                 <p className="mb-3">
-                  DOB <span className="float-end text-dark">10 Jan 1991</span>
+                  DOB <span className="float-end text-dark">{formatDate(patient.dateOfBirth)} ({calculateAge(patient.dateOfBirth)} years)</span>
                 </p>
                 <p className="mb-3">
-                  Gender <span className="float-end text-dark">Male</span>
+                  Gender <span className="float-end text-dark">{patient.gender || 'N/A'}</span>
                 </p>
                 <p className="mb-3">
-                  Martial Status{" "}
-                  <span className="float-end text-dark">Married</span>
+                  Marital Status{" "}
+                  <span className="float-end text-dark">{patient.maritalStatus || 'N/A'}</span>
                 </p>
                 <p className="mb-3">
-                  Blood Group <span className="float-end text-dark">O+ve</span>
+                  Blood Group <span className="float-end text-dark">{patient.bloodGroup || 'N/A'}</span>
                 </p>
                 <p className="mb-3">
                   Phone Number{" "}
-                  <span className="float-end text-dark">+1 75964 25493</span>
+                  <span className="float-end text-dark">{patient.phoneNumber}</span>
                 </p>
                 <p className="mb-3">
                   Email{" "}
                   <span className="float-end text-dark">
-                  reyan@example.com
+                    {patient.email || 'N/A'}
                   </span>
                 </p>
                 <p className="mb-3">
                   Referred By{" "}
-                  <Link
-                    href={all_routes.doctorDetails}
-                    className="float-end text-decoration-underline link-primary"
-                  >
-                    Dr Antonio
-                  </Link>
+                  <span className="float-end text-dark">
+                    {patient.referredBy || 'N/A'}
+                  </span>
                 </p>
                 <p className="mb-4">
-                  Total No of Bookings{" "}
-                  <span className="float-end text-dark">12</span>
+                  Total No of Visits{" "}
+                  <span className="float-end text-dark">{patient.recentVisits?.length || 0}</span>
                 </p>
                 <h6 className="mb-2 mt-3 mb-2 pt-3 border-top">
                   Address Information
                 </h6>
-                <p className="mb-0">2557 Tanglewood Road, Jackson, MS 39213</p>
+                <p className="mb-0">
+                  {patient.address}{patient.address2 ? `, ${patient.address2}` : ''}, {patient.city}, {patient.state} {patient.zipCode || ''}, {patient.country}
+                </p>
               </div>
             </div>
           </div>
@@ -120,87 +238,62 @@ const PatientDetailsCompoent = () => {
                   Appointments
                 </h5>
                 <Link
-                  href={all_routes.appointments}
+                  href={`${all_routes.appointments}?patient=${patientId}`}
                   className="btn btn-sm btn-white flex-shrink-0"
                 >
                   View All
                 </Link>
               </div>
               <div className="card-body">
-                <div className="row row-gap-3">
-                  <div className="col-xl-6 d-flex">
-                    <div className="p-3 border rounded flex-fill">
-                      <div className="d-flex align-items-center justify-content-between border-bottom mb-3 pb-3">
-                        <span className="badge badge-soft-purple">Upcoming</span>
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-secondary"
-                        >
-                          <i className="ti ti-video" />
-                        </Link>
+                {appointments.length > 0 ? (
+                  <div className="row row-gap-3">
+                    {appointments.map((appointment, index) => (
+                      <div className="col-xl-6 d-flex" key={index}>
+                        <div className="p-3 border rounded flex-fill">
+                          <div className="d-flex align-items-center justify-content-between border-bottom mb-3 pb-3">
+                            <span className={`badge ${getStatusBadgeClass(appointment.status)}`}>
+                              {appointment.status}
+                            </span>
+                            {appointment.type === 'VIDEO' && (
+                              <span className="btn btn-icon btn-secondary">
+                                <i className="ti ti-video" />
+                              </span>
+                            )}
+                            {appointment.type === 'IN_PERSON' && (
+                              <span className="btn btn-icon btn-primary">
+                                <i className="ti ti-user" />
+                              </span>
+                            )}
+                          </div>
+                          <div className="row row-gap-3">
+                            <div className="col-sm-6">
+                              <h6 className="fs-14 fw-semibold mb-1">Department</h6>
+                              <p className="fs-13 mb-0">{appointment.department || 'N/A'}</p>
+                            </div>
+                            <div className="col-sm-6">
+                              <h6 className="fs-14 fw-semibold mb-1">Doctor</h6>
+                              <p className="fs-13 mb-0 text-truncate">
+                                {appointment.doctorId?.name || 'N/A'}
+                              </p>
+                            </div>
+                            <div className="col-sm-6">
+                              <h6 className="fs-14 fw-semibold mb-1">
+                                Date &amp; Time
+                              </h6>
+                              <p className="fs-13 mb-0">{formatDateTime(appointment.appointmentDate)}</p>
+                            </div>
+                            <div className="col-sm-6">
+                              <h6 className="fs-14 fw-semibold mb-1">Booked On</h6>
+                              <p className="fs-13 mb-0">{formatDate(appointment.createdAt)}</p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="row row-gap-3">
-                        <div className="col-sm-6">
-                          <h6 className="fs-14 fw-semibold mb-1">Department</h6>
-                          <p className="fs-13 mb-0">Cardiology</p>
-                        </div>
-                        <div className="col-sm-6">
-                          <h6 className="fs-14 fw-semibold mb-1">Doctor</h6>
-                          <p className="fs-13 mb-0 text-truncate">
-                            Dr. Andrew Clark
-                          </p>
-                        </div>
-                        <div className="col-sm-6">
-                          <h6 className="fs-14 fw-semibold mb-1">
-                            Date &amp; Time
-                          </h6>
-                          <p className="fs-13 mb-0">21 Dec 2024, 07:00 AM</p>
-                        </div>
-                        <div className="col-sm-6">
-                          <h6 className="fs-14 fw-semibold mb-1">Booked On</h6>
-                          <p className="fs-13 mb-0">20 Dec 2024</p>
-                        </div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                  <div className="col-xl-6 d-flex">
-                    <div className="p-3 border rounded flex-fill">
-                      <div className="d-flex align-items-center justify-content-between border-bottom mb-3 pb-3">
-                        <span className="badge badge-soft-success">
-                          Completed
-                        </span>
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-primary"
-                        >
-                          <i className="ti ti-phone" />
-                        </Link>
-                      </div>
-                      <div className="row row-gap-3">
-                        <div className="col-sm-6">
-                          <h6 className="fs-14 fw-semibold mb-1">Department</h6>
-                          <p className="fs-13 mb-0">Radiology</p>
-                        </div>
-                        <div className="col-sm-6">
-                          <h6 className="fs-14 fw-semibold mb-1">Doctor</h6>
-                          <p className="fs-13 mb-0 text-truncate">
-                            Dr. Laura Mitchell
-                          </p>
-                        </div>
-                        <div className="col-sm-6">
-                          <h6 className="fs-14 fw-semibold mb-1">
-                            Date &amp; Time
-                          </h6>
-                          <p className="fs-13 mb-0">15 Jan 2025, 10:35 AM</p>
-                        </div>
-                        <div className="col-sm-6">
-                          <h6 className="fs-14 fw-semibold mb-1">Booked On</h6>
-                          <p className="fs-13 mb-0">13 Jan 2025</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-muted text-center py-3">No appointments found</p>
+                )}
               </div>
             </div>
             {/* card end */}
@@ -211,10 +304,10 @@ const PatientDetailsCompoent = () => {
                   Vital Signs
                 </h5>
                 <Link
-                  href="#"
+                  href={`${all_routes.patientDetailsVitalSign}?id=${patientId}`}
                   className="link-danger text-decoration-underline"
                 >
-                  Past Data
+                  View All
                 </Link>
               </div>
               <div className="card-body pb-0">
@@ -229,7 +322,7 @@ const PatientDetailsCompoent = () => {
                           Blood Pressure
                         </h6>
                         <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          100/67 mmHg
+                          {patient.vitalSigns?.bloodPressure || 'N/A'}
                         </p>
                       </div>
                     </div>
@@ -244,7 +337,7 @@ const PatientDetailsCompoent = () => {
                           Heart Rate
                         </h6>
                         <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          89 Bpm
+                          {patient.vitalSigns?.heartRate || 'N/A'} Bpm
                         </p>
                       </div>
                     </div>
@@ -257,7 +350,7 @@ const PatientDetailsCompoent = () => {
                       <div>
                         <h6 className="fs-14 fw-semibold mb-1">SPO2</h6>
                         <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          98 %
+                          {patient.vitalSigns?.spo2 || 'N/A'} %
                         </p>
                       </div>
                     </div>
@@ -272,7 +365,7 @@ const PatientDetailsCompoent = () => {
                           Temperature
                         </h6>
                         <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          101 C
+                          {patient.vitalSigns?.temperature || 'N/A'} C
                         </p>
                       </div>
                     </div>
@@ -287,7 +380,7 @@ const PatientDetailsCompoent = () => {
                           Respiratory Rate
                         </h6>
                         <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          24 rpm
+                          {patient.vitalSigns?.respiratoryRate || 'N/A'} rpm
                         </p>
                       </div>
                     </div>
@@ -302,7 +395,7 @@ const PatientDetailsCompoent = () => {
                           Weight
                         </h6>
                         <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          100 kg
+                          {patient.vitalSigns?.weight || 'N/A'} kg
                         </p>
                       </div>
                     </div>
@@ -318,109 +411,67 @@ const PatientDetailsCompoent = () => {
                   Visit History
                 </h5>
                 <Link
-                  href={all_routes.visits}
+                  href={`${all_routes.visits}?patient=${patientId}`}
                   className="btn btn-sm btn-outline-light flex-shrink-0"
                 >
                   View All
                 </Link>
               </div>
               <div className="card-body pb-0">
-                <div className="row row-gap-3">
-                  <div className="col-xl-6">
-                    <div className="card">
-                      <div className="card-body">
-                        <div className="d-flex align-items-center mb-3">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar flex-shrink-0"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-12.jpg"
-                              className="rounded"
-                              alt="doctor"
-                            />
-                          </Link>
-                          <div className="ms-2">
-                            <div>
-                              <h6 className="fw-semibold fs-14 text-truncate mb-1">
-                                <Link href={all_routes.doctorDetails}>
-                                  Dr. Samuel Turner
-                                </Link>
-                              </h6>
-                              <p className="fs-13 mb-0">Cardiology, MD, FRCS</p>
+                {patient.recentVisits && patient.recentVisits.length > 0 ? (
+                  <div className="row row-gap-3">
+                    {patient.recentVisits.slice(0, 2).map((visit: any, index: number) => (
+                      <div className="col-xl-6" key={index}>
+                        <div className="card">
+                          <div className="card-body">
+                            <div className="d-flex align-items-center mb-3">
+                              <Link
+                                href={all_routes.doctorDetails}
+                                className="avatar flex-shrink-0"
+                              >
+                                <ImageWithBasePath
+                                  src={visit.doctor?.profileImage || "assets/img/doctors/doctor-12.jpg"}
+                                  className="rounded"
+                                  alt="doctor"
+                                />
+                              </Link>
+                              <div className="ms-2">
+                                <div>
+                                  <h6 className="fw-semibold fs-14 text-truncate mb-1">
+                                    <Link href={all_routes.doctorDetails}>
+                                      {visit.doctor?.name || 'N/A'}
+                                    </Link>
+                                  </h6>
+                                  <p className="fs-13 mb-0">{visit.doctor?.specialization || 'N/A'}</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="row mb-3 row-gap-2">
+                              <div className="col-sm-6">
+                                <h6 className="fw-semibold mb-1 fs-14">Visited On</h6>
+                                <p className="fs-13 mb-0 text-truncate">
+                                  {formatDateTime(visit.visitDate)}
+                                </p>
+                              </div>
+                              <div className="col-sm-6">
+                                <h6 className="fw-semibold mb-1 fs-14">Status</h6>
+                                <p className="fs-13 mb-0">{visit.status || 'N/A'}</p>
+                              </div>
+                            </div>
+                            <div className="p-3 bg-light rounded">
+                              <h6 className="fw-semibold mb-1 fs-14">Notes</h6>
+                              <p className="fs-13 mb-0 text-truncate line-clamb-2">
+                                {visit.notes || visit.chiefComplaint || 'No notes available'}
+                              </p>
                             </div>
                           </div>
                         </div>
-                        <div className="row mb-3 row-gap-2">
-                          <div className="col-sm-6">
-                            <h6 className="fw-semibold mb-1 fs-14">Visited On</h6>
-                            <p className="fs-13 mb-0 text-truncate">
-                              21 Dec 2024, 07:00 AM
-                            </p>
-                          </div>
-                          <div className="col-sm-6">
-                            <h6 className="fw-semibold mb-1 fs-14">Follow Up</h6>
-                            <p className="fs-13 mb-0">After 15 Days</p>
-                          </div>
-                        </div>
-                        <div className="p-3 bg-light rounded">
-                          <h6 className="fw-semibold mb-1 fs-14">Notes</h6>
-                          <p className="fs-13 mb-0 text-truncate line-clamb-2">
-                            Detailed Information about the symptoms that brought
-                            the patient to the visit
-                          </p>
-                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                  <div className="col-xl-6">
-                    <div className="card">
-                      <div className="card-body">
-                        <div className="d-flex align-items-center mb-3">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar flex-shrink-0"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-09.jpg"
-                              className="rounded"
-                              alt="doctor"
-                            />
-                          </Link>
-                          <div className="ms-2">
-                            <div>
-                              <h6 className="fw-semibold fs-14 text-truncate mb-1">
-                                <Link href={all_routes.doctorDetails}>
-                                  Dr. Natalie Foster
-                                </Link>
-                              </h6>
-                              <p className="fs-13 mb-0">Neurology, MD, DNB</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="row mb-3 row-gap-2">
-                          <div className="col-sm-6">
-                            <h6 className="fw-semibold mb-1 fs-14">Visited On</h6>
-                            <p className="fs-13 mb-0 text-truncate">
-                              08 Jan 2024, 09:55 AM
-                            </p>
-                          </div>
-                          <div className="col-sm-6">
-                            <h6 className="fw-semibold mb-1 fs-14">Follow Up</h6>
-                            <p className="fs-13 mb-0">After 12 Days</p>
-                          </div>
-                        </div>
-                        <div className="p-3 bg-light rounded">
-                          <h6 className="fw-semibold mb-1 fs-14">Notes</h6>
-                          <p className="fs-13 mb-0 text-truncate line-clamb-2">
-                            Information provided to the patient regarding their
-                            condition and symptoms
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-muted text-center py-3">No visit history found</p>
+                )}
               </div>
             </div>
             {/* card end */}

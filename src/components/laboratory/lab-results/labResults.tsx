@@ -3,18 +3,239 @@ import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import { all_routes } from "@/router/all_routes";
 import Link from "next/link";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
+import { labTestService, LabTestFilters } from "@/lib/services/labTestService";
+import { ILabTest } from "@/models/LabTest";
+import { toast } from "react-toastify";
+import { format } from "date-fns";
 
 const LabResultsModal = lazy(() => import("./modal/labResultsModal"));
 
 const LabResultsComponent = () => {
+  const [labTests, setLabTests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [selectedLabTest, setSelectedLabTest] = useState<any | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [modalType, setModalType] = useState<"create" | "view" | "delete" | null>(null);
+  const limit = 20;
+
+  const fetchLabTests = async () => {
+    try {
+      setLoading(true);
+      
+      const filters: LabTestFilters = {
+        page: currentPage,
+        limit: limit,
+        search: searchQuery,
+      };
+
+      const response = await labTestService.getAll(filters);
+      
+      setLabTests(response.labTests);
+      setTotalPages(response.pagination.totalPages);
+      setTotalCount(response.pagination.totalCount);
+    } catch (error: any) {
+      console.error("Error fetching lab tests:", error);
+      toast.error(error.message || "Failed to fetch lab tests");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLabTests();
+  }, [currentPage, searchQuery, sortOrder]);
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setCurrentPage(1);
+  };
+
+  const handleRefresh = () => {
+    fetchLabTests();
+    toast.success("Lab results refreshed");
+  };
+
+  const handleSortChange = (order: "newest" | "oldest") => {
+    setSortOrder(order);
+    setCurrentPage(1);
+  };
+
+  const handleOpenCreateModal = () => {
+    setModalType("create");
+    setSelectedLabTest(null);
+    setIsEditing(false);
+  };
+
+  const handleOpenViewModal = (labTest: any) => {
+    setModalType("view");
+    setSelectedLabTest(labTest);
+    setIsEditing(false);
+  };
+
+  const handleOpenDeleteModal = (labTest: any) => {
+    setModalType("delete");
+    setSelectedLabTest(labTest);
+  };
+
+  const handleCloseModal = () => {
+    setModalType(null);
+    setSelectedLabTest(null);
+    setIsEditing(false);
+  };
+
+  const handleLabTestCreated = () => {
+    fetchLabTests();
+    handleCloseModal();
+  };
+
+  const handleLabTestUpdated = () => {
+    fetchLabTests();
+    handleCloseModal();
+  };
+
+  const handleLabTestDeleted = () => {
+    fetchLabTests();
+    handleCloseModal();
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "badge badge-soft-success";
+      case "in_progress":
+        return "badge badge-soft-info";
+      case "pending":
+        return "badge badge-soft-warning";
+      case "cancelled":
+        return "badge badge-soft-danger";
+      default:
+        return "badge badge-soft-secondary";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "Received";
+      case "in_progress":
+        return "In Progress";
+      case "pending":
+        return "Pending";
+      case "cancelled":
+        return "Cancelled";
+      default:
+        return status;
+    }
+  };
+
+  const formatDate = (date: string | Date) => {
+    try {
+      return format(new Date(date), "dd MMM yyyy");
+    } catch {
+      return "N/A";
+    }
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    if (endPage - startPage + 1 < maxPagesToShow) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <li key={i} className={`page-item ${i === currentPage ? "active" : ""}`}>
+          <button
+            className="page-link"
+            onClick={() => setCurrentPage(i)}
+            disabled={loading}
+          >
+            {i}
+          </button>
+        </li>
+      );
+    }
+
+    return (
+      <nav aria-label="Lab results pagination">
+        <ul className="pagination justify-content-center mb-0">
+          <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+            <button
+              className="page-link"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1 || loading}
+              aria-label="Previous page"
+            >
+              <i className="ti ti-chevron-left" />
+            </button>
+          </li>
+          {startPage > 1 && (
+            <>
+              <li className="page-item">
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={loading}
+                >
+                  1
+                </button>
+              </li>
+              {startPage > 2 && (
+                <li className="page-item disabled">
+                  <span className="page-link">...</span>
+                </li>
+              )}
+            </>
+          )}
+          {pages}
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && (
+                <li className="page-item disabled">
+                  <span className="page-link">...</span>
+                </li>
+              )}
+              <li className="page-item">
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={loading}
+                >
+                  {totalPages}
+                </button>
+              </li>
+            </>
+          )}
+          <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+            <button
+              className="page-link"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages || loading}
+              aria-label="Next page"
+            >
+              <i className="ti ti-chevron-right" />
+            </button>
+          </li>
+        </ul>
+      </nav>
+    );
+  };
+
   return (
     <>
-      {/* ========================
-			Start Page Content
-		========================= */}
       <div className="page-wrapper">
-        {/* Start Content */}
         <div className="content">
           {/* Page Header */}
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
@@ -30,16 +251,26 @@ const LabResultsComponent = () => {
               </div>
             </div>
             <div className="gap-2 d-flex align-items-center flex-wrap">
-              <Link
-                href="#"
+              <button
+                onClick={handleOpenCreateModal}
+                className="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#create_modal"
+              >
+                <i className="ti ti-plus me-1" />
+                Add Lab Test
+              </button>
+              <button
+                onClick={handleRefresh}
                 className="btn btn-icon btn-white"
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
                 aria-label="Refresh"
                 data-bs-original-title="Refresh"
+                disabled={loading}
               >
-                <i className="ti ti-refresh" />
-              </Link>
+                <i className={`ti ti-refresh ${loading ? "spin" : ""}`} />
+              </button>
               <Link
                 href="#"
                 className="btn btn-icon btn-white"
@@ -63,12 +294,55 @@ const LabResultsComponent = () => {
             </div>
           </div>
           {/* End Page Header */}
+
+          {/* Search Bar */}
+          <div className="card mb-3">
+            <div className="card-body">
+              <form onSubmit={handleSearch}>
+                <div className="row g-3 align-items-center">
+                  <div className="col-12 col-md-8 col-lg-6">
+                    <div className="input-group">
+                      <span className="input-group-text">
+                        <i className="ti ti-search" />
+                      </span>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Search by test ID, test name, or category..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary"
+                          onClick={() => {
+                            setSearchQuery("");
+                            setCurrentPage(1);
+                          }}
+                        >
+                          <i className="ti ti-x" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-12 col-md-4 col-lg-3">
+                    <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+                      <i className="ti ti-search me-1" />
+                      Search
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
           {/* card start */}
           <div className="card mb-0">
             <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
               <h6 className="d-inline-flex align-items-center mb-0">
                 Total Lab Results{" "}
-                <span className="badge bg-danger ms-2">658</span>
+                <span className="badge bg-danger ms-2">{totalCount}</span>
               </h6>
               <div className="d-flex align-items-center flex-wrap gap-2">
                 <div className="dropdown">
@@ -76,1009 +350,228 @@ const LabResultsComponent = () => {
                     href="#"
                     className="dropdown-toggle btn btn-md btn-outline-light d-inline-flex align-items-center"
                     data-bs-toggle="dropdown"
-                   aria-label="Patient actions menu" aria-haspopup="true" aria-expanded="false">
+                    aria-label="Sort options menu"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
                     <i className="ti ti-sort-descending-2 me-1" />
-                    <span className="me-1">Sort By : </span> Newest
+                    <span className="me-1">Sort By : </span> {sortOrder === "newest" ? "Newest" : "Oldest"}
                   </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-2">
+                  <ul className="dropdown-menu dropdown-menu-end p-2">
                     <li>
-                      <Link href="#" className="dropdown-item rounded-1">
+                      <button
+                        onClick={() => handleSortChange("newest")}
+                        className="dropdown-item rounded-1"
+                        type="button"
+                      >
                         Newest
-                      </Link>
+                      </button>
                     </li>
                     <li>
-                      <Link href="#" className="dropdown-item rounded-1">
+                      <button
+                        onClick={() => handleSortChange("oldest")}
+                        className="dropdown-item rounded-1"
+                        type="button"
+                      >
                         Oldest
-                      </Link>
+                      </button>
                     </li>
                   </ul>
                 </div>
               </div>
             </div>
             <div className="card-body">
-              {/* table start */}
-              <div className="table-responsive table-nowrap">
-                <table className="table mb-0 border">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Test ID</th>
-                      <th>Patient Name</th>
-                      <th className="no-sort">Gender</th>
-                      <th className="no-sort">Appointment Date</th>
-                      <th>Refered By</th>
-                      <th>Test Name</th>
-                      <th className="no-sort">Status</th>
-                      <th className="no-sort" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #TE0025
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-31.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                James Carter
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Male</td>
-                      <td>17 Jun 2025</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-01.jpg"
-                              alt="doctors"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Andrew Clark
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Blood Test</td>
-                      <td>
-                        <span className="badge badge-soft-success">
-                          Received
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Lab result actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #TE0024
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-54.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Emily Davis
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Female</td>
-                      <td>10 Jun 2025</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-03.jpg"
-                              alt="doctors"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Katherine Brooks
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Urinalysis</td>
-                      <td>
-                        <span className="badge badge-soft-info">
-                          In Progress
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Lab result actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #TE0023
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-45.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Michael Johnson
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Male</td>
-                      <td>22 May 2025</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-04.jpg"
-                              alt="doctors"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Benjamin Harris
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Throat Culture</td>
-                      <td>
-                        <span className="badge badge-soft-warning">
-                          Pending
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Lab result actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #TE0022
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-51.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Olivia Miller
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Female</td>
-                      <td>15 May 2025</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-05.jpg"
-                              alt="doctors"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Laura Mitchell
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Iron Panel</td>
-                      <td>
-                        <span className="badge badge-soft-success">
-                          Received
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Lab result actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #TE0021
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-41.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                David Smith
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Male</td>
-                      <td>30 Apr 2025</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-06.jpg"
-                              alt="doctor"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Christopher Lewis
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Vitamin D Test</td>
-                      <td>
-                        <span className="badge badge-soft-info">
-                          In Progress
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Lab result actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #TE0020
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-48.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Sophia Wilson
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Female</td>
-                      <td>25 Apr 2025</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-07.jpg"
-                              alt="doctors"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Natalie Foster
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Liver Function Test</td>
-                      <td>
-                        <span className="badge badge-soft-warning">
-                          Pending
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Lab result actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #TE0019
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-53.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Daniel Williams
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Male</td>
-                      <td>13 Mar 2025</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-10.jpg"
-                              alt="doctors"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Jonathan Adams
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Thyroid Test</td>
-                      <td>
-                        <span className="badge badge-soft-success">
-                          Received
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Lab result actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #TE0018
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-50.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Isabella Anderson
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Female</td>
-                      <td>16 Feb 2025</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-08.jpg"
-                              alt="doctors"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Rebecca Scott
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Lipid Panel</td>
-                      <td>
-                        <span className="badge badge-soft-info">
-                          In Progress
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Lab result actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #TE0017
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-42.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                William Brown
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Male</td>
-                      <td>20 Jan 2025</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-12.jpg"
-                              alt="doctors"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Samuel Turner
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Troponin Test</td>
-                      <td>
-                        <span className="badge badge-soft-warning">
-                          Pending
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Lab result actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #TE0016
-                        </Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.patientDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-56.jpg"
-                              alt="patient"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.patientDetails}>
-                                Charlotte Taylor
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Female</td>
-                      <td>15 Jan 2025</td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-11.jpg"
-                              alt="doctors"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Victoria Evans
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Hepatitis Panel</td>
-                      <td>
-                        <span className="badge badge-soft-success">
-                          Received
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Lab result actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              {/* table end */}
+              {loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-3 text-muted">Loading lab results...</p>
+                </div>
+              ) : labTests.length === 0 ? (
+                <div className="text-center py-5">
+                  <i className="ti ti-flask-2 display-1 text-muted mb-3" />
+                  <h5 className="text-muted">No lab results found</h5>
+                  <p className="text-muted">
+                    {searchQuery
+                      ? "Try adjusting your search criteria"
+                      : "Lab results will appear here when available"}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* table start */}
+                  <div className="table-responsive table-nowrap">
+                    <table className="table mb-0 border">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Test ID</th>
+                          <th>Patient Name</th>
+                          <th className="no-sort d-none d-md-table-cell">Gender</th>
+                          <th className="no-sort d-none d-lg-table-cell">Requested Date</th>
+                          <th className="d-none d-xl-table-cell">Referred By</th>
+                          <th>Test Name</th>
+                          <th className="no-sort">Status</th>
+                          <th className="no-sort" />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {labTests.map((labTest: any) => (
+                          <tr key={labTest._id}>
+                            <td>
+                              <button
+                                onClick={() => handleOpenViewModal(labTest)}
+                                data-bs-toggle="modal"
+                                data-bs-target="#view_modal"
+                                className="text-primary fw-medium btn btn-link p-0 text-decoration-none"
+                              >
+                                #{labTest.testNumber}
+                              </button>
+                            </td>
+                            <td>
+                              <div className="d-flex align-items-center">
+                                <Link
+                                  href={`${all_routes.patientDetails}?id=${labTest.patient?._id || ""}`}
+                                  className="avatar avatar-xs me-2 flex-shrink-0"
+                                >
+                                  <ImageWithBasePath
+                                    src={labTest.patient?.profileImage || "assets/img/avatars/avatar-01.jpg"}
+                                    alt={`${labTest.patient?.firstName || "Patient"} ${labTest.patient?.lastName || ""}`}
+                                    className="rounded"
+                                  />
+                                </Link>
+                                <div className="overflow-hidden">
+                                  <h6 className="fs-14 mb-0 fw-medium text-truncate">
+                                    <Link href={`${all_routes.patientDetails}?id=${labTest.patient?._id || ""}`}>
+                                      {labTest.patient?.firstName || "N/A"} {labTest.patient?.lastName || ""}
+                                    </Link>
+                                  </h6>
+                                  <span className="text-muted fs-12 d-md-none">
+                                    {labTest.patient?.patientId || ""}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="d-none d-md-table-cell">
+                              {labTest.patient?.gender || "N/A"}
+                            </td>
+                            <td className="d-none d-lg-table-cell">
+                              {formatDate(labTest.requestedAt)}
+                            </td>
+                            <td className="d-none d-xl-table-cell">
+                              <div className="d-flex align-items-center">
+                                <Link
+                                  href={all_routes.doctorDetails}
+                                  className="avatar avatar-xs me-2 flex-shrink-0"
+                                >
+                                  <ImageWithBasePath
+                                    src={labTest.doctor?.profileImage || "assets/img/doctors/doctor-01.jpg"}
+                                    alt={`Dr. ${labTest.doctor?.firstName || "Doctor"} ${labTest.doctor?.lastName || ""}`}
+                                    className="rounded"
+                                  />
+                                </Link>
+                                <div className="overflow-hidden">
+                                  <h6 className="fs-14 mb-0 fw-medium text-truncate">
+                                    <Link href={all_routes.doctorDetails}>
+                                      Dr. {labTest.doctor?.firstName || "N/A"} {labTest.doctor?.lastName || ""}
+                                    </Link>
+                                  </h6>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <span className="fw-medium">{labTest.testName}</span>
+                              <span className="d-block text-muted fs-12 d-xl-none">
+                                {labTest.testCategory}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={getStatusBadgeClass(labTest.status)}>
+                                {getStatusLabel(labTest.status)}
+                              </span>
+                            </td>
+                            <td className="text-end">
+                              <div className="d-flex gap-2 justify-content-end">
+                                <button
+                                  onClick={() => handleOpenViewModal(labTest)}
+                                  className="btn btn-sm btn-icon btn-light"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#view_modal"
+                                  aria-label="View lab result details"
+                                >
+                                  <i className="ti ti-eye" />
+                                </button>
+                                <button
+                                  onClick={() => handleOpenDeleteModal(labTest)}
+                                  className="btn btn-sm btn-icon btn-light"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#delete_modal"
+                                  aria-label="Delete lab result"
+                                >
+                                  <i className="ti ti-trash" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* table end */}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
+                      <div className="text-muted">
+                        Showing {(currentPage - 1) * limit + 1} to{" "}
+                        {Math.min(currentPage * limit, totalCount)} of {totalCount} results
+                      </div>
+                      {renderPagination()}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
-          {/* card start */}
+          {/* card end */}
         </div>
-        {/* End Content */}
-        {/* Start Footer */}
         <CommonFooter />
-        {/* End Footer */}
       </div>
-      {/* ========================
-			End Page Content
-		========================= */}
-      <Suspense fallback={<div />}><LabResultsModal /></Suspense>
+
+      <Suspense fallback={<div>Loading...</div>}>
+        <LabResultsModal
+          selectedLabTest={selectedLabTest}
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
+          onLabTestCreated={handleLabTestCreated}
+          onLabTestUpdated={handleLabTestUpdated}
+          onLabTestDeleted={handleLabTestDeleted}
+          onClose={handleCloseModal}
+        />
+      </Suspense>
+
+      <style jsx>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        .spin {
+          animation: spin 1s linear infinite;
+        }
+        @media (max-width: 767.98px) {
+          .table-responsive {
+            font-size: 0.875rem;
+          }
+          .avatar-xs {
+            width: 2rem;
+            height: 2rem;
+          }
+        }
+      `}</style>
     </>
   );
 };

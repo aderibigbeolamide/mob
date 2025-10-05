@@ -42,7 +42,7 @@ export async function GET(
       const recentVisits = await PatientVisit.find({ patient: id })
         .sort({ visitDate: -1 })
         .limit(10)
-        .populate('branch', 'name')
+        .populate('branchId', 'name')
         .populate('appointment')
         .lean() as any;
 

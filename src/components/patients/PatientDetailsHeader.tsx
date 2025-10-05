@@ -1,7 +1,7 @@
 "use client";
 import { all_routes } from "@/router/all_routes";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const tabs = [
   { label: "Patient Profile", route: all_routes.patientDetails },
@@ -16,12 +16,15 @@ const tabs = [
 
 const PatientDetailsHeader = () => {
   const location = usePathname();
+  const searchParams = useSearchParams();
+  const patientId = searchParams.get('id');
+  
   return (
     <ul className="nav nav-tabs nav-solid-primary  border-bottom pb-4 mb-4 d-flex align-items-center gap-2">
       {tabs.map((tab) => (
         <li className="nav-item" key={tab.route}>
           <Link
-            href={tab.route}
+            href={`${tab.route}${patientId ? `?id=${patientId}` : ''}`}
             className={`nav-link border rounded fw-semibold${location === tab.route ? " active" : ""}`}
           >
             {tab.label}
