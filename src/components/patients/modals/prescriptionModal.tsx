@@ -8,6 +8,7 @@ import { IPrescription } from "@/models/Prescription";
 interface PrescriptionModalProps {
   selectedPrescription: any | null;
   isEditing: boolean;
+  isViewing?: boolean;
   patientId: string | null;
   onPrescriptionCreated: () => void;
   onPrescriptionUpdated: () => void;
@@ -26,6 +27,7 @@ interface Medication {
 const PrescriptionModal = ({
   selectedPrescription,
   isEditing,
+  isViewing = false,
   patientId,
   onPrescriptionCreated,
   onPrescriptionUpdated,
@@ -341,6 +343,117 @@ const PrescriptionModal = ({
   };
 
   const medications = isEditing ? editFormData.medications : createFormData.medications;
+
+  if (isViewing && selectedPrescription) {
+    return (
+      <div
+        className="modal fade show"
+        style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+        tabIndex={-1}
+      >
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">
+                Prescription Details - {selectedPrescription.prescriptionNumber}
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={onClose}
+              />
+            </div>
+            <div className="modal-body">
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Prescription Number</label>
+                  <p className="mb-0">{selectedPrescription.prescriptionNumber || "N/A"}</p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Date</label>
+                  <p className="mb-0">
+                    {selectedPrescription.createdAt
+                      ? new Date(selectedPrescription.createdAt).toLocaleDateString()
+                      : "N/A"}
+                  </p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Prescribed By</label>
+                  <p className="mb-0">
+                    {selectedPrescription.doctor
+                      ? `Dr. ${selectedPrescription.doctor.firstName} ${selectedPrescription.doctor.lastName}`
+                      : "N/A"}
+                  </p>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-semibold">Status</label>
+                  <p className="mb-0">
+                    <span className={`badge ${
+                      selectedPrescription.status === "dispensed"
+                        ? "bg-success"
+                        : selectedPrescription.status === "active"
+                        ? "bg-info"
+                        : "bg-danger"
+                    }`}>
+                      {selectedPrescription.status?.charAt(0).toUpperCase() + selectedPrescription.status?.slice(1)}
+                    </span>
+                  </p>
+                </div>
+                <div className="col-12">
+                  <label className="form-label fw-semibold">Diagnosis</label>
+                  <p className="mb-0">{selectedPrescription.diagnosis || "N/A"}</p>
+                </div>
+                <div className="col-12">
+                  <label className="form-label fw-semibold">Medications</label>
+                  <div className="table-responsive">
+                    <table className="table table-bordered">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Name</th>
+                          <th>Dosage</th>
+                          <th>Frequency</th>
+                          <th>Duration</th>
+                          <th>Quantity</th>
+                          <th>Instructions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedPrescription.medications?.map((med: any, index: number) => (
+                          <tr key={index}>
+                            <td>{med.name}</td>
+                            <td>{med.dosage}</td>
+                            <td>{med.frequency}</td>
+                            <td>{med.duration}</td>
+                            <td>{med.quantity}</td>
+                            <td>{med.instructions || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {selectedPrescription.notes && (
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">Notes</label>
+                    <p className="mb-0">{selectedPrescription.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={onClose}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

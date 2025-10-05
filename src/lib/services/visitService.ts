@@ -88,4 +88,34 @@ export const visitService = {
     
     return response.json();
   },
+
+  async update(visitId: string, data: Partial<IPatientVisit>): Promise<{ message: string; visit: IPatientVisit }> {
+    const response = await fetch(`/api/visits/${visitId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update visit');
+    }
+    
+    return response.json();
+  },
+
+  async delete(visitId: string): Promise<{ message: string; visitId: string; visitNumber: string }> {
+    const response = await fetch(`/api/visits/${visitId}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to cancel visit');
+    }
+    
+    return response.json();
+  },
 };

@@ -44,6 +44,32 @@ const PatientDetailsDocumentsComponent = () => {
     }
   };
 
+  const handleView = async (document: PatientDocumentPopulated) => {
+    try {
+      const blob = await documentService.download(document._id);
+      const url = window.URL.createObjectURL(blob);
+      
+      const isPDF = document.mimeType?.includes('pdf') || document.fileName.toLowerCase().endsWith('.pdf');
+      const isImage = document.mimeType?.includes('image') || /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(document.fileName);
+      
+      if (isPDF || isImage) {
+        window.open(url, '_blank');
+      } else {
+        const link = window.document.createElement("a");
+        link.href = url;
+        link.download = document.fileName;
+        window.document.body.appendChild(link);
+        link.click();
+        window.document.body.removeChild(link);
+      }
+      
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (error: any) {
+      console.error("Error viewing document:", error);
+      toast.error("Failed to view document");
+    }
+  };
+
   const handleDownload = async (document: PatientDocumentPopulated) => {
     try {
       const blob = await documentService.download(document._id);
@@ -274,6 +300,13 @@ const PatientDetailsDocumentsComponent = () => {
                             <div className="d-flex gap-1 justify-content-end">
                               <button
                                 className="btn btn-icon btn-sm btn-outline-primary"
+                                onClick={() => handleView(document)}
+                                title="View Document"
+                              >
+                                <i className="ti ti-eye" />
+                              </button>
+                              <button
+                                className="btn btn-icon btn-sm btn-outline-success"
                                 onClick={() => handleDownload(document)}
                                 title="Download"
                               >

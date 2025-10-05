@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PatientDetailsHeader from "./PatientDetailsHeader";
@@ -9,6 +9,8 @@ import { visitService } from "@/lib/services/visitService";
 import { IPatientVisit } from "@/models/PatientVisit";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+
+const VisitModal = lazy(() => import("./modals/visitModal"));
 
 const PatientDetailsVisitHistoryComponent = () => {
   const searchParams = useSearchParams();
@@ -21,6 +23,9 @@ const PatientDetailsVisitHistoryComponent = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const limit = 10;
+
+  const [selectedVisit, setSelectedVisit] = useState<IPatientVisit | null>(null);
+  const [modalMode, setModalMode] = useState<"view" | "edit" | "delete" | null>(null);
 
   const fetchVisits = async () => {
     if (!patientId) {
@@ -110,6 +115,34 @@ const PatientDetailsVisitHistoryComponent = () => {
 
   const getStageLabel = (stage: string) => {
     return stage.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+  };
+
+  const handleOpenViewModal = (visit: IPatientVisit) => {
+    setSelectedVisit(visit);
+    setModalMode("view");
+  };
+
+  const handleOpenEditModal = (visit: IPatientVisit) => {
+    setSelectedVisit(visit);
+    setModalMode("edit");
+  };
+
+  const handleOpenDeleteModal = (visit: IPatientVisit) => {
+    setSelectedVisit(visit);
+    setModalMode("delete");
+  };
+
+  const handleCloseModal = () => {
+    setSelectedVisit(null);
+    setModalMode(null);
+  };
+
+  const handleVisitUpdated = () => {
+    fetchVisits();
+  };
+
+  const handleVisitDeleted = () => {
+    fetchVisits();
   };
 
   const renderPagination = () => {
@@ -313,7 +346,7 @@ const PatientDetailsVisitHistoryComponent = () => {
                           <th>Visit Date</th>
                           <th>Current Stage</th>
                           <th>Status</th>
-                          <th className="no-sort" />
+                          <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -341,30 +374,30 @@ const PatientDetailsVisitHistoryComponent = () => {
                                 {getStatusLabel(visit.status)}
                               </span>
                             </td>
-                            <td className="text-end">
-                              <Link
-                                href="#"
-                                className="btn btn-icon btn-outline-light"
-                                data-bs-toggle="dropdown"
-                                aria-label="Visit actions menu"
-                              >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </Link>
-                              <ul className="dropdown-menu dropdown-menu-end p-2">
-                                <li>
-                                  <Link
-                                    href="#"
-                                    className="dropdown-item d-flex align-items-center"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      toast.info("View visit details will be implemented soon");
-                                    }}
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                              </ul>
+                            <td>
+                              <div className="d-flex align-items-center gap-2">
+                                <button
+                                  className="btn btn-sm btn-icon btn-outline-primary"
+                                  onClick={() => handleOpenViewModal(visit)}
+                                  title="View Details"
+                                >
+                                  <i className="ti ti-eye" />
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-icon btn-outline-success"
+                                  onClick={() => handleOpenEditModal(visit)}
+                                  title="Edit Visit"
+                                >
+                                  <i className="ti ti-edit" />
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-icon btn-outline-danger"
+                                  onClick={() => handleOpenDeleteModal(visit)}
+                                  title="Cancel Visit"
+                                >
+                                  <i className="ti ti-trash" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -382,6 +415,18 @@ const PatientDetailsVisitHistoryComponent = () => {
         </div>
       </div>
       <CommonFooter />
+
+      {modalMode && selectedVisit && (
+        <Suspense fallback={<div>Loading...</div>}>
+          <VisitModal
+            selectedVisit={selectedVisit}
+            mode={modalMode}
+            onVisitUpdated={handleVisitUpdated}
+            onVisitDeleted={handleVisitDeleted}
+            onClose={handleCloseModal}
+          />
+        </Suspense>
+      )}
     </>
   );
 };

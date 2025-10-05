@@ -40,6 +40,7 @@ const PatientDetailsPrescriptionComponent = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<PopulatedPrescription | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isViewing, setIsViewing] = useState(false);
 
   const fetchPrescriptions = async () => {
     if (!patientId) {
@@ -114,12 +115,21 @@ const PatientDetailsPrescriptionComponent = () => {
   const handleCreatePrescription = () => {
     setSelectedPrescription(null);
     setIsEditing(false);
+    setIsViewing(false);
+    setShowModal(true);
+  };
+
+  const handleViewPrescription = (prescription: PopulatedPrescription) => {
+    setSelectedPrescription(prescription);
+    setIsEditing(false);
+    setIsViewing(true);
     setShowModal(true);
   };
 
   const handleEditPrescription = (prescription: PopulatedPrescription) => {
     setSelectedPrescription(prescription);
     setIsEditing(true);
+    setIsViewing(false);
     setShowModal(true);
   };
 
@@ -142,6 +152,7 @@ const PatientDetailsPrescriptionComponent = () => {
     setShowModal(false);
     setSelectedPrescription(null);
     setIsEditing(false);
+    setIsViewing(false);
   };
 
   const renderPagination = () => {
@@ -359,7 +370,7 @@ const PatientDetailsPrescriptionComponent = () => {
                         <th>Prescribed By</th>
                         <th>Diagnosis</th>
                         <th className="no-sort">Status</th>
-                        <th className="no-sort" />
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -425,56 +436,30 @@ const PatientDetailsPrescriptionComponent = () => {
                               {getStatusLabel(prescription.status)}
                             </span>
                           </td>
-                          <td className="text-end">
-                            <Link
-                              href="#"
-                              className="btn btn-icon btn-outline-light"
-                              data-bs-toggle="dropdown"
-                              aria-label="Prescription actions menu"
-                            >
-                              <i className="ti ti-dots-vertical" aria-hidden="true" />
-                            </Link>
-                            <ul className="dropdown-menu dropdown-menu-end p-2">
-                              <li>
-                                <Link
-                                  href="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    toast.info("View prescription modal will be implemented soon");
-                                  }}
-                                >
-                                  <i className="ti ti-eye me-1" />
-                                  View Details
-                                </Link>
-                              </li>
-                              <li>
-                                <Link
-                                  href="#"
-                                  className="dropdown-item d-flex align-items-center"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleEditPrescription(prescription);
-                                  }}
-                                >
-                                  <i className="ti ti-edit me-1" />
-                                  Edit
-                                </Link>
-                              </li>
-                              <li>
-                                <Link
-                                  href="#"
-                                  className="dropdown-item d-flex align-items-center text-danger"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleDeletePrescription(prescription);
-                                  }}
-                                >
-                                  <i className="ti ti-trash me-1" />
-                                  Delete
-                                </Link>
-                              </li>
-                            </ul>
+                          <td>
+                            <div className="d-flex align-items-center gap-2">
+                              <button
+                                className="btn btn-sm btn-icon btn-outline-primary"
+                                onClick={() => handleViewPrescription(prescription)}
+                                title="View Details"
+                              >
+                                <i className="ti ti-eye" />
+                              </button>
+                              <button
+                                className="btn btn-sm btn-icon btn-outline-success"
+                                onClick={() => handleEditPrescription(prescription)}
+                                title="Edit Prescription"
+                              >
+                                <i className="ti ti-edit" />
+                              </button>
+                              <button
+                                className="btn btn-sm btn-icon btn-outline-danger"
+                                onClick={() => handleDeletePrescription(prescription)}
+                                title="Delete Prescription"
+                              >
+                                <i className="ti ti-trash" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -496,6 +481,7 @@ const PatientDetailsPrescriptionComponent = () => {
         <PrescriptionModal
           selectedPrescription={selectedPrescription}
           isEditing={isEditing}
+          isViewing={isViewing}
           patientId={patientId}
           onPrescriptionCreated={fetchPrescriptions}
           onPrescriptionUpdated={fetchPrescriptions}
