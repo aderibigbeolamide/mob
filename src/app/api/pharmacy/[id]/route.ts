@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Pharmacy from '@/models/Pharmacy';
 import { checkRole, UserRole } from '@/lib/middleware/auth';
-import { createNotification } from '@/lib/services/notification';
 
 export async function GET(
   req: NextRequest,
@@ -95,15 +94,6 @@ export async function PUT(
           .populate('branchId', 'name code city')
           .populate('createdBy', 'firstName lastName');
 
-        await createNotification({
-          userId: 'admin',
-          title: 'Product Updated',
-          message: `${updatedProduct?.productName} has been updated in pharmacy inventory`,
-          type: 'pharmacy',
-          link: `/pharmacy`,
-          metadata: { productId: params.id }
-        });
-
         return NextResponse.json({
           message: 'Product updated successfully',
           product: updatedProduct
@@ -150,15 +140,6 @@ export async function DELETE(
         }
 
         await Pharmacy.findByIdAndDelete(params.id);
-
-        await createNotification({
-          userId: 'admin',
-          title: 'Product Deleted',
-          message: `${product.productName} has been removed from pharmacy inventory`,
-          type: 'pharmacy',
-          link: `/pharmacy`,
-          metadata: { productId: params.id }
-        });
 
         return NextResponse.json({
           message: 'Product deleted successfully'

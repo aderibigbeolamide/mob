@@ -1,21 +1,142 @@
 "use client";
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import { all_routes } from "@/router/all_routes";
 import Link from "next/link";
 import { Suspense, lazy } from "react";
+import { apiClient } from "@/lib/services/api-client";
+import { Pharmacy, PaginationInfo, Branch } from "@/types/emr";
 
 const PharmacyModal = lazy(() => import("./modal/pharmacyModal"));
 
+interface PharmacyResponse {
+  products: Pharmacy[];
+  pagination: PaginationInfo;
+}
+
 const PharmacyComponent = () => {
+  const { data: session } = useSession();
+  const [products, setProducts] = useState<Pharmacy[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    limit: 20,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProduct, setSelectedProduct] = useState<Pharmacy | null>(null);
+  const [modalType, setModalType] = useState<"add" | "edit" | "view" | "delete" | null>(null);
+
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: "20",
+        ...(searchTerm && { search: searchTerm }),
+      });
+
+      const response = await apiClient.get<PharmacyResponse>(
+        `/api/pharmacy?${params.toString()}`,
+        { showErrorToast: true }
+      );
+
+      setProducts(response.products || []);
+      setPagination(response.pagination);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, searchTerm]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setCurrentPage(1);
+  };
+
+  const handleRefresh = () => {
+    fetchProducts();
+  };
+
+  const openModal = (type: "add" | "edit" | "view" | "delete", product?: Pharmacy) => {
+    setModalType(type);
+    setSelectedProduct(product || null);
+  };
+
+  const closeModal = () => {
+    setModalType(null);
+    setSelectedProduct(null);
+  };
+
+  const handleSuccess = () => {
+    closeModal();
+    fetchProducts();
+  };
+
+  const formatDate = (date: Date | string | undefined) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
+  const isExpiringSoon = (expiryDate: Date | string) => {
+    const expiry = new Date(expiryDate);
+    const today = new Date();
+    const daysUntilExpiry = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+  };
+
+  const isExpired = (expiryDate: Date | string) => {
+    return new Date(expiryDate) < new Date();
+  };
+
+  const getBranchName = (branchId: string | Branch | undefined) => {
+    if (!branchId) return "N/A";
+    if (typeof branchId === 'string') return branchId;
+    return branchId.name || "N/A";
+  };
+
+  const renderSkeletonRow = () => (
+    <tr>
+      <td><div className="skeleton-loader" style={{ width: '60px', height: '16px' }}></div></td>
+      <td><div className="skeleton-loader" style={{ width: '120px', height: '16px' }}></div></td>
+      <td><div className="skeleton-loader" style={{ width: '80px', height: '16px' }}></div></td>
+      <td><div className="skeleton-loader" style={{ width: '80px', height: '16px' }}></div></td>
+      <td><div className="skeleton-loader" style={{ width: '100px', height: '16px' }}></div></td>
+      <td><div className="skeleton-loader" style={{ width: '100px', height: '16px' }}></div></td>
+      <td><div className="skeleton-loader" style={{ width: '60px', height: '16px' }}></div></td>
+      <td><div className="skeleton-loader" style={{ width: '100px', height: '16px' }}></div></td>
+      <td><div className="skeleton-loader" style={{ width: '100px', height: '16px' }}></div></td>
+      <td><div className="skeleton-loader" style={{ width: '60px', height: '16px' }}></div></td>
+      <td><div className="skeleton-loader" style={{ width: '80px', height: '16px' }}></div></td>
+    </tr>
+  );
+
   return (
     <>
-      {/* ========================
-			Start Page Content
-		========================= */}
       <div className="page-wrapper">
-        {/* Start Content */}
         <div className="content">
-          {/* Page Header */}
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
             <div className="breadcrumb-arrow">
               <h4 className="mb-1">Pharmacy</h4>
@@ -31,6 +152,10 @@ const PharmacyComponent = () => {
             <div className="gap-2 d-flex align-items-center flex-wrap">
               <Link
                 href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleRefresh();
+                }}
                 className="btn btn-icon btn-white"
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
@@ -41,790 +166,290 @@ const PharmacyComponent = () => {
               </Link>
               <Link
                 href="#"
-                className="btn btn-icon btn-white"
-                data-bs-toggle="tooltip"
-                data-bs-placement="top"
-                aria-label="Print"
-                data-bs-original-title="Print"
-              >
-                <i className="ti ti-printer" />
-              </Link>
-              <Link
-                href="#"
-                className="btn btn-icon btn-white"
-                data-bs-toggle="tooltip"
-                data-bs-placement="top"
-                aria-label="Download"
-                data-bs-original-title="Download"
-              >
-                <i className="ti ti-cloud-download" />
-              </Link>
-              <Link
-                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openModal("add");
+                }}
                 className="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#add_modal"
               >
                 <i className="ti ti-square-rounded-plus me-1" />
                 New Product
               </Link>
             </div>
           </div>
-          {/* End Page Header */}
-          {/* card start */}
+
           <div className="card mb-0">
             <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
               <h6 className="d-inline-flex align-items-center mb-0">
-                Total Products<span className="badge bg-danger ms-2">658</span>
+                Total Products
+                <span className="badge bg-primary ms-2">
+                  {loading ? "..." : pagination.totalCount}
+                </span>
               </h6>
               <div className="d-flex align-items-center flex-wrap gap-2">
-                <div className="search-set">
+                <form onSubmit={handleSearch} className="search-set">
                   <div className="d-flex align-items-center flex-wrap gap-2">
-                   
+                    <div className="search-input">
+                      <Link href="#" className="btn btn-searchset">
+                        <i className="ti ti-search" />
+                      </Link>
+                      <input
+                        type="search"
+                        className="form-control"
+                        placeholder="Search by name, ID, manufacturer..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="dropdown">
-                  <Link
-                    href="#"
-                    className="dropdown-toggle btn btn-md btn-outline-light d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                   aria-label="Pharmacy item actions menu" aria-haspopup="true" aria-expanded="false">
-                    <i className="ti ti-sort-descending-2 me-1" />
-                    <span className="me-1">Sort By : </span> Newest
-                  </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-2" role="menu">
-                    <li>
-                      <Link href="#" className="dropdown-item rounded-1" role="menuitem">
-                        Newest
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="#" className="dropdown-item rounded-1" role="menuitem">
-                        Oldest
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
+                </form>
               </div>
             </div>
             <div className="card-body">
-              {/* table start */}
-              <div className="table-responsive table-nowrap">
+              <div className="table-responsive">
                 <table className="table mb-0 border">
                   <thead className="table-light">
                     <tr>
                       <th>ID</th>
                       <th>Product Name</th>
-                      <th className="no-sort">Price</th>
-                      <th className="no-sort">Offer Price</th>
+                      <th>Price</th>
+                      <th>Offer Price</th>
                       <th>Purchase Date</th>
                       <th>Expiry Date</th>
                       <th>Stock</th>
-                      <th className="no-sort">Description</th>
-                      <th>Unit (ml/mg)</th>
-                      <th className="no-sort" />
+                      <th>Branch</th>
+                      <th>Unit</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #PR0025
-                        </Link>
-                      </td>
-                      <td>Acetaminophen</td>
-                      <td>$500</td>
-                      <td>$50</td>
-                      <td>17 Jun 2025</td>
-                      <td>22 Jun 2025</td>
-                      <td>280</td>
-                      <td>
-                        <p className="mb-0 text-truncate">
-                          Prevents heart attacks and strokes
-                        </p>
-                      </td>
-                      <td>20mg</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Pharmacy item actions menu"
-                          aria-haspopup="true"
-                          aria-expanded="false"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2" role="menu">
-                          <li>
+                    {loading ? (
+                      <>
+                        {renderSkeletonRow()}
+                        {renderSkeletonRow()}
+                        {renderSkeletonRow()}
+                        {renderSkeletonRow()}
+                        {renderSkeletonRow()}
+                      </>
+                    ) : products.length === 0 ? (
+                      <tr>
+                        <td colSpan={11} className="text-center py-4">
+                          <div className="d-flex flex-column align-items-center">
+                            <i className="ti ti-package fs-1 text-muted mb-2" />
+                            <p className="text-muted mb-0">No products found</p>
+                            {searchTerm && (
+                              <button
+                                onClick={() => {
+                                  setSearchTerm("");
+                                  setCurrentPage(1);
+                                }}
+                                className="btn btn-sm btn-link"
+                              >
+                                Clear search
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      products.map((product) => (
+                        <tr key={product._id}>
+                          <td>
                             <Link
                               href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                             role="menuitem">
-                              <i className="ti ti-eye me-1" />
-                              View Details
+                              onClick={(e) => {
+                                e.preventDefault();
+                                openModal("view", product);
+                              }}
+                              className="text-primary"
+                            >
+                              {product.productId}
                             </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit_modal"
-                             role="menuitem">
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                             role="menuitem">
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #PR0024
-                        </Link>
-                      </td>
-                      <td>Cymbalta</td>
-                      <td>$500</td>
-                      <td>$50</td>
-                      <td>10 Jun 2025</td>
-                      <td>15 Jun 2025</td>
-                      <td>468</td>
-                      <td>
-                        <p className="mb-0 text-truncate">
-                          Treats hypertension, angina, and heart failure
-                        </p>
-                      </td>
-                      <td>17mg</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Pharmacy item actions menu"
-                          aria-haspopup="true"
-                          aria-expanded="false"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2" role="menu">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                             role="menuitem">
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit_modal"
-                             role="menuitem">
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                             role="menuitem">
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #PR0023
-                        </Link>
-                      </td>
-                      <td>Dupixent</td>
-                      <td>$300</td>
-                      <td>$30</td>
-                      <td>22 May 2025</td>
-                      <td>27 May 2025</td>
-                      <td>261</td>
-                      <td>
-                        <p className="mb-0 text-truncate">
-                          Used for muscle spasms and spasticity
-                        </p>
-                      </td>
-                      <td>40mg</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Pharmacy item actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2" role="menu">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                             role="menuitem">
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit_modal"
-                             role="menuitem">
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                             role="menuitem">
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #PR0022
-                        </Link>
-                      </td>
-                      <td>Entresto</td>
-                      <td>$200</td>
-                      <td>$20</td>
-                      <td>15 May 2025</td>
-                      <td>20 May 2025</td>
-                      <td>550</td>
-                      <td>
-                        <p className="mb-0 text-truncate">
-                          Treats depression and panic disorder
-                        </p>
-                      </td>
-                      <td>28mg</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Pharmacy item actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2" role="menu">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                             role="menuitem">
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit_modal"
-                             role="menuitem">
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                             role="menuitem">
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #PR0021
-                        </Link>
-                      </td>
-                      <td>Rybelsus</td>
-                      <td>$100</td>
-                      <td>$10</td>
-                      <td>30 Apr 2025</td>
-                      <td>5 May 2025</td>
-                      <td>303</td>
-                      <td>
-                        <p className="mb-0 text-truncate">
-                          Treats angina by dilating blood vessels.
-                        </p>
-                      </td>
-                      <td>30ml</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Pharmacy item actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2" role="menu">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                             role="menuitem">
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit_modal"
-                             role="menuitem">
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                             role="menuitem">
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #PR0020
-                        </Link>
-                      </td>
-                      <td>Pantoprazole</td>
-                      <td>$600</td>
-                      <td>$60</td>
-                      <td>25 Apr 2025</td>
-                      <td>30 Apr 2025</td>
-                      <td>468</td>
-                      <td>
-                        <p className="mb-0 text-truncate">
-                          Used for schizophrenia and bipolar disorder
-                        </p>
-                      </td>
-                      <td>10mg</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Pharmacy item actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2" role="menu">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                             role="menuitem">
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit_modal"
-                             role="menuitem">
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                             role="menuitem">
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #PR0019
-                        </Link>
-                      </td>
-                      <td>Prednisone</td>
-                      <td>$700</td>
-                      <td>$70</td>
-                      <td>13 Mar 2025</td>
-                      <td>18 Mar 2025</td>
-                      <td>100</td>
-                      <td>
-                        <p className="mb-0">Reduces stomach acid</p>
-                      </td>
-                      <td>20ml</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Pharmacy item actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2" role="menu">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                             role="menuitem">
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit_modal"
-                             role="menuitem">
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                             role="menuitem">
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #PR0018
-                        </Link>
-                      </td>
-                      <td>Entyvio</td>
-                      <td>$800</td>
-                      <td>$80</td>
-                      <td>16 Feb 2025</td>
-                      <td>21 Feb 2025</td>
-                      <td>250</td>
-                      <td>
-                        <p className="mb-0 text-truncate">
-                          For chest pain associated with heart conditions
-                        </p>
-                      </td>
-                      <td>25mg</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Pharmacy item actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2" role="menu">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                             role="menuitem">
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit_modal"
-                             role="menuitem">
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                             role="menuitem">
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #PR0017
-                        </Link>
-                      </td>
-                      <td>Farxiga</td>
-                      <td>$900</td>
-                      <td>$90</td>
-                      <td>20 Jan 2025</td>
-                      <td>25 Jan 2025</td>
-                      <td>180</td>
-                      <td>
-                        <p className="mb-0 text-truncate">
-                          Treats bacterial infections
-                        </p>
-                      </td>
-                      <td>35mg</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Pharmacy item actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2" role="menu">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                             role="menuitem">
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit_modal"
-                             role="menuitem">
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                             role="menuitem">
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link
-                          href="#"
-                          data-bs-toggle="modal"
-                          data-bs-target="#view_modal"
-                        >
-                          #PR0016
-                        </Link>
-                      </td>
-                      <td>Apexitecan</td>
-                      <td>$500</td>
-                      <td>$50</td>
-                      <td>15 Jan 2025</td>
-                      <td>20 Jan 2025</td>
-                      <td>220</td>
-                      <td>
-                        <p className="mb-0 text-truncate">
-                          Reduces stomach acid, treats acid reflux
-                        </p>
-                      </td>
-                      <td>45mg</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Pharmacy item actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2" role="menu">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                             role="menuitem">
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#edit_modal"
-                             role="menuitem">
-                              <i className="ti ti-edit me-1" />
-                              Edit
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                             role="menuitem">
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
+                          </td>
+                          <td>
+                            <div>
+                              <div className="fw-medium">{product.productName}</div>
+                              {product.genericName && (
+                                <small className="text-muted">{product.genericName}</small>
+                              )}
+                            </div>
+                          </td>
+                          <td>{formatCurrency(product.price)}</td>
+                          <td>
+                            {product.offerPrice ? (
+                              <span className="text-success fw-medium">
+                                {formatCurrency(product.offerPrice)}
+                              </span>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                          <td>{formatDate(product.purchaseDate)}</td>
+                          <td>
+                            <div className="d-flex align-items-center gap-1">
+                              {formatDate(product.expiryDate)}
+                              {isExpired(product.expiryDate) && (
+                                <span className="badge bg-danger">Expired</span>
+                              )}
+                              {!isExpired(product.expiryDate) && isExpiringSoon(product.expiryDate) && (
+                                <span className="badge bg-warning">Expiring Soon</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center gap-1">
+                              <span className={product.stock <= (product.minStockLevel || 10) ? 'text-danger fw-medium' : ''}>
+                                {product.stock}
+                              </span>
+                              {product.stock <= (product.minStockLevel || 10) && (
+                                <span className="badge bg-danger">Low</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>{getBranchName(product.branchId)}</td>
+                          <td>{product.unit}</td>
+                          <td>
+                            <span className={`badge ${product.isActive ? 'bg-success' : 'bg-secondary'}`}>
+                              {product.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center gap-1">
+                              <Link
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  openModal("view", product);
+                                }}
+                                className="btn btn-icon btn-sm btn-light"
+                                data-bs-toggle="tooltip"
+                                title="View"
+                              >
+                                <i className="ti ti-eye" />
+                              </Link>
+                              <Link
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  openModal("edit", product);
+                                }}
+                                className="btn btn-icon btn-sm btn-light"
+                                data-bs-toggle="tooltip"
+                                title="Edit"
+                              >
+                                <i className="ti ti-edit" />
+                              </Link>
+                              <Link
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  openModal("delete", product);
+                                }}
+                                className="btn btn-icon btn-sm btn-light"
+                                data-bs-toggle="tooltip"
+                                title="Delete"
+                              >
+                                <i className="ti ti-trash" />
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
-              {/* table end */}
+
+              {!loading && products.length > 0 && (
+                <div className="d-flex align-items-center justify-content-between flex-wrap mt-3">
+                  <div className="text-muted">
+                    Showing {((currentPage - 1) * pagination.limit) + 1} to{" "}
+                    {Math.min(currentPage * pagination.limit, pagination.totalCount)} of{" "}
+                    {pagination.totalCount} entries
+                  </div>
+                  <nav>
+                    <ul className="pagination mb-0">
+                      <li className={`page-item ${!pagination.hasPreviousPage ? 'disabled' : ''}`}>
+                        <Link
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (pagination.hasPreviousPage) setCurrentPage(currentPage - 1);
+                          }}
+                          className="page-link"
+                        >
+                          Previous
+                        </Link>
+                      </li>
+                      {[...Array(pagination.totalPages)].map((_, index) => {
+                        const pageNumber = index + 1;
+                        if (
+                          pageNumber === 1 ||
+                          pageNumber === pagination.totalPages ||
+                          (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                        ) {
+                          return (
+                            <li
+                              key={pageNumber}
+                              className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}
+                            >
+                              <Link
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setCurrentPage(pageNumber);
+                                }}
+                                className="page-link"
+                              >
+                                {pageNumber}
+                              </Link>
+                            </li>
+                          );
+                        } else if (
+                          pageNumber === currentPage - 2 ||
+                          pageNumber === currentPage + 2
+                        ) {
+                          return (
+                            <li key={pageNumber} className="page-item disabled">
+                              <span className="page-link">...</span>
+                            </li>
+                          );
+                        }
+                        return null;
+                      })}
+                      <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
+                        <Link
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (pagination.hasNextPage) setCurrentPage(currentPage + 1);
+                          }}
+                          className="page-link"
+                        >
+                          Next
+                        </Link>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              )}
             </div>
           </div>
-          {/* card start */}
         </div>
-        {/* End Content */}
-        {/* Start Footer */}
         <CommonFooter />
-        {/* End Footer */}
       </div>
-      {/* ========================
-			End Page Content
-		========================= */}
-      <Suspense fallback={<div />}><PharmacyModal /></Suspense>
+
+      <Suspense fallback={<div>Loading...</div>}>
+        {modalType && (
+          <PharmacyModal
+            type={modalType}
+            product={selectedProduct}
+            onClose={closeModal}
+            onSuccess={handleSuccess}
+          />
+        )}
+      </Suspense>
     </>
   );
 };

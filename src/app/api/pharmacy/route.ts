@@ -8,7 +8,6 @@ import {
   extractPaginationParams, 
   buildPaginationResponse 
 } from '@/lib/utils/queryHelpers';
-import { createNotification } from '@/lib/services/notification';
 
 export async function POST(req: NextRequest) {
   return checkRole([UserRole.PHARMACY, UserRole.ADMIN])(
@@ -71,15 +70,6 @@ export async function POST(req: NextRequest) {
           .populate('branchId', 'name code city')
           .populate('createdBy', 'firstName lastName email');
 
-        await createNotification({
-          userId: 'admin',
-          title: 'New Product Added',
-          message: `${body.productName} has been added to pharmacy inventory`,
-          type: 'pharmacy',
-          link: `/pharmacy`,
-          metadata: { productId: product._id }
-        });
-
         return NextResponse.json(
           { 
             message: 'Product created successfully',
@@ -118,7 +108,8 @@ export async function GET(req: NextRequest) {
         await dbConnect();
 
         const { searchParams } = new URL(req.url);
-        const { page, limit, skip } = extractPaginationParams(searchParams);
+        const { page, limit } = extractPaginationParams(searchParams);
+        const skip = (page - 1) * limit;
         
         const search = searchParams.get('search') || '';
         const category = searchParams.get('category');
@@ -148,9 +139,10 @@ export async function GET(req: NextRequest) {
 
         if (branchId) {
           query.branchId = branchId;
-        } else if (!shouldAllowCrossBranch(session.user.role)) {
-          query = applyBranchFilter(query, session.user.branchId);
         }
+
+        const allowCrossBranch = true;
+        applyBranchFilter(query, session.user, allowCrossBranch);
 
         const totalCount = await Pharmacy.countDocuments(query);
 
