@@ -159,6 +159,93 @@ export interface Staff {
   updatedAt?: Date;
 }
 
+export interface PatientVisit {
+  _id?: string;
+  visitNumber: string;
+  patient: string | Patient;
+  appointment?: string | Appointment;
+  branchId: string | Branch;
+  visitDate: Date;
+  currentStage: 'front_desk' | 'nurse' | 'doctor' | 'lab' | 'pharmacy' | 'billing' | 'returned_to_front_desk' | 'completed';
+  status: 'in_progress' | 'completed' | 'cancelled';
+  stages: {
+    frontDesk?: {
+      clockedInBy?: string | any;
+      clockedInAt?: Date;
+      clockedOutBy?: string | any;
+      clockedOutAt?: Date;
+      notes?: string;
+      nextAction?: string;
+    };
+    nurse?: {
+      clockedInBy?: string | any;
+      clockedInAt?: Date;
+      clockedOutBy?: string | any;
+      clockedOutAt?: Date;
+      vitalSigns?: {
+        bloodPressure?: string;
+        temperature?: number;
+        pulse?: number;
+        weight?: number;
+        height?: number;
+        bmi?: number;
+      };
+      notes?: string;
+      nextAction?: string;
+    };
+    doctor?: {
+      clockedInBy?: string | any;
+      clockedInAt?: Date;
+      clockedOutBy?: string | any;
+      clockedOutAt?: Date;
+      diagnosis?: string;
+      prescription?: string;
+      labTests?: string[];
+      notes?: string;
+      nextAction?: string;
+    };
+    lab?: {
+      clockedInBy?: string | any;
+      clockedInAt?: Date;
+      clockedOutBy?: string | any;
+      clockedOutAt?: Date;
+      notes?: string;
+      nextAction?: string;
+    };
+    pharmacy?: {
+      clockedInBy?: string | any;
+      clockedInAt?: Date;
+      clockedOutBy?: string | any;
+      clockedOutAt?: Date;
+      notes?: string;
+      nextAction?: string;
+    };
+    billing?: {
+      clockedInBy?: string | any;
+      clockedInAt?: Date;
+      clockedOutBy?: string | any;
+      clockedOutAt?: Date;
+      notes?: string;
+      nextAction?: string;
+    };
+    returnedToFrontDesk?: {
+      clockedInBy?: string | any;
+      clockedInAt?: Date;
+      clockedOutBy?: string | any;
+      clockedOutAt?: Date;
+      notes?: string;
+      nextAction?: string;
+    };
+  };
+  finalClockOut?: {
+    clockedOutBy?: string | any;
+    clockedOutAt?: Date;
+    notes?: string;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export interface PaginationInfo {
   currentPage: number;
   totalPages: number;
