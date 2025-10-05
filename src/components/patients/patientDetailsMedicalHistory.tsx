@@ -3,13 +3,136 @@ import Link from "next/link";
 import PatientDetailsHeader from "./PatientDetailsHeader";
 import { all_routes } from "@/router/all_routes";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { patientService } from "@/lib/services/patientService";
+import { IPatient } from "@/models/Patient";
+import { toast } from "react-toastify";
 
 const PatientDetailsMedicalHistoryComponent = () => {
+  const searchParams = useSearchParams();
+  const patientId = searchParams.get("id");
+  
+  const [patient, setPatient] = useState<IPatient | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [formData, setFormData] = useState({
+    chronicConditions: [] as string[],
+    medications: [] as string[],
+    allergies: [] as string[],
+    notes: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (patientId) {
+      fetchPatientData();
+    } else {
+      setLoading(false);
+    }
+  }, [patientId]);
+
+  const fetchPatientData = async () => {
+    if (!patientId) return;
+    
+    try {
+      setLoading(true);
+      const response = await patientService.getById(patientId);
+      setPatient(response.patient);
+      
+      setFormData({
+        chronicConditions: response.patient.chronicConditions || [],
+        medications: response.patient.medications || [],
+        allergies: response.patient.allergies || [],
+        notes: response.patient.notes || "",
+      });
+    } catch (error: any) {
+      console.error("Error fetching patient data:", error);
+      toast.error(error.message || "Failed to fetch patient data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenEditModal = () => {
+    if (patient) {
+      setFormData({
+        chronicConditions: patient.chronicConditions || [],
+        medications: patient.medications || [],
+        allergies: patient.allergies || [],
+        notes: patient.notes || "",
+      });
+      setShowEditModal(true);
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleArrayInputChange = (field: string, value: string) => {
+    const arrayValue = value.split(",").map(item => item.trim()).filter(item => item !== "");
+    setFormData(prev => ({
+      ...prev,
+      [field]: arrayValue
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!patientId) return;
+    
+    try {
+      setSubmitting(true);
+      
+      await patientService.update(patientId, {
+        chronicConditions: formData.chronicConditions,
+        medications: formData.medications,
+        allergies: formData.allergies,
+        notes: formData.notes,
+      });
+      
+      toast.success("Medical history updated successfully");
+      await fetchPatientData();
+      handleCloseEditModal();
+    } catch (error: any) {
+      console.error("Error updating medical history:", error);
+      toast.error(error.message || "Failed to update medical history");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!patientId) {
+    return (
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="text-center py-5">
+            <i className="ti ti-alert-circle display-1 text-danger mb-3" />
+            <h5 className="text-danger">No Patient ID Provided</h5>
+            <p className="text-muted">Please select a patient to view medical history</p>
+            <Link href={all_routes.patients} className="btn btn-primary mt-3">
+              Go to Patients
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* ========================
-			Start Page Content
-		========================= */}
+                        Start Page Content
+                ========================= */}
       <div className="page-wrapper">
         {/* Start Content */}
         <div className="content">
@@ -42,234 +165,136 @@ const PatientDetailsMedicalHistoryComponent = () => {
           <div className="card mb-0">
             <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
               <h5 className="d-inline-flex align-items-center mb-0">
-                Medical History<span className="badge bg-danger ms-2">658</span>
+                Medical History
               </h5>
-              <div className="d-flex align-items-center flex-wrap">
-                <div className="dropdown">
-                  <Link
-                    href="#"
-                    className="dropdown-toggle btn btn-md btn-outline-light d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                   aria-label="Patient actions menu" aria-haspopup="true" aria-expanded="false">
-                    <i className="ti ti-sort-descending-2 me-1" />
-                    <span className="me-1">Sort By : </span> Newest
-                  </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-2">
-                    <li>
-                      <Link href="#" className="dropdown-item rounded-1">
-                        Newest
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="#" className="dropdown-item rounded-1">
-                        Oldest
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
+              <div className="d-flex align-items-center flex-wrap gap-2">
+                {!loading && patient && (
+                  <button
+                    onClick={handleOpenEditModal}
+                    className="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#edit_medical_history_modal"
+                  >
+                    <i className="ti ti-edit me-1" />
+                    Edit Medical History
+                  </button>
+                )}
               </div>
             </div>
             <div className="card-body">
-              {/* table start */}
-              <div className="table-responsive table-nowrap">
-                <table className="table mb-0 border">
-                  <thead className="table-light">
-                    <tr>
-                      <th className="no-sort">Illness Name</th>
-                      <th>Illness Date</th>
-                      <th className="no-sort" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Throat Pain</td>
-                      <td>17 Jun 2025</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                         aria-label="Patient actions menu" aria-haspopup="true" aria-expanded="false">
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Malaria</td>
-                      <td>10 Jun 2025</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                         aria-label="Patient actions menu" aria-haspopup="true" aria-expanded="false">
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Fever</td>
-                      <td>22 May 2025</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                         aria-label="Patient actions menu" aria-haspopup="true" aria-expanded="false">
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Headpain</td>
-                      <td>15 May 2025</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                         aria-label="Patient actions menu" aria-haspopup="true" aria-expanded="false">
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Influenza</td>
-                      <td>30 Apr 2025</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                         aria-label="Patient actions menu" aria-haspopup="true" aria-expanded="false">
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              {/* table end */}
+              {loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-3 text-muted">Loading medical history...</p>
+                </div>
+              ) : !patient ? (
+                <div className="text-center py-5">
+                  <i className="ti ti-alert-circle display-1 text-muted mb-3" />
+                  <h5 className="text-muted">Patient Not Found</h5>
+                  <p className="text-muted">Unable to load patient data</p>
+                </div>
+              ) : (
+                <div className="row g-4">
+                  {/* Chronic Conditions */}
+                  <div className="col-md-6">
+                    <div className="card border h-100">
+                      <div className="card-header bg-light">
+                        <h6 className="mb-0 d-flex align-items-center">
+                          <i className="ti ti-heart-pulse me-2 text-danger" />
+                          Chronic Conditions
+                        </h6>
+                      </div>
+                      <div className="card-body">
+                        {formData.chronicConditions.length === 0 ? (
+                          <p className="text-muted mb-0">No chronic conditions recorded</p>
+                        ) : (
+                          <ul className="list-unstyled mb-0">
+                            {formData.chronicConditions.map((condition, index) => (
+                              <li key={index} className="mb-2">
+                                <i className="ti ti-point-filled text-primary me-1" />
+                                {condition}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Current Medications */}
+                  <div className="col-md-6">
+                    <div className="card border h-100">
+                      <div className="card-header bg-light">
+                        <h6 className="mb-0 d-flex align-items-center">
+                          <i className="ti ti-pill me-2 text-success" />
+                          Current Medications
+                        </h6>
+                      </div>
+                      <div className="card-body">
+                        {formData.medications.length === 0 ? (
+                          <p className="text-muted mb-0">No medications recorded</p>
+                        ) : (
+                          <ul className="list-unstyled mb-0">
+                            {formData.medications.map((medication, index) => (
+                              <li key={index} className="mb-2">
+                                <i className="ti ti-point-filled text-success me-1" />
+                                {medication}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Allergies */}
+                  <div className="col-md-6">
+                    <div className="card border h-100">
+                      <div className="card-header bg-light">
+                        <h6 className="mb-0 d-flex align-items-center">
+                          <i className="ti ti-alert-triangle me-2 text-warning" />
+                          Allergies
+                        </h6>
+                      </div>
+                      <div className="card-body">
+                        {formData.allergies.length === 0 ? (
+                          <p className="text-muted mb-0">No allergies recorded</p>
+                        ) : (
+                          <ul className="list-unstyled mb-0">
+                            {formData.allergies.map((allergy, index) => (
+                              <li key={index} className="mb-2">
+                                <i className="ti ti-point-filled text-warning me-1" />
+                                {allergy}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Medical Notes */}
+                  <div className="col-md-6">
+                    <div className="card border h-100">
+                      <div className="card-header bg-light">
+                        <h6 className="mb-0 d-flex align-items-center">
+                          <i className="ti ti-notes me-2 text-info" />
+                          Medical Notes
+                        </h6>
+                      </div>
+                      <div className="card-body">
+                        {!formData.notes ? (
+                          <p className="text-muted mb-0">No medical notes recorded</p>
+                        ) : (
+                          <p className="mb-0">{formData.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           {/* card end */}
@@ -280,96 +305,131 @@ const PatientDetailsMedicalHistoryComponent = () => {
         {/* End Footer */}
       </div>
       {/* ========================
-			End Page Content
-		========================= */}
-      <>
-        {/* Start Delete Modal  */}
-        <div className="modal fade" id="delete_modal">
-          <div className="modal-dialog modal-dialog-centered modal-sm">
-            <div className="modal-content">
-              <div className="modal-body text-center position-relative">
-                <div className="mb-2 position-relative z-1">
-                  <span className="avatar avatar-md bg-danger rounded-circle">
-                    <i className="ti ti-trash fs-24" />
-                  </span>
-                </div>
-                <h5 className="mb-1">Delete Confirmation</h5>
-                <p className="mb-3">Are you sure you want to delete?</p>
-                <div className="d-flex justify-content-center gap-2">
-                  <Link
-                    href="#"
-                    className="btn btn-white w-100 position-relative z-1"
-                    data-bs-dismiss="modal"
-                  >
-                    Cancel
-                  </Link>
-                  <Link
-                    href="#"
-                    className="btn btn-danger w-100 position-relative z-1"
-                    data-bs-dismiss="modal"
-                  >
-                    Yes, Delete
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* End Delete Modal  */}
-        {/* Start view Modal */}
-        <div id="view_modal" className="modal fade">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header justify-content-between">
-                <h5 className="modal-title text-truncate">Medical History</h5>
+                        End Page Content
+                ========================= */}
+
+      {/* Edit Medical History Modal */}
+      <div 
+        className={`modal fade ${showEditModal ? "show" : ""}`} 
+        id="edit_medical_history_modal"
+        style={{ display: showEditModal ? "block" : "none" }}
+        aria-hidden={!showEditModal}
+      >
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content">
+            <form onSubmit={handleSubmit}>
+              <div className="modal-header">
+                <h5 className="modal-title">Edit Medical History</h5>
                 <button
                   type="button"
-                  className="btn-close btn-close-modal"
-                  data-bs-dismiss="modal"
+                  className="btn-close"
+                  onClick={handleCloseEditModal}
                   aria-label="Close"
-                >
-                  <i className="ti ti-circle-x-filled" />
-                </button>
+                  disabled={submitting}
+                />
               </div>
               <div className="modal-body">
-                <div className="d-flex align-items-center mb-4">
-                  <Link href="#" className="avatar flex-shrink-0 bg-primary">
-                    <i className="ti ti-history fs-16" />
-                  </Link>
-                  <div className="ms-2">
-                    <div>
-                        <h6 className="fw-semibold fs-14 text-truncate mb-1">Throat Pain</h6>
-                      <p className="fs-13 mb-0">25 Jan 2024, (2yrs ago)</p>
-                    </div>
+                <div className="row g-3">
+                  {/* Chronic Conditions */}
+                  <div className="col-12">
+                    <label className="form-label">
+                      <i className="ti ti-heart-pulse me-1 text-danger" />
+                      Chronic Conditions
+                    </label>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      placeholder="Enter chronic conditions separated by commas (e.g., Diabetes, Hypertension, Asthma)"
+                      value={formData.chronicConditions.join(", ")}
+                      onChange={(e) => handleArrayInputChange("chronicConditions", e.target.value)}
+                      disabled={submitting}
+                    />
+                    <small className="text-muted">Separate multiple conditions with commas</small>
+                  </div>
+
+                  {/* Current Medications */}
+                  <div className="col-12">
+                    <label className="form-label">
+                      <i className="ti ti-pill me-1 text-success" />
+                      Current Medications
+                    </label>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      placeholder="Enter current medications separated by commas (e.g., Metformin 500mg, Lisinopril 10mg)"
+                      value={formData.medications.join(", ")}
+                      onChange={(e) => handleArrayInputChange("medications", e.target.value)}
+                      disabled={submitting}
+                    />
+                    <small className="text-muted">Separate multiple medications with commas</small>
+                  </div>
+
+                  {/* Allergies */}
+                  <div className="col-12">
+                    <label className="form-label">
+                      <i className="ti ti-alert-triangle me-1 text-warning" />
+                      Allergies
+                    </label>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      placeholder="Enter allergies separated by commas (e.g., Penicillin, Peanuts, Latex)"
+                      value={formData.allergies.join(", ")}
+                      onChange={(e) => handleArrayInputChange("allergies", e.target.value)}
+                      disabled={submitting}
+                    />
+                    <small className="text-muted">Separate multiple allergies with commas</small>
+                  </div>
+
+                  {/* Medical Notes */}
+                  <div className="col-12">
+                    <label className="form-label">
+                      <i className="ti ti-notes me-1 text-info" />
+                      Medical Notes
+                    </label>
+                    <textarea
+                      className="form-control"
+                      rows={4}
+                      placeholder="Enter any additional medical notes or observations"
+                      value={formData.notes}
+                      onChange={(e) => handleInputChange("notes", e.target.value)}
+                      disabled={submitting}
+                    />
                   </div>
                 </div>
-                <h6 className="mb-2">Assessment</h6>
-                <ol className="ps-3">
-                  <li className="mb-2">
-                    Applying a cool compress to the forehead or the back of the
-                    neck may provide some relief. Avoid using cold water, as it
-                    can cause shivering and may increase body temperature.
-                  </li>
-                  <li className="mb-4">
-                    Keep an eye on the person's symptoms and seek medical
-                    attention if the fever persists, is very high, or if there
-                    are other concerning symptoms such as difficulty breathing,
-                    persistent vomiting, or severe headache.
-                  </li>
-                </ol>
-                <h6 className="fw-semibold mb-2">Notes</h6>
-                <p className="mb-0">
-                  If the fever is accompanied by other worrisome symptoms or if
-                  it lasts for more than a few days, it's essential to consult
-                  with a healthcare professional. They can provide a proper
-                  diagnosis and recommend appropriate treatment.
-                </p>
               </div>
-            </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleCloseEditModal}
+                  disabled={submitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="ti ti-check me-1" />
+                      Update Medical History
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-        {/* End view Modal */}
-      </>
+      </div>
+      {showEditModal && <div className="modal-backdrop fade show" onClick={handleCloseEditModal} />}
     </>
   );
 };

@@ -1,19 +1,112 @@
 "use client";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PatientDetailsHeader from "./PatientDetailsHeader";
 import { all_routes } from "@/router/all_routes";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import DocumentModal from "./modals/documentModal";
+import { documentService, PatientDocumentPopulated } from "@/lib/services/documentService";
+import { toast } from "react-toastify";
 
 const PatientDetailsDocumentsComponent = () => {
+  const searchParams = useSearchParams();
+  const patientId = searchParams.get("id");
+
+  const [documents, setDocuments] = useState<PatientDocumentPopulated[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [deleteModalData, setDeleteModalData] = useState<{
+    show: boolean;
+    document: PatientDocumentPopulated | null;
+  }>({ show: false, document: null });
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+
+  useEffect(() => {
+    if (patientId) {
+      fetchDocuments();
+    }
+  }, [patientId]);
+
+  const fetchDocuments = async () => {
+    if (!patientId) return;
+
+    try {
+      setLoading(true);
+      const response = await documentService.getByPatient(patientId);
+      setDocuments(response.documents || []);
+    } catch (error: any) {
+      console.error("Error fetching documents:", error);
+      toast.error("Failed to load documents");
+      setDocuments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async (document: PatientDocumentPopulated) => {
+    try {
+      const blob = await documentService.download(document._id);
+      const url = window.URL.createObjectURL(blob);
+      const link = window.document.createElement("a");
+      link.href = url;
+      link.download = document.fileName;
+      window.document.body.appendChild(link);
+      link.click();
+      window.document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Document downloaded successfully");
+    } catch (error: any) {
+      console.error("Error downloading document:", error);
+      toast.error("Failed to download document");
+    }
+  };
+
+  const handleDeleteClick = (document: PatientDocumentPopulated) => {
+    setDeleteModalData({ show: true, document });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModalData.document) return;
+
+    try {
+      await documentService.delete(deleteModalData.document._id);
+      toast.success("Document deleted successfully");
+      setDeleteModalData({ show: false, document: null });
+      fetchDocuments();
+    } catch (error: any) {
+      console.error("Error deleting document:", error);
+      toast.error("Failed to delete document");
+    }
+  };
+
+  const handleDocumentUploaded = () => {
+    fetchDocuments();
+  };
+
+  const getDocumentTypeLabel = (type: string) => {
+    const typeMap: Record<string, string> = {
+      medical_record: "Medical Report",
+      lab_report: "Lab Result",
+      prescription: "Prescription",
+      imaging: "Imaging",
+      insurance: "Insurance",
+      consent_form: "Consent Form",
+      other: "Other",
+    };
+    return typeMap[type] || type;
+  };
+
+  const sortedDocuments = [...documents].sort((a, b) => {
+    const dateA = new Date(a.uploadedAt).getTime();
+    const dateB = new Date(b.uploadedAt).getTime();
+    return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+  });
+
   return (
     <>
-      {/* ========================
-			Start Page Content
-		========================= */}
       <div className="page-wrapper">
-        {/* Start Content */}
         <div className="content">
-          {/* Page Header */}
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
             <div className="breadcrumb-arrow">
               <h4 className="mb-1">Patient Details</h4>
@@ -34,221 +127,230 @@ const PatientDetailsDocumentsComponent = () => {
               Back to Patient
             </Link>
           </div>
-          {/* End Page Header */}
-          {/* tabs start */}
+
           <PatientDetailsHeader />
-          {/* tabs end */}
-          {/* card start */}
+
           <div className="card mb-0">
             <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
               <h5 className="d-inline-flex align-items-center mb-0">
-                Documents<span className="badge bg-danger ms-2">658</span>
+                Documents
+                <span className="badge bg-danger ms-2">{documents.length}</span>
               </h5>
-              <div className="d-flex align-items-center flex-wrap">
+              <div className="d-flex align-items-center flex-wrap gap-2">
                 <div className="dropdown">
                   <Link
                     href="#"
                     className="dropdown-toggle btn btn-md btn-outline-light d-inline-flex align-items-center"
                     data-bs-toggle="dropdown"
-                   aria-label="Patient actions menu" aria-haspopup="true" aria-expanded="false">
+                    aria-label="Sort documents"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
                     <i className="ti ti-sort-descending-2 me-1" />
-                    <span className="me-1">Sort By : </span> Newest
+                    <span className="me-1">Sort By : </span>
+                    {sortOrder === "newest" ? "Newest" : "Oldest"}
                   </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-2">
+                  <ul className="dropdown-menu dropdown-menu-end p-2">
                     <li>
-                      <Link href="#" className="dropdown-item rounded-1">
+                      <Link
+                        href="#"
+                        className="dropdown-item rounded-1"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSortOrder("newest");
+                        }}
+                      >
                         Newest
                       </Link>
                     </li>
                     <li>
-                      <Link href="#" className="dropdown-item rounded-1">
+                      <Link
+                        href="#"
+                        className="dropdown-item rounded-1"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSortOrder("oldest");
+                        }}
+                      >
                         Oldest
                       </Link>
                     </li>
                   </ul>
                 </div>
+                <button
+                  className="btn btn-primary d-inline-flex align-items-center"
+                  onClick={() => setShowUploadModal(true)}
+                >
+                  <i className="ti ti-upload me-1" />
+                  Upload Document
+                </button>
               </div>
             </div>
             <div className="card-body">
-              {/* table start */}
-              <div className="table-responsive table-nowrap">
-                <table className="table mb-0 border">
-                  <thead className="table-light">
-                    <tr>
-                      <th className="no-sort">Document Name</th>
-                      <th>Date</th>
-                      <th className="no-sort" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Laboratory Report</td>
-                      <td>17 Jun 2025</td>
-                      <td className="text-end">
-                        <Link href="#" className="btn btn-icon btn-outline-light">
-                          <i className="ti ti-download" />
-                        </Link>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Lab - Blood Test</td>
-                      <td>10 Jun 2025</td>
-                      <td className="text-end">
-                        <Link href="#" className="btn btn-icon btn-outline-light">
-                          <i className="ti ti-download" />
-                        </Link>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Radiology Report</td>
-                      <td>22 May 2025</td>
-                      <td className="text-end">
-                        <Link href="#" className="btn btn-icon btn-outline-light">
-                          <i className="ti ti-download" />
-                        </Link>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Lab - Hepetatis</td>
-                      <td>15 May 2025</td>
-                      <td className="text-end">
-                        <Link href="#" className="btn btn-icon btn-outline-light">
-                          <i className="ti ti-download" />
-                        </Link>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Operative Report</td>
-                      <td>30 Apr 2025</td>
-                      <td className="text-end">
-                        <Link href="#" className="btn btn-icon btn-outline-light">
-                          <i className="ti ti-download" />
-                        </Link>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              {/* table end */}
+              {loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-2 text-muted">Loading documents...</p>
+                </div>
+              ) : documents.length === 0 ? (
+                <div className="text-center py-5">
+                  <i className="ti ti-file-off fs-1 text-muted mb-3 d-block" />
+                  <h5 className="text-muted">No documents found</h5>
+                  <p className="text-muted">
+                    Upload documents to keep track of patient records
+                  </p>
+                  <button
+                    className="btn btn-primary mt-3"
+                    onClick={() => setShowUploadModal(true)}
+                  >
+                    <i className="ti ti-upload me-1" />
+                    Upload First Document
+                  </button>
+                </div>
+              ) : (
+                <div className="table-responsive table-nowrap">
+                  <table className="table mb-0 border">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Document Name</th>
+                        <th>Type</th>
+                        <th>Uploaded By</th>
+                        <th>Date</th>
+                        <th>Notes</th>
+                        <th className="text-end">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedDocuments.map((document) => (
+                        <tr key={document._id}>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <i className="ti ti-file-text me-2 text-primary" />
+                              <div>
+                                <h6 className="mb-0">{document.documentName}</h6>
+                                {document.fileName && (
+                                  <small className="text-muted">
+                                    {document.fileName}
+                                  </small>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="badge bg-light text-dark">
+                              {getDocumentTypeLabel(document.documentType)}
+                            </span>
+                          </td>
+                          <td>
+                            {document.uploadedBy.firstName}{" "}
+                            {document.uploadedBy.lastName}
+                          </td>
+                          <td>
+                            {new Date(document.uploadedAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
+                          </td>
+                          <td>
+                            {document.notes ? (
+                              <span
+                                className="text-truncate d-inline-block"
+                                style={{ maxWidth: "200px" }}
+                                title={document.notes}
+                              >
+                                {document.notes}
+                              </span>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </td>
+                          <td className="text-end">
+                            <div className="d-flex gap-1 justify-content-end">
+                              <button
+                                className="btn btn-icon btn-sm btn-outline-primary"
+                                onClick={() => handleDownload(document)}
+                                title="Download"
+                              >
+                                <i className="ti ti-download" />
+                              </button>
+                              <button
+                                className="btn btn-icon btn-sm btn-outline-danger"
+                                onClick={() => handleDeleteClick(document)}
+                                title="Delete"
+                              >
+                                <i className="ti ti-trash" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
-          {/* card end */}
         </div>
-        {/* End Content */}
-        {/* Start Footer */}
+
         <CommonFooter />
-        {/* End Footer */}
       </div>
-      {/* ========================
-			End Page Content
-		========================= */}
-      <>
-        {/* Start Delete Modal  */}
-        <div className="modal fade" id="delete_modal">
-          <div className="modal-dialog modal-dialog-centered modal-sm">
-            <div className="modal-content">
-              <div className="modal-body text-center position-relative">
-                <div className="mb-2 position-relative z-1">
-                  <span className="avatar avatar-md bg-danger rounded-circle">
-                    <i className="ti ti-trash fs-24" />
-                  </span>
-                </div>
-                <h5 className="mb-1">Delete Confirmation</h5>
-                <p className="mb-3">Are you sure you want to delete?</p>
-                <div className="d-flex justify-content-center gap-2">
-                  <Link
-                    href="#"
-                    className="btn btn-white position-relative z-1 w-100"
-                    data-bs-dismiss="modal"
-                  >
-                    Cancel
-                  </Link>
-                  <Link
-                    href="#"
-                    className="btn btn-danger position-relative z-1 w-100"
-                    data-bs-dismiss="modal"
-                  >
-                    Yes, Delete
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* End Delete Modal  */}
-        {/* Start view Modal */}
-        <div id="view_modal" className="modal fade">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header justify-content-between">
-                <h4 className="text-dark modal-title fw-bold text-truncate">
-                  Medical History
-                </h4>
-                <button
-                  type="button"
-                  className="btn-close btn-close-modal"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                >
-                  <i className="ti ti-circle-x-filled" />
-                </button>
-              </div>
-              <div className="modal-body">
-                <div className="d-flex align-items-center mb-4">
-                  <Link href="#" className="avatar flex-shrink-0 bg-primary">
-                    <i className="ti ti-history fs-16" />
-                  </Link>
-                  <div className="ms-2">
-                    <div>
-                      <h6 className="fw-semibold fs-14 text-truncate mb-1">
-                        <Link href="#">Throat Pain</Link>
-                      </h6>
-                      <p className="fs-13 mb-0">25 Jan 2024, (2yrs ago)</p>
-                    </div>
+
+      {showUploadModal && (
+        <>
+          <div className="modal-backdrop fade show" />
+          <DocumentModal
+            patientId={patientId}
+            onDocumentUploaded={handleDocumentUploaded}
+            onClose={() => setShowUploadModal(false)}
+          />
+        </>
+      )}
+
+      {deleteModalData.show && (
+        <>
+          <div className="modal-backdrop fade show" />
+          <div className="modal fade show" style={{ display: "block" }}>
+            <div className="modal-dialog modal-dialog-centered modal-sm">
+              <div className="modal-content">
+                <div className="modal-body text-center position-relative">
+                  <div className="mb-2 position-relative z-1">
+                    <span className="avatar avatar-md bg-danger rounded-circle">
+                      <i className="ti ti-trash fs-24" />
+                    </span>
                   </div>
-                </div>
-                <h6 className="fw-semibold mb-2">Assessment</h6>
-                <ol className="ps-3">
-                  <li className="mb-2">
-                    Applying a cool compress to the forehead or the back of the
-                    neck may provide some relief. Avoid using cold water, as it
-                    can cause shivering and may increase body temperature.
-                  </li>
-                  <li className="mb-4">
-                    Keep an eye on the person's symptoms and seek medical
-                    attention if the fever persists, is very high, or if there
-                    are other concerning symptoms such as difficulty breathing,
-                    persistent vomiting, or severe headache.
-                  </li>
-                </ol>
-                <h6 className="fw-semibold mb-2">Notes</h6>
-                <p className="mb-4">
-                  If the fever is accompanied by other worrisome symptoms or if
-                  it lasts for more than a few days, it's essential to consult
-                  with a healthcare professional. They can provide a proper
-                  diagnosis and recommend appropriate treatment.
-                </p>
-                <div className="p-3 bg-light rounded">
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div>
-                      <h6 className="fw-semibold mb-1 fs-14 text-truncate">
-                        X-ray_throat 4356
-                      </h6>
-                      <p className="fs-13 mb-0 text-truncate line-clamb-2">
-                        Size : 21.2 Kb
-                      </p>
-                    </div>
-                    <Link href="#" className="btn btn-icon fs-16">
-                      <i className="ti ti-download" />
-                    </Link>
+                  <h5 className="mb-1">Delete Document</h5>
+                  <p className="mb-3">
+                    Are you sure you want to delete &quot;
+                    {deleteModalData.document?.documentName}&quot;?
+                  </p>
+                  <div className="d-flex justify-content-center gap-2">
+                    <button
+                      className="btn btn-white position-relative z-1 w-100"
+                      onClick={() =>
+                        setDeleteModalData({ show: false, document: null })
+                      }
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="btn btn-danger position-relative z-1 w-100"
+                      onClick={handleDeleteConfirm}
+                    >
+                      Yes, Delete
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        {/* End view Modal */}
-      </>
+        </>
+      )}
     </>
   );
 };
