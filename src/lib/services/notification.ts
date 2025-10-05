@@ -81,3 +81,36 @@ export async function sendBulkNotifications(
     });
   }
 }
+
+export async function createInAppNotification(data: {
+  recipientId: string;
+  branchId: string;
+  title: string;
+  message: string;
+  type?: 'info' | 'warning' | 'success' | 'error' | 'clock_out' | 'appointment' | 'message';
+  relatedModel?: 'Patient' | 'PatientVisit' | 'Appointment' | 'Billing' | 'Message';
+  relatedId?: string;
+  actionUrl?: string;
+  senderId?: string;
+}): Promise<void> {
+  try {
+    const Notification = (await import('@/models/Notification')).default;
+    
+    await Notification.create({
+      recipient: data.recipientId,
+      sender: data.senderId,
+      branchId: data.branchId,
+      title: data.title,
+      message: data.message,
+      type: data.type || 'info',
+      relatedModel: data.relatedModel,
+      relatedId: data.relatedId,
+      actionUrl: data.actionUrl,
+      isRead: false
+    });
+    
+    console.log(`✅ In-app notification created for user ${data.recipientId}`);
+  } catch (error) {
+    console.error('Failed to create in-app notification:', error);
+  }
+}

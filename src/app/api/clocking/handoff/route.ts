@@ -3,7 +3,7 @@ import dbConnect from '@/lib/dbConnect';
 import PatientVisit from '@/models/PatientVisit';
 import User from '@/models/User';
 import { requireAuth, UserRole } from '@/lib/middleware/auth';
-import { sendBulkNotifications } from '@/lib/services/notification';
+import { sendBulkNotifications, createInAppNotification } from '@/lib/services/notification';
 
 const STAGE_WORKFLOW: Record<string, string> = {
   'front_desk': 'nurse',
@@ -178,6 +178,20 @@ export async function POST(req: NextRequest) {
             }));
 
             await sendBulkNotifications(notifications);
+
+            for (const staff of nextStaffMembers) {
+              await createInAppNotification({
+                recipientId: staff._id.toString(),
+                branchId: visit.branchId.toString(),
+                title: `New Patient in ${nextStage.replace('_', ' ').toUpperCase()} Queue`,
+                message: `${(visit.patient as any).firstName} ${(visit.patient as any).lastName} (${visit.visitNumber}) has been handed off to your department.`,
+                type: 'info',
+                relatedModel: 'PatientVisit',
+                relatedId: visit._id.toString(),
+                actionUrl: `/visits/${visit._id}`,
+                senderId: session.user.id
+              });
+            }
           }
         }
       } else {

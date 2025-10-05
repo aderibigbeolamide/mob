@@ -8,6 +8,8 @@ import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import { apiClient } from "@/lib/services/api-client";
 import { PatientVisit } from "@/types/emr";
+import HandoffButton from "./handoff/HandoffButton";
+import VisitTimeline from "./VisitTimeline";
 
 interface VisitDetailsResponse {
   visit: PatientVisit;
@@ -263,6 +265,15 @@ const StartVisitsComponent = () => {
               </div>
             </div>
             <div className="gap-2 d-flex align-items-center flex-wrap">
+              {!isEditMode && visit && visit._id && visit.status === 'in_progress' && visit.currentStage !== 'completed' && (
+                <HandoffButton
+                  visitId={visit._id}
+                  currentStage={visit.currentStage}
+                  patientName={patient ? `${patient.firstName} ${patient.lastName}` : 'Patient'}
+                  onSuccess={fetchVisitDetails}
+                  variant="success"
+                />
+              )}
               {!isEditMode && visit?.status !== 'completed' && visit?.status !== 'cancelled' && (
                 <Link
                   href={`${all_routes.startVisits}?id=${visitId}&edit=true`}
@@ -409,26 +420,20 @@ const StartVisitsComponent = () => {
                 </div>
               </div>
 
-              <h5 className="mb-3">Visit Timeline</h5>
-              {visit?.stages?.frontDesk && renderStageInfo('Front Desk', visit.stages.frontDesk)}
-              {visit?.stages?.nurse && renderStageInfo('Nurse', visit.stages.nurse)}
-              {visit?.stages?.doctor && renderStageInfo('Doctor', visit.stages.doctor)}
-              {visit?.stages?.lab && renderStageInfo('Lab', visit.stages.lab)}
-              {visit?.stages?.pharmacy && renderStageInfo('Pharmacy', visit.stages.pharmacy)}
-              {visit?.stages?.billing && renderStageInfo('Billing', visit.stages.billing)}
-              {visit?.finalClockOut && (
-                <div className="card mb-3">
-                  <div className="card-body">
-                    <h6 className="card-title text-success mb-3">
-                      <i className="ti ti-check-circle me-2"></i>
-                      Visit Completed
-                    </h6>
-                    <p className="mb-0 text-muted">
-                      Completed on {formatDate(visit.finalClockOut.clockedOutAt)}
-                    </p>
-                  </div>
-                </div>
-              )}
+              <div className="d-flex align-items-center justify-content-between mb-3">
+                <h5 className="mb-0">Visit Timeline</h5>
+                {visit && visit._id && visit.status === 'in_progress' && visit.currentStage !== 'completed' && (
+                  <HandoffButton
+                    visitId={visit._id}
+                    currentStage={visit.currentStage}
+                    patientName={patient ? `${patient.firstName} ${patient.lastName}` : 'Patient'}
+                    onSuccess={fetchVisitDetails}
+                    variant="primary"
+                    size="sm"
+                  />
+                )}
+              </div>
+              <VisitTimeline visit={visit!} />
             </>
           )}
         </div>
