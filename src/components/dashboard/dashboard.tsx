@@ -257,7 +257,7 @@ const DashboardComponent = () => {
                     <div className="ms-2 overflow-hidden">
                       <p className="mb-1 text-truncate">Transactions</p>
                       <h5 className="mb-0">
-                        {loading ? '...' : `$${stats?.transactions.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}`}
+                        {loading ? '...' : `$${stats?.transactions.total.toFixed(2) || '0.00'}`}
                       </h5>
                     </div>
                   </div>
