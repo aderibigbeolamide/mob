@@ -1,4 +1,4 @@
-import DashboardComponent from "@/components/dashboard/dashboard";
+import RoleDashboardRouter from "@/components/dashboard/RoleDashboardRouter";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function Dashboard() {
   return (
     <>
-      <DashboardComponent />
+      <RoleDashboardRouter />
     </>
   );
 }
