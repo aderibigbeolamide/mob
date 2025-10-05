@@ -4,6 +4,7 @@ import SettingsTabs from "./SettingsTabs";
 import  { useState } from "react";
 import { all_routes } from "@/router/all_routes";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import { signOut } from "next-auth/react";
 
 const SecuritySettingsComponent = () => {
   // Password visibility states
@@ -12,6 +13,10 @@ const SecuritySettingsComponent = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPhonePassword, setShowPhonePassword] = useState(false);
   const [showEmailPassword, setShowEmailPassword] = useState(false);
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: '/login' });
+  };
 
   return (
     <>
@@ -234,6 +239,32 @@ const SecuritySettingsComponent = () => {
                     >
                       Delete
                     </Link>
+                  </div>
+                </div>
+                {/* Items */}
+                <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 border-bottom mb-4 pb-4">
+                  <div className="d-flex align-items-center flex-wrap gap-2">
+                    <span className="avatar avatar-lg border bg-light">
+                      <i className="ti ti-logout text-dark fs-24" />
+                    </span>
+                    <div>
+                      <h6 className="fw-semibold fs-14 mb-1">
+                        Logout
+                      </h6>
+                      <p className="mb-0">
+                        Sign out of your current session and return to the login page
+                      </p>
+                    </div>
+                  </div>
+                  <div className="d-flex align-items-center flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="btn btn-danger"
+                    >
+                      <i className="ti ti-logout me-2" />
+                      Logout
+                    </button>
                   </div>
                 </div>
                 {/* Items */}
