@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession as nextAuthGetServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { UserRole } from '@/types/emr';
 
 export { UserRole };
 
-export async function getServerSession() {
-  return await nextAuthGetServerSession(authOptions);
+export async function getServerAuthSession() {
+  return await getServerSession(authOptions);
 }
+
+export { getServerAuthSession as getServerSession };
 
 export async function requireAuth(
   req: NextRequest,
   handler: (req: NextRequest, session: any) => Promise<NextResponse>
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
       return NextResponse.json(
@@ -38,7 +40,7 @@ export function checkRole(allowedRoles: UserRole[]) {
     handler: (req: NextRequest, session: any) => Promise<NextResponse>
   ) => {
     try {
-      const session = await getServerSession();
+      const session = await getServerSession(authOptions);
 
       if (!session || !session.user) {
         return NextResponse.json(
@@ -76,7 +78,7 @@ export async function checkBranch(
   handler: (req: NextRequest, session: any) => Promise<NextResponse>
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
       return NextResponse.json(
@@ -116,5 +118,4 @@ export interface AuthMiddleware {
   requireAuth: typeof requireAuth;
   checkRole: typeof checkRole;
   checkBranch: typeof checkBranch;
-  getServerSession: typeof getServerSession;
 }

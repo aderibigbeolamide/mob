@@ -1,11 +1,11 @@
-import { getServerSession as nextAuthGetServerSession } from 'next-auth';
+import { getServerSession as getNextAuthSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { UserRole } from '@/types/emr';
 import { Session } from 'next-auth';
 
 export async function getServerSession(): Promise<Session | null> {
   try {
-    const session = await nextAuthGetServerSession(authOptions);
+    const session = await getNextAuthSession(authOptions);
     return session;
   } catch (error) {
     console.error('Error getting server session:', error);
