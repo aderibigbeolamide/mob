@@ -1,19 +1,176 @@
 "use client";
-import CommonFooter from "@/core/common-components/common-footer/commonFooter";
-import ImageWithBasePath from "@/core/common-components/image-with-base-path";
-import { all_routes } from "@/router/all_routes";
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { format } from "date-fns";
+import { all_routes } from "@/router/all_routes";
+import ImageWithBasePath from "@/core/common-components/image-with-base-path";
+import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import { apiClient } from "@/lib/services/api-client";
+
+interface Patient {
+  _id: string;
+  patientId: string;
+  firstName: string;
+  lastName: string;
+  profileImage?: string;
+}
+
+interface Invoice {
+  _id: string;
+  invoiceNumber: string;
+  patientId: Patient;
+  grandTotal: number;
+  balance: number;
+  paidAmount: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface InvoiceStats {
+  totalRevenue: number;
+  unpaidAmount: number;
+  pendingAmount: number;
+  paidCount: number;
+}
+
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+interface InvoicesResponse {
+  invoices: Invoice[];
+  pagination: PaginationInfo;
+}
 
 const InvoiceComponent = () => {
+  const { data: session } = useSession();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<InvoiceStats | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    limit: 20,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const fetchInvoices = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: "20",
+      });
+
+      const response = await apiClient.get<InvoicesResponse>(
+        `/api/billing/invoices?${params.toString()}`,
+        { showErrorToast: false }
+      );
+
+      setInvoices(response.invoices || []);
+      setPagination(response.pagination);
+    } catch (error) {
+      console.error("Failed to fetch invoices:", error);
+      setInvoices([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await apiClient.get<InvoicesResponse>(
+        `/api/billing/invoices?limit=1000`,
+        { showErrorToast: false }
+      );
+
+      const allInvoices = response.invoices || [];
+      
+      const totalRevenue = allInvoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
+      const unpaidAmount = allInvoices
+        .filter(inv => inv.status === 'PENDING')
+        .reduce((sum, inv) => sum + inv.balance, 0);
+      const pendingAmount = allInvoices
+        .filter(inv => inv.status === 'PARTIALLY_PAID')
+        .reduce((sum, inv) => sum + inv.balance, 0);
+      const paidCount = allInvoices.filter(inv => inv.status === 'PAID').length;
+
+      setStats({
+        totalRevenue,
+        unpaidAmount,
+        pendingAmount,
+        paidCount
+      });
+    } catch (error) {
+      console.error("Failed to fetch invoice stats:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInvoices();
+  }, [fetchInvoices]);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await apiClient.delete(`/api/billing/invoices/${id}`, {
+        successMessage: "Invoice cancelled successfully",
+      });
+      setDeleteConfirmId(null);
+      fetchInvoices();
+      fetchStats();
+    } catch (error) {
+      console.error("Failed to delete invoice:", error);
+    }
+  };
+
+  const formatDate = (date: Date | string) => {
+    try {
+      return format(new Date(date), 'dd MMM yyyy, hh:mm a');
+    } catch {
+      return 'N/A';
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return `$${amount.toFixed(2)}`;
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'PAID':
+        return <span className="badge badge-soft-success">Paid</span>;
+      case 'PENDING':
+        return <span className="badge badge-soft-warning">Pending</span>;
+      case 'PARTIALLY_PAID':
+        return <span className="badge badge-soft-info">Partially Paid</span>;
+      case 'CANCELLED':
+        return <span className="badge badge-soft-danger">Cancelled</span>;
+      default:
+        return <span className="badge badge-soft-secondary">{status}</span>;
+    }
+  };
+
+  const isAdmin = session?.user?.role === "ADMIN";
+
   return (
     <>
-      {/* ========================
-              Start Page Content
-          ========================= */}
       <div className="page-wrapper">
-        {/* Start Content */}
         <div className="content">
-          {/* Page Header */}
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
             <div className="breadcrumb-arrow">
               <h4 className="mb-1">Invoice</h4>
@@ -30,8 +187,11 @@ const InvoiceComponent = () => {
               </div>
             </div>
             <div className="gap-2 d-flex align-items-center flex-wrap">
-              <Link
-                href="#"
+              <button
+                onClick={() => {
+                  fetchInvoices();
+                  fetchStats();
+                }}
                 className="btn btn-icon btn-white"
                 data-bs-toggle="tooltip"
                 data-bs-placement="top"
@@ -39,919 +199,282 @@ const InvoiceComponent = () => {
                 data-bs-original-title="Refresh"
               >
                 <i className="ti ti-refresh" />
-              </Link>
-              <Link
-                href="#"
-                className="btn btn-icon btn-white"
-                data-bs-toggle="tooltip"
-                data-bs-placement="top"
-                aria-label="Print"
-                data-bs-original-title="Print"
-              >
-                <i className="ti ti-printer" />
-              </Link>
-              <Link
-                href="#"
-                className="btn btn-icon btn-white"
-                data-bs-toggle="tooltip"
-                data-bs-placement="top"
-                aria-label="Download"
-                data-bs-original-title="Download"
-              >
-                <i className="ti ti-cloud-download" />
-              </Link>
+              </button>
               <Link href={all_routes.addInvoice} className="btn btn-primary">
                 <i className="ti ti-square-rounded-plus me-1" />
                 New Invoice
               </Link>
             </div>
           </div>
-          {/* End Page Header */}
+
           <div className="row">
             <div className="col-xl-3 col-md-6 d-flex">
               <div className="card flex-fill">
                 <div className="card-body">
                   <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
                     <div>
-                      <p className="mb-1">Total Invoice</p>
-                      <h6 className="mb-0">$2,45,445</h6>
+                      <p className="mb-1">Total Revenue</p>
+                      <h6 className="mb-0">
+                        {loading ? '...' : formatCurrency(stats?.totalRevenue || 0)}
+                      </h6>
                     </div>
                     <span className="avatar rounded-circle bg-soft-primary text-primary">
                       <i className="ti ti-components fs-24" />
                     </span>
                   </div>
-                  <div>
-                    <p className="d-flex align-items-center fs-13 mb-0">
-                      <span className="text-success me-1">+31%</span>
-                      From Last Month
-                    </p>
-                  </div>
-                </div>{" "}
-                {/* end card body */}
-              </div>{" "}
-              {/* end card */}
-            </div>{" "}
-            {/* end col */}
+                </div>
+              </div>
+            </div>
+
             <div className="col-xl-3 col-md-6 d-flex">
               <div className="card flex-fill">
                 <div className="card-body">
                   <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
                     <div>
                       <p className="mb-1">Unpaid Invoice</p>
-                      <h6 className="mb-0">$50,000</h6>
+                      <h6 className="mb-0">
+                        {loading ? '...' : formatCurrency(stats?.unpaidAmount || 0)}
+                      </h6>
                     </div>
                     <span className="avatar rounded-circle bg-soft-pink text-pink">
                       <i className="ti ti-clipboard-data fs-24" />
                     </span>
                   </div>
-                  <div>
-                    <p className="d-flex align-items-center fs-13 mb-0">
-                      <span className="text-danger me-1">-15%</span>
-                      From Last Month
-                    </p>
-                  </div>
-                </div>{" "}
-                {/* end card body */}
-              </div>{" "}
-              {/* end card */}
-            </div>{" "}
-            {/* end col */}
+                </div>
+              </div>
+            </div>
+
             <div className="col-xl-3 col-md-6 d-flex">
               <div className="card flex-fill">
                 <div className="card-body">
                   <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
                     <div>
-                      <p className="mb-1">Pending Invoice</p>
-                      <h6 className="mb-0">$45,000</h6>
+                      <p className="mb-1">Partially Paid</p>
+                      <h6 className="mb-0">
+                        {loading ? '...' : formatCurrency(stats?.pendingAmount || 0)}
+                      </h6>
                     </div>
                     <span className="avatar rounded-circle bg-soft-indigo text-indigo">
                       <i className="ti ti-cards fs-24" />
                     </span>
                   </div>
-                  <div>
-                    <p className="d-flex align-items-center fs-13 mb-0">
-                      <span className="text-success me-1">+48%</span>
-                      From Last Month
-                    </p>
-                  </div>
-                </div>{" "}
-                {/* end card body */}
-              </div>{" "}
-              {/* end card */}
-            </div>{" "}
-            {/* end col */}
+                </div>
+              </div>
+            </div>
+
             <div className="col-xl-3 col-md-6 d-flex">
               <div className="card flex-fill">
                 <div className="card-body">
                   <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
                     <div>
-                      <p className="mb-1">Overdue Invoice</p>
-                      <h6 className="mb-0">$2,50,550</h6>
+                      <p className="mb-1">Paid Invoices</p>
+                      <h6 className="mb-0">
+                        {loading ? '...' : stats?.paidCount || 0}
+                      </h6>
                     </div>
                     <span className="avatar rounded-circle bg-soft-orange text-orange">
                       <i className="ti ti-calendar-event fs-24" />
                     </span>
                   </div>
-                  <div>
-                    <p className="d-flex align-items-center fs-13 mb-0">
-                      <span className="text-success me-1">+39%</span>
-                      From Last Month
-                    </p>
-                  </div>
-                </div>{" "}
-                {/* end card body */}
-              </div>{" "}
-              {/* end card */}
-            </div>{" "}
-            {/* end col */}
+                </div>
+              </div>
+            </div>
           </div>
-          {/* card start */}
+
           <div className="card mb-0">
             <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
               <h6 className="d-inline-flex align-items-center mb-0">
-                Total Invoices<span className="badge bg-danger ms-2">658</span>
+                Total Invoices
+                <span className="badge bg-danger ms-2">{pagination.totalCount}</span>
               </h6>
-              <div className="d-flex align-items-center">
-                {/* sort by */}
-                <div className="dropdown">
-                  <Link
-                    href="#"
-                    className="dropdown-toggle btn btn-md btn-outline-light d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown"
-                   aria-label="Patient actions menu" aria-haspopup="true" aria-expanded="false">
-                    <i className="ti ti-sort-descending-2 me-1" />
-                    <span className="me-1">Sort By : </span> Newest
-                  </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-2">
-                    <li>
-                      <Link href="#" className="dropdown-item rounded-1">
-                        Newest
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="#" className="dropdown-item rounded-1">
-                        Oldest
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              </div>
             </div>
             <div className="card-body">
-              {/* table start */}
-              <div className="table-responsive table-nowrap">
-                <table className="table border">
-                  <thead className="table-light">
-                    <tr>
-                      <th>ID</th>
-                      <th>Name</th>
-                      <th>Created Date</th>
-                      <th>Amount</th>
-                      <th>Amount Due</th>
-                      <th>Due Date</th>
-                      <th>Status</th>
-                      <th className="no-sort" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <Link href={all_routes.invoiceDetails}>#IV0025</Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link href="#" className="avatar avatar-sm me-2">
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-05.jpg"
-                              alt="patient"
-                            />
-                          </Link>
-                          <h6 className="mb-0 fs-14 fw-medium">
-                            <Link href="#">James Carter</Link>
-                          </h6>
-                        </div>
-                      </td>
-                      <td>17 Jun 2025, 09:00 AM</td>
-                      <td>$500</td>
-                      <td>$50</td>
-                      <td>17 Jun 2025, 09:00 AM</td>
-                      <td>
-                        <span className="badge badge-soft-success">Paid</span>
-                      </td>
-                      <td className="text-end">
-                        <div>
-                          <Link
-                            href="#"
-                            className="btn btn-icon btn-outline-light"
-                            data-bs-toggle="dropdown"
-                            aria-label="more options"
-                          >
-                            <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
-                          <ul className="dropdown-menu p-2">
-                            <li>
-                              <Link
-                                href={all_routes.invoiceDetails}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-eye me-1" />
-                                Preview
+              {loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : invoices.length === 0 ? (
+                <div className="text-center py-5">
+                  <p className="text-muted mb-0">No invoices found</p>
+                </div>
+              ) : (
+                <div className="table-responsive table-nowrap">
+                  <table className="table border">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Invoice #</th>
+                        <th>Patient</th>
+                        <th>Created Date</th>
+                        <th>Total Amount</th>
+                        <th>Paid Amount</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th className="text-end">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoices.map((invoice) => (
+                        <tr key={invoice._id}>
+                          <td>
+                            <Link href={`${all_routes.invoiceDetails}?id=${invoice._id}`}>
+                              {invoice.invoiceNumber}
+                            </Link>
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <Link href="#" className="avatar avatar-sm me-2">
+                                {invoice.patientId?.profileImage ? (
+                                  <ImageWithBasePath
+                                    src={invoice.patientId.profileImage}
+                                    alt="patient"
+                                  />
+                                ) : (
+                                  <span className="avatar-text bg-primary rounded">
+                                    {invoice.patientId?.firstName?.[0]}{invoice.patientId?.lastName?.[0]}
+                                  </span>
+                                )}
                               </Link>
-                            </li>
-                            <li>
+                              <h6 className="mb-0 fs-14 fw-medium">
+                                <Link href={`${all_routes.patientDetails}?id=${invoice.patientId?._id}`}>
+                                  {invoice.patientId?.firstName} {invoice.patientId?.lastName}
+                                </Link>
+                              </h6>
+                            </div>
+                          </td>
+                          <td>{formatDate(invoice.createdAt)}</td>
+                          <td>{formatCurrency(invoice.grandTotal)}</td>
+                          <td>{formatCurrency(invoice.paidAmount)}</td>
+                          <td>{formatCurrency(invoice.balance)}</td>
+                          <td>{getStatusBadge(invoice.status)}</td>
+                          <td className="text-end">
+                            <div className="d-flex gap-2 justify-content-end">
                               <Link
-                                href={all_routes.editInvoice}
-                                className="dropdown-item d-flex align-items-center"
+                                href={`${all_routes.invoiceDetails}?id=${invoice._id}`}
+                                className="btn btn-sm btn-icon btn-light"
+                                data-bs-toggle="tooltip"
+                                title="View Details"
                               >
-                                <i className="ti ti-edit me-1" />
-                                Edit
+                                <i className="ti ti-eye" />
                               </Link>
-                            </li>
-                            <li>
                               <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
+                                href={`${all_routes.editInvoice}?id=${invoice._id}`}
+                                className="btn btn-sm btn-icon btn-light"
+                                data-bs-toggle="tooltip"
+                                title="Edit"
                               >
-                                <i className="ti ti-trash me-1" />
-                                Delete
+                                <i className="ti ti-edit" />
                               </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link href={all_routes.invoiceDetails}>#IV0024</Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link href="#" className="avatar avatar-sm me-2">
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-17.jpg"
-                              alt="patient"
-                            />
-                          </Link>
-                          <h6 className="mb-0 fs-14 fw-medium">
-                            <Link href="#">Emily Davis</Link>
-                          </h6>
-                        </div>
-                      </td>
-                      <td>10 Jun 2025, 10:30 AM</td>
-                      <td>$500</td>
-                      <td>$50</td>
-                      <td>10 Jun 2025, 10:30 AM</td>
-                      <td>
-                        <span className="badge badge-soft-danger">Overdue</span>
-                      </td>
-                      <td className="text-end">
-                        <div>
-                          <Link
-                            href="#"
-                            className="btn btn-icon btn-outline-light"
-                            data-bs-toggle="dropdown"
-                            aria-label="more options"
-                          >
-                            <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
-                          <ul className="dropdown-menu p-2">
-                            <li>
-                              <Link
-                                href={all_routes.invoiceDetails}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-eye me-1" />
-                                Preview
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href={all_routes.editInvoice}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-edit me-1" />
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                              >
-                                <i className="ti ti-trash me-1" />
-                                Delete
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link href={all_routes.invoiceDetails}>#IV0023</Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link href="#" className="avatar avatar-sm me-2">
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-06.jpg"
-                              alt="patient"
-                            />
-                          </Link>
-                          <h6 className="mb-0 fs-14 fw-medium">
-                            <Link href="#">Michael Johnson</Link>
-                          </h6>
-                        </div>
-                      </td>
-                      <td>22 May 2025, 01:15 PM</td>
-                      <td>$300</td>
-                      <td>$30</td>
-                      <td>22 May 2025, 01:15 PM</td>
-                      <td>
-                        <span className="badge badge-soft-info">Draft</span>
-                      </td>
-                      <td className="text-end">
-                        <div>
-                          <Link
-                            href="#"
-                            className="btn btn-icon btn-outline-light"
-                            data-bs-toggle="dropdown"
-                            aria-label="more options"
-                          >
-                            <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
-                          <ul className="dropdown-menu p-2">
-                            <li>
-                              <Link
-                                href={all_routes.invoiceDetails}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-eye me-1" />
-                                Preview
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href={all_routes.editInvoice}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-edit me-1" />
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                              >
-                                <i className="ti ti-trash me-1" />
-                                Delete
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link href={all_routes.invoiceDetails}>#IV0022</Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link href="#" className="avatar avatar-sm me-2">
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-04.jpg"
-                              alt="patient"
-                            />
-                          </Link>
-                          <h6 className="mb-0 fs-14 fw-medium">
-                            <Link href="#">Olivia Miller</Link>
-                          </h6>
-                        </div>
-                      </td>
-                      <td>15 May 2025, 11:30 AM</td>
-                      <td>$200</td>
-                      <td>$20</td>
-                      <td>15 May 2025, 11:30 AM</td>
-                      <td>
-                        <span className="badge badge-soft-warning">
-                          Pending
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <div>
-                          <Link
-                            href="#"
-                            className="btn btn-icon btn-outline-light"
-                            data-bs-toggle="dropdown"
-                            aria-label="more options"
-                          >
-                            <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
-                          <ul className="dropdown-menu p-2">
-                            <li>
-                              <Link
-                                href={all_routes.invoiceDetails}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-eye me-1" />
-                                Preview
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href={all_routes.editInvoice}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-edit me-1" />
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                              >
-                                <i className="ti ti-trash me-1" />
-                                Delete
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link href={all_routes.invoiceDetails}>#IV0021</Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link href="#" className="avatar avatar-sm me-2">
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-15.jpg"
-                              alt="patient"
-                            />
-                          </Link>
-                          <h6 className="mb-0 fs-14 fw-medium">
-                            <Link href="#">David Smith</Link>
-                          </h6>
-                        </div>
-                      </td>
-                      <td>30 Apr 2025, 12:20 PM</td>
-                      <td>$100</td>
-                      <td>$10</td>
-                      <td>30 Apr 2025, 12:20 PM</td>
-                      <td>
-                        <span className="badge badge-soft-success">Paid</span>
-                      </td>
-                      <td className="text-end">
-                        <div>
-                          <Link
-                            href="#"
-                            className="btn btn-icon btn-outline-light"
-                            data-bs-toggle="dropdown"
-                            aria-label="more options"
-                          >
-                            <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
-                          <ul className="dropdown-menu p-2">
-                            <li>
-                              <Link
-                                href={all_routes.invoiceDetails}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-eye me-1" />
-                                Preview
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href={all_routes.editInvoice}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-edit me-1" />
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                              >
-                                <i className="ti ti-trash me-1" />
-                                Delete
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link href={all_routes.invoiceDetails}>#IV0020</Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link href="#" className="avatar avatar-sm me-2">
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-08.jpg"
-                              alt="patient"
-                            />
-                          </Link>
-                          <h6 className="mb-0 fs-14 fw-medium">
-                            <Link href="#">Sophia Wilson</Link>
-                          </h6>
-                        </div>
-                      </td>
-                      <td>25 Apr 2025, 03:15 PM</td>
-                      <td>$600</td>
-                      <td>$60</td>
-                      <td>25 Apr 2025, 03:15 PM</td>
-                      <td>
-                        <span className="badge badge-soft-danger">Overdue</span>
-                      </td>
-                      <td className="text-end">
-                        <div>
-                          <Link
-                            href="#"
-                            className="btn btn-icon btn-outline-light"
-                            data-bs-toggle="dropdown"
-                            aria-label="more options"
-                          >
-                            <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
-                          <ul className="dropdown-menu p-2">
-                            <li>
-                              <Link
-                                href={all_routes.invoiceDetails}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-eye me-1" />
-                                Preview
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href={all_routes.editInvoice}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-edit me-1" />
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                              >
-                                <i className="ti ti-trash me-1" />
-                                Delete
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link href={all_routes.invoiceDetails}>#IV0019</Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link href="#" className="avatar avatar-sm me-2">
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-14.jpg"
-                              alt="patient"
-                            />
-                          </Link>
-                          <h6 className="mb-0 fs-14 fw-medium">
-                            <Link href="#">Daniel Williams</Link>
-                          </h6>
-                        </div>
-                      </td>
-                      <td>13 Mar 2025, 02:40 PM</td>
-                      <td>$700</td>
-                      <td>$70</td>
-                      <td>13 Mar 2025, 02:40 PM</td>
-                      <td>
-                        <span className="badge badge-soft-info">Draft</span>
-                      </td>
-                      <td className="text-end">
-                        <div>
-                          <Link
-                            href="#"
-                            className="btn btn-icon btn-outline-light"
-                            data-bs-toggle="dropdown"
-                            aria-label="more options"
-                          >
-                            <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
-                          <ul className="dropdown-menu p-2">
-                            <li>
-                              <Link
-                                href={all_routes.invoiceDetails}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-eye me-1" />
-                                Preview
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href={all_routes.editInvoice}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-edit me-1" />
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                              >
-                                <i className="ti ti-trash me-1" />
-                                Delete
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link href={all_routes.invoiceDetails}>#IV0018</Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link href="#" className="avatar avatar-sm me-2">
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-08.jpg"
-                              alt="patient"
-                            />
-                          </Link>
-                          <h6 className="mb-0 fs-14 fw-medium">
-                            <Link href="#">Isabella Anderson</Link>
-                          </h6>
-                        </div>
-                      </td>
-                      <td>16 Feb 2025, 03:00 PM</td>
-                      <td>$800</td>
-                      <td>$80</td>
-                      <td>16 Feb 2025, 03:00 PM</td>
-                      <td>
-                        <span className="badge badge-soft-warning">
-                          Pending
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        <div>
-                          <Link
-                            href="#"
-                            className="btn btn-icon btn-outline-light"
-                            data-bs-toggle="dropdown"
-                            aria-label="more options"
-                          >
-                            <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
-                          <ul className="dropdown-menu p-2">
-                            <li>
-                              <Link
-                                href={all_routes.invoiceDetails}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-eye me-1" />
-                                Preview
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href={all_routes.editInvoice}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-edit me-1" />
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                              >
-                                <i className="ti ti-trash me-1" />
-                                Delete
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link href={all_routes.invoiceDetails}>#IV0017</Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link href="#" className="avatar avatar-sm me-2">
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-23.jpg"
-                              alt="patient"
-                            />
-                          </Link>
-                          <h6 className="mb-0 fs-14 fw-medium">
-                            <Link href="#">William Brown</Link>
-                          </h6>
-                        </div>
-                      </td>
-                      <td>20 Jan 2025, 04:45 PM</td>
-                      <td>$900</td>
-                      <td>$90</td>
-                      <td>20 Jan 2025, 04:45 PM</td>
-                      <td>
-                        <span className="badge badge-soft-success">Paid</span>
-                      </td>
-                      <td className="text-end">
-                        <div>
-                          <Link
-                            href="#"
-                            className="btn btn-icon btn-outline-light"
-                            data-bs-toggle="dropdown"
-                            aria-label="more options"
-                          >
-                            <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
-                          <ul className="dropdown-menu p-2">
-                            <li>
-                              <Link
-                                href={all_routes.invoiceDetails}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-eye me-1" />
-                                Preview
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href={all_routes.editInvoice}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-edit me-1" />
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                              >
-                                <i className="ti ti-trash me-1" />
-                                Delete
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link href={all_routes.invoiceDetails}>#IV0016</Link>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link href="#" className="avatar avatar-sm me-2">
-                            <ImageWithBasePath
-                              src="assets/img/avatars/avatar-09.jpg"
-                              alt="patient"
-                            />
-                          </Link>
-                          <h6 className="mb-0 fs-14 fw-medium">
-                            <Link href="#">Charlotte Taylor</Link>
-                          </h6>
-                        </div>
-                      </td>
-                      <td>15 Jan 2025, 05:30 PM</td>
-                      <td>$500</td>
-                      <td>$50</td>
-                      <td>15 Jan 2025, 05:30 PM</td>
-                      <td>
-                        <span className="badge badge-soft-danger">Overdue</span>
-                      </td>
-                      <td className="text-end">
-                        <div>
-                          <Link
-                            href="#"
-                            className="btn btn-icon btn-outline-light"
-                            data-bs-toggle="dropdown"
-                            aria-label="more options"
-                          >
-                            <i className="ti ti-dots-vertical" aria-hidden="true" />
-                          </Link>
-                          <ul className="dropdown-menu p-2">
-                            <li>
-                              <Link
-                                href={all_routes.invoiceDetails}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-eye me-1" />
-                                Preview
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href={all_routes.editInvoice}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-edit me-1" />
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                              >
-                                <i className="ti ti-trash me-1" />
-                                Delete
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              {/* table end */}
+                              {isAdmin && (
+                                <button
+                                  onClick={() => setDeleteConfirmId(invoice._id)}
+                                  className="btn btn-sm btn-icon btn-light"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#delete_modal"
+                                  title="Delete"
+                                >
+                                  <i className="ti ti-trash" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
-          {/* card end */}
+
+          {!loading && invoices.length > 0 && (
+            <div className="d-flex align-items-center justify-content-between flex-wrap mt-3">
+              <div className="dataTables_info">
+                Showing {((currentPage - 1) * pagination.limit) + 1} to{" "}
+                {Math.min(currentPage * pagination.limit, pagination.totalCount)} of{" "}
+                {pagination.totalCount} entries
+              </div>
+              <nav>
+                <ul className="pagination mb-0">
+                  <li className={`page-item ${!pagination.hasPreviousPage ? 'disabled' : ''}`}>
+                    <button
+                      className="page-link"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={!pagination.hasPreviousPage}
+                    >
+                      Previous
+                    </button>
+                  </li>
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                    .slice(Math.max(0, currentPage - 3), Math.min(pagination.totalPages, currentPage + 2))
+                    .map((page) => (
+                      <li key={page} className={`page-item ${page === currentPage ? 'active' : ''}`}>
+                        <button
+                          className="page-link"
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </button>
+                      </li>
+                    ))}
+                  <li className={`page-item ${!pagination.hasNextPage ? 'disabled' : ''}`}>
+                    <button
+                      className="page-link"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={!pagination.hasNextPage}
+                    >
+                      Next
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          )}
         </div>
-        {/* End Content */}
-        {/* Start Footer */}
         <CommonFooter />
-        {/* End Footer */}
       </div>
-      {/* ========================
-              End Page Content
-          ========================= */}
+
       {/* Delete Confirmation Modal */}
-      <>
-        {/* Start Modal  */}
-        <div className="modal fade" id="delete_modal">
-          <div className="modal-dialog modal-dialog-centered modal-sm">
-            <div className="modal-content">
-              <div className="modal-body text-center">
-                <div className="mb-2">
-                  <span className="avatar avatar-md rounded-circle bg-danger">
-                    <i className="ti ti-trash fs-24" />
-                  </span>
-                </div>
-                <h6 className="fs-16 mb-1">Confirm Deletion</h6>
-                <p className="mb-3">
-                  Are you sure you want to delete this invoice?
-                </p>
-                <div className="d-flex justify-content-center gap-2">
-                  <Link
-                    href="#"
-                    className="btn btn-outline-light w-100"
-                    data-bs-dismiss="modal"
-                  >
-                    Cancel
-                  </Link>
-                  <Link
-                    href="#"
-                    className="btn btn-danger w-100"
-                    data-bs-dismiss="modal"
-                  >
-                    Yes, Delete
-                  </Link>
-                </div>
-              </div>
+      <div className="modal fade" id="delete_modal" tabIndex={-1} aria-hidden="true">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Confirm Deletion</h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              />
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to cancel this invoice? This action cannot be undone.</p>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => {
+                  if (deleteConfirmId) {
+                    handleDelete(deleteConfirmId);
+                  }
+                }}
+                data-bs-dismiss="modal"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
-        {/* End Modal  */}
-      </>
+      </div>
     </>
   );
 };
