@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 const UiTooltipsComponent = () => {
   useEffect(() => {
-    // @ts-ignore
+    // Check if Bootstrap is available
     if (window.bootstrap) {
       // Clean up any existing tooltips
       const oldTooltips = document.querySelectorAll('.tooltip');
@@ -14,7 +14,7 @@ const UiTooltipsComponent = () => {
       // Initialize new tooltips
       const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
       const tooltipInstances = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        // @ts-ignore
+        // Initialize Bootstrap tooltip
         return new window.bootstrap.Tooltip(tooltipTriggerEl);
       });
       // Cleanup on unmount
@@ -28,8 +28,8 @@ const UiTooltipsComponent = () => {
   return (
     <>
       {/* ========================
-			Start Page Content
-		========================= */}
+                        Start Page Content
+                ========================= */}
       <div className="page-wrapper">
         {/* Start Content */}
         <div className="content pb-0">
@@ -338,8 +338,8 @@ const UiTooltipsComponent = () => {
         {/* End Footer */}
       </div>
       {/* ========================
-			End Page Content
-		========================= */}
+                        End Page Content
+                ========================= */}
     </>
   );
 };

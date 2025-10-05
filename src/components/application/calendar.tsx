@@ -76,7 +76,7 @@ const useCalendar = () => {
     // Show the Add Event modal
     const modal = document.getElementById("add_new");
     if (modal) {
-      // @ts-ignore
+      // Get or create Bootstrap modal instance
       const bsModal = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
       bsModal.show();
     }
@@ -140,7 +140,7 @@ const useCalendar = () => {
     // Show the Bootstrap modal
     const modal = document.getElementById("event_modal");
     if (modal) {
-      // @ts-ignore
+      // Get or create Bootstrap modal instance
       const bsModal = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
       bsModal.show();
     }
@@ -159,7 +159,7 @@ const useCalendar = () => {
     // Show the Add Event modal
     const modal = document.getElementById("add_new");
     if (modal) {
-      // @ts-ignore
+      // Get or create Bootstrap modal instance
       const bsModal = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
       bsModal.show();
     }
@@ -265,7 +265,7 @@ const CalendarComponent = () => {
       // Close the modal using Bootstrap hide
       const modal = document.getElementById("add_new");
       if (modal) {
-        // @ts-ignore
+        // Get or create Bootstrap modal instance
         const bsModal = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
         bsModal.hide();
         
@@ -287,7 +287,7 @@ const CalendarComponent = () => {
     // Close the modal using Bootstrap hide
     const modal = document.getElementById("add_new");
     if (modal) {
-      // @ts-ignore
+      // Get or create Bootstrap modal instance
       const bsModal = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
       bsModal.hide();
       
@@ -535,7 +535,7 @@ const CalendarComponent = () => {
           // Close the modal after deleting
           const modal = document.getElementById("event_modal");
           if (modal) {
-            // @ts-ignore
+            // Get or create Bootstrap modal instance
             const bsModal = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
             bsModal.hide();
             
@@ -556,7 +556,7 @@ const CalendarComponent = () => {
           // Close the modal
           const modal = document.getElementById("event_modal");
           if (modal) {
-            // @ts-ignore
+            // Get or create Bootstrap modal instance
             const bsModal = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
             bsModal.hide();
             

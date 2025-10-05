@@ -142,7 +142,7 @@ export default function PagesLayout({
 
   // Bootstrap tooltip re-init
   useEffect(() => {
-    // @ts-ignore
+    // @ts-expect-error - Bootstrap types are not fully typed
     if (window.bootstrap) {
       const oldTooltips = document.querySelectorAll(".tooltip");
       oldTooltips.forEach(
@@ -155,7 +155,7 @@ export default function PagesLayout({
       const tooltipInstances = tooltipTriggerList.map(function (
         tooltipTriggerEl
       ) {
-        // @ts-ignore
+        // @ts-expect-error - Bootstrap types are not fully typed
         return new window.bootstrap.Tooltip(tooltipTriggerEl);
       });
 

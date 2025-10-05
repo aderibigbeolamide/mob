@@ -24,7 +24,7 @@ import { seedDatabase } from '@/lib/seed';
 export async function POST(req: NextRequest) {
   return checkRole([UserRole.ADMIN])(
     req,
-    async (req: NextRequest, session: any) => {
+    async (_req: NextRequest, _session: any) => {
       try {
         // Force parameter is intentionally not accepted from the API for security
         // Only idempotent seeding is allowed through the API endpoint

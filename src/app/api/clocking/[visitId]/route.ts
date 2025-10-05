@@ -7,7 +7,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ visitId: string }> }
 ) {
-  return requireAuth(req, async (req: NextRequest, session: any) => {
+  return requireAuth(req, async (_req: NextRequest, _session: any) => {
     try {
       await dbConnect();
 

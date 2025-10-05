@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       const limit = parseInt(searchParams.get('limit') || '20');
       const search = searchParams.get('search') || '';
 
-      let query: any = {
+      const query: any = {
         status: 'in_progress'
       };
 

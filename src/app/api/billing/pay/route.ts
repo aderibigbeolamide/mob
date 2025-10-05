@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Invoice from '@/models/Invoice';
 import Payment, { PaymentMethod, PaymentStatus } from '@/models/Payment';
-import Patient from '@/models/Patient';
 import { requireAuth } from '@/lib/middleware/auth';
 import { initializePayment } from '@/lib/services/paystack';
 

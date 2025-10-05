@@ -31,12 +31,12 @@ const CalendarModal = ({
       const addModal = document.getElementById("add_new");
       
       if (eventModal) {
-        // @ts-ignore
+        // Initialize Bootstrap modal
         new (window as any).bootstrap.Modal(eventModal);
       }
       
       if (addModal) {
-        // @ts-ignore
+        // Initialize Bootstrap modal
         new (window as any).bootstrap.Modal(addModal);
       }
     }
@@ -100,7 +100,7 @@ const CalendarModal = ({
       // Close the modal using Bootstrap hide
       const modal = document.getElementById("add_new");
       if (modal) {
-        // @ts-ignore
+        // Get or create Bootstrap modal instance
         const bsModal = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
         bsModal.hide();
         

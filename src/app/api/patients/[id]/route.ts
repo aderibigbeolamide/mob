@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Patient from '@/models/Patient';
 import PatientVisit from '@/models/PatientVisit';
-import { requireAuth, checkRole, checkBranch, UserRole } from '@/lib/middleware/auth';
+import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { uploadPatientImage } from '@/lib/services/cloudinary';
 import { canAccessResource } from '@/lib/utils/queryHelpers';
 import mongoose from 'mongoose';
@@ -11,7 +11,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return requireAuth(req, async (req: NextRequest, session: any) => {
+  return requireAuth(req, async (_req: NextRequest, _session: any) => {
     try {
       await dbConnect();
 

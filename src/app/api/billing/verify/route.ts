@@ -6,7 +6,7 @@ import { requireAuth } from '@/lib/middleware/auth';
 import { verifyPayment } from '@/lib/services/paystack';
 
 export async function POST(req: NextRequest) {
-  return requireAuth(req, async (req: NextRequest, session: any) => {
+  return requireAuth(req, async (req: NextRequest, _session: any) => {
     try {
       await dbConnect();
 

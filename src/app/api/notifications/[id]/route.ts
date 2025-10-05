@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Notification from '@/models/Notification';
-import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
+import { requireAuth, UserRole } from '@/lib/middleware/auth';
 import mongoose from 'mongoose';
 
 export async function DELETE(

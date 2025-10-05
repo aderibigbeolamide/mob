@@ -5,8 +5,6 @@ import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { uploadPatientImage } from '@/lib/services/cloudinary';
 import { 
   applyBranchFilter, 
-  shouldAllowCrossBranch, 
-  extractPaginationParams, 
   buildPaginationResponse 
 } from '@/lib/utils/queryHelpers';
 

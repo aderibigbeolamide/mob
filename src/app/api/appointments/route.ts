@@ -7,7 +7,6 @@ import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { sendAppointmentNotification } from '@/lib/services/notification';
 import { 
   applyBranchFilter, 
-  shouldAllowCrossBranch, 
   buildPaginationResponse 
 } from '@/lib/utils/queryHelpers';
 

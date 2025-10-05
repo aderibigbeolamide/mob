@@ -4,7 +4,6 @@ import Pharmacy from '@/models/Pharmacy';
 import { checkRole, UserRole } from '@/lib/middleware/auth';
 import { 
   applyBranchFilter, 
-  shouldAllowCrossBranch, 
   extractPaginationParams, 
   buildPaginationResponse 
 } from '@/lib/utils/queryHelpers';
@@ -116,7 +115,7 @@ export async function GET(req: NextRequest) {
         const status = searchParams.get('status');
         const branchId = searchParams.get('branchId');
 
-        let query: any = {};
+        const query: any = {};
 
         if (search) {
           query.$or = [

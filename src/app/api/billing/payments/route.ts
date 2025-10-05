@@ -4,7 +4,6 @@ import Payment from '@/models/Payment';
 import { checkRole, UserRole } from '@/lib/middleware/auth';
 import { 
   applyBranchFilter, 
-  shouldAllowCrossBranch, 
   buildPaginationResponse 
 } from '@/lib/utils/queryHelpers';
 

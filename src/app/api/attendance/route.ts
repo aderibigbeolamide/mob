@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Attendance from '@/models/Attendance';
-import User from '@/models/User';
-import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
+import { requireAuth, UserRole } from '@/lib/middleware/auth';
 
 export async function POST(req: NextRequest) {
   return requireAuth(req, async (req: NextRequest, session: any) => {

@@ -9,7 +9,7 @@ export async function GET(
 ) {
   return checkRole([UserRole.PHARMACY, UserRole.DOCTOR, UserRole.NURSE, UserRole.ADMIN])(
     req,
-    async (req: NextRequest, session: any) => {
+    async (_req: NextRequest, _session: any) => {
       try {
         await dbConnect();
 
@@ -44,7 +44,7 @@ export async function PUT(
 ) {
   return checkRole([UserRole.PHARMACY, UserRole.ADMIN])(
     req,
-    async (req: NextRequest, session: any) => {
+    async (req: NextRequest, _session: any) => {
       try {
         await dbConnect();
 
@@ -129,7 +129,7 @@ export async function DELETE(
 ) {
   return checkRole([UserRole.PHARMACY, UserRole.ADMIN])(
     req,
-    async (req: NextRequest, session: any) => {
+    async (_req: NextRequest, _session: any) => {
       try {
         await dbConnect();
 

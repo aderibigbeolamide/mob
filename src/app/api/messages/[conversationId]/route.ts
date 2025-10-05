@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Message from '@/models/Message';
 import User from '@/models/User';
-import Patient from '@/models/Patient';
 import { requireAuth } from '@/lib/middleware/auth';
 import mongoose from 'mongoose';
 

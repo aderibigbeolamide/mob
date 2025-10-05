@@ -5,14 +5,13 @@ import Patient from '@/models/Patient';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { 
   applyBranchFilter, 
-  shouldAllowCrossBranch, 
   buildPaginationResponse 
 } from '@/lib/utils/queryHelpers';
 
 export async function POST(req: NextRequest) {
   return checkRole([UserRole.DOCTOR, UserRole.ADMIN])(
     req,
-    async (req: NextRequest, session: any) => {
+    async (req: NextRequest, _session: any) => {
       try {
         await dbConnect();
 

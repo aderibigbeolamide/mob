@@ -3,7 +3,6 @@ import dbConnect from '@/lib/dbConnect';
 import Message from '@/models/Message';
 import Notification from '@/models/Notification';
 import User from '@/models/User';
-import Patient from '@/models/Patient';
 import { requireAuth } from '@/lib/middleware/auth';
 import mongoose from 'mongoose';
 
