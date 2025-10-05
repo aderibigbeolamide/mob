@@ -302,7 +302,7 @@ const DashboardComponent = () => {
                     <div className="table-responsive table-nowrap">
                       <table className="table table-borderless mb-0">
                         <tbody>
-                          {stats.pendingAppointments.map((appointment) => (
+                          {stats.pendingAppointments.filter(appointment => appointment.patient).map((appointment) => (
                             <tr key={appointment._id}>
                               <td>
                                 <div className="d-flex align-items-center">
