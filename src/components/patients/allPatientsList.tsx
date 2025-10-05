@@ -266,48 +266,34 @@ const AllPatientsListComponent = () => {
                             </td>
                           )}
                           <td className="text-end">
-                            <div className="dropdown">
-                              <button
-                                type="button"
-                                className="btn btn-icon btn-outline-light dropdown-toggle"
-                                data-bs-toggle="dropdown"
-                                aria-label="Patient actions menu"
+                            <div className="d-flex gap-2 justify-content-end">
+                              <Link
+                                href={`${all_routes.patientDetails}?id=${patient._id}`}
+                                className="btn btn-sm btn-icon btn-light"
+                                data-bs-toggle="tooltip"
+                                title="View Details"
                               >
-                                <i className="ti ti-dots-vertical" aria-hidden="true" />
-                              </button>
-                              <ul className="dropdown-menu p-2">
-                                <li>
-                                  <Link
-                                    href={`${all_routes.patientDetails}?id=${patient._id}`}
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-eye me-1" />
-                                    View Details
-                                  </Link>
-                                </li>
-                                <li>
-                                  <Link
-                                    href={`${all_routes.editPatient}?id=${patient._id}`}
-                                    className="dropdown-item d-flex align-items-center"
-                                  >
-                                    <i className="ti ti-edit me-1" />
-                                    Edit
-                                  </Link>
-                                </li>
-                                {isAdmin && (
-                                  <li>
-                                    <button
-                                      onClick={() => setDeleteConfirmId(patient._id || null)}
-                                      className="dropdown-item d-flex align-items-center"
-                                      data-bs-toggle="modal"
-                                      data-bs-target="#delete_modal"
-                                    >
-                                      <i className="ti ti-trash me-1" />
-                                      Delete
-                                    </button>
-                                  </li>
-                                )}
-                              </ul>
+                                <i className="ti ti-eye" />
+                              </Link>
+                              <Link
+                                href={`${all_routes.editPatient}?id=${patient._id}`}
+                                className="btn btn-sm btn-icon btn-light"
+                                data-bs-toggle="tooltip"
+                                title="Edit"
+                              >
+                                <i className="ti ti-edit" />
+                              </Link>
+                              {isAdmin && (
+                                <button
+                                  onClick={() => setDeleteConfirmId(patient._id || null)}
+                                  className="btn btn-sm btn-icon btn-light"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#delete_modal"
+                                  title="Delete"
+                                >
+                                  <i className="ti ti-trash" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
