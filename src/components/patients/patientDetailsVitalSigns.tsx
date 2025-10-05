@@ -1,20 +1,73 @@
 "use client";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PatientDetailsHeader from "./PatientDetailsHeader";
 import { all_routes } from "@/router/all_routes";
-import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
+import { toast } from "react-toastify";
+import { format } from "date-fns";
 
 const PatientDetailsVitalSignsComponent = () => {
+  const searchParams = useSearchParams();
+  const patientId = searchParams.get("id");
+
+  const [visits, setVisits] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+
+  const fetchVitalSigns = async () => {
+    if (!patientId) {
+      toast.error("Patient ID not found");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/visits?patient=${patientId}&limit=100`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch vital signs");
+      }
+
+      const data = await response.json();
+      const visitsWithVitalSigns = (data.visits || []).filter(
+        (visit: any) => visit.stages?.nurse?.vitalSigns
+      );
+      setVisits(visitsWithVitalSigns);
+    } catch (error: any) {
+      console.error("Error fetching vital signs:", error);
+      toast.error(error.message || "Failed to fetch vital signs");
+      setVisits([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVitalSigns();
+  }, [patientId, sortOrder]);
+
+  const formatDate = (date: string | Date) => {
+    try {
+      return format(new Date(date), "dd MMM yyyy, hh:mm a");
+    } catch {
+      return "N/A";
+    }
+  };
+
+  const calculateBMI = (weight?: number, height?: number) => {
+    if (!weight || !height || height === 0) return "N/A";
+    const heightInMeters = height / 100;
+    const bmi = weight / (heightInMeters * heightInMeters);
+    return bmi.toFixed(1);
+  };
+
   return (
     <>
-      {/* ========================
-              Start Page Content
-          ========================= */}
       <div className="page-wrapper">
-        {/* Start Content */}
         <div className="content">
-          {/* Page Header */}
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
             <div className="breadcrumb-arrow">
               <h4 className="mb-1">Patient Details</h4>
@@ -35,15 +88,14 @@ const PatientDetailsVitalSignsComponent = () => {
               Back to Patient
             </Link>
           </div>
-          {/* End Page Header */}
-          {/* tabs start */}
+
           <PatientDetailsHeader />
-          {/* tabs end */}
-          {/* card start */}
+
           <div className="card mb-0">
             <div className="card-header d-flex align-items-center flex-wrap gap-2 justify-content-between">
               <h5 className="d-inline-flex align-items-center mb-0">
-                Vital Signs<span className="badge bg-danger ms-2">658</span>
+                Vital Signs
+                <span className="badge bg-danger ms-2">{visits.length}</span>
               </h5>
               <div className="d-flex align-items-center flex-wrap">
                 <div className="dropdown">
@@ -51,18 +103,36 @@ const PatientDetailsVitalSignsComponent = () => {
                     href="#"
                     className="dropdown-toggle btn btn-md btn-outline-light d-inline-flex align-items-center"
                     data-bs-toggle="dropdown"
-                   aria-label="Patient actions menu" aria-haspopup="true" aria-expanded="false">
+                    aria-label="Patient actions menu"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
                     <i className="ti ti-sort-descending-2 me-1" />
-                    <span className="me-1">Sort By : </span> Newest
+                    <span className="me-1">Sort By : </span>{" "}
+                    {sortOrder === "newest" ? "Newest" : "Oldest"}
                   </Link>
-                  <ul className="dropdown-menu  dropdown-menu-end p-2">
+                  <ul className="dropdown-menu dropdown-menu-end p-2">
                     <li>
-                      <Link href="#" className="dropdown-item rounded-1">
+                      <Link
+                        href="#"
+                        className="dropdown-item rounded-1"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSortOrder("newest");
+                        }}
+                      >
                         Newest
                       </Link>
                     </li>
                     <li>
-                      <Link href="#" className="dropdown-item rounded-1">
+                      <Link
+                        href="#"
+                        className="dropdown-item rounded-1"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSortOrder("oldest");
+                        }}
+                      >
                         Oldest
                       </Link>
                     </li>
@@ -70,483 +140,83 @@ const PatientDetailsVitalSignsComponent = () => {
                 </div>
               </div>
             </div>
+
             <div className="card-body">
-              {/* table start */}
-              <div className="table-responsive table-nowrap">
-                <table className="table mb-0 border">
-                  <thead className="table-light">
-                    <tr>
-                      <th className="no-sort">Doctor Name</th>
-                      <th className="no-sort">Department</th>
-                      <th>Date</th>
-                      <th className="no-sort" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-01.jpg"
-                              alt="doctor"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Andrew Clark
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Anaesthesiology</td>
-                      <td>17 Jun 2025</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Vital signs actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-03.jpg"
-                              alt="doctor"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Katherine Brooks
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Dental Surgery</td>
-                      <td>10 Jun 2025</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Vital signs actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-04.jpg"
-                              alt="doctor"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Benjamin Harris
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>Dermatology</td>
-                      <td>22 May 2025</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Vital signs actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-05.jpg"
-                              alt="doctor"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Laura Mitchell
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>ENT Surgery</td>
-                      <td>15 May 2025</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Vital signs actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <Link
-                            href={all_routes.doctorDetails}
-                            className="avatar avatar-xs me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/doctors/doctor-06.jpg"
-                              alt="doctor"
-                              className="rounded"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="fs-14 mb-0 fw-medium">
-                              <Link href={all_routes.doctorDetails}>
-                                Dr. Christopher Lewis
-                              </Link>
-                            </h6>
-                          </div>
-                        </div>
-                      </td>
-                      <td>General Medicine</td>
-                      <td>30 Apr 2025</td>
-                      <td className="text-end">
-                        <Link
-                          href="#"
-                          className="btn btn-icon btn-outline-light"
-                          data-bs-toggle="dropdown"
-                          aria-label="Vital signs actions menu"
-                        >
-                          <i className="ti ti-dots-vertical" aria-hidden="true" />
-                        </Link>
-                        <ul className="dropdown-menu p-2">
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#view_modal"
-                            >
-                              <i className="ti ti-eye me-1" />
-                              View Details
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href="#"
-                              className="dropdown-item d-flex align-items-center"
-                              data-bs-toggle="modal"
-                              data-bs-target="#delete_modal"
-                            >
-                              <i className="ti ti-trash me-1" />
-                              Delete
-                            </Link>
-                          </li>
-                        </ul>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              {/* table end */}
+              {loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-2 text-muted">Loading vital signs...</p>
+                </div>
+              ) : visits.length === 0 ? (
+                <div className="text-center py-5">
+                  <div className="mb-3">
+                    <i
+                      className="ti ti-heart-rate-monitor"
+                      style={{ fontSize: "48px", color: "#6c757d" }}
+                    />
+                  </div>
+                  <h5 className="text-muted">No Vital Signs Found</h5>
+                  <p className="text-muted mb-0">
+                    No vital signs have been recorded for this patient yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="table-responsive table-nowrap">
+                  <table className="table mb-0 border">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Date</th>
+                        <th>Blood Pressure</th>
+                        <th>Temperature (°C)</th>
+                        <th>Pulse (bpm)</th>
+                        <th>Weight (kg)</th>
+                        <th>Height (cm)</th>
+                        <th>BMI</th>
+                        <th>Recorded By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visits.map((visit) => {
+                        const vitalSigns = visit.stages?.nurse?.vitalSigns || {};
+                        const bmi = calculateBMI(vitalSigns.weight, vitalSigns.height);
+                        
+                        return (
+                          <tr key={visit._id}>
+                            <td>{formatDate(visit.visitDate)}</td>
+                            <td>{vitalSigns.bloodPressure || "N/A"}</td>
+                            <td>
+                              {vitalSigns.temperature
+                                ? `${vitalSigns.temperature}°C`
+                                : "N/A"}
+                            </td>
+                            <td>{vitalSigns.pulse || "N/A"}</td>
+                            <td>
+                              {vitalSigns.weight ? `${vitalSigns.weight} kg` : "N/A"}
+                            </td>
+                            <td>
+                              {vitalSigns.height ? `${vitalSigns.height} cm` : "N/A"}
+                            </td>
+                            <td>{bmi}</td>
+                            <td>
+                              {visit.stages?.nurse?.recordedBy?.firstName &&
+                              visit.stages?.nurse?.recordedBy?.lastName
+                                ? `${visit.stages.nurse.recordedBy.firstName} ${visit.stages.nurse.recordedBy.lastName}`
+                                : "N/A"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
-          {/* card end */}
         </div>
-        {/* End Content */}
-        {/* Start Footer */}
-        <CommonFooter />
-        {/* End Footer */}
       </div>
-      {/* ========================
-              End Page Content
-          ========================= */}
-      <>
-        {/* Start Delete Modal  */}
-        <div className="modal fade" id="delete_modal">
-          <div className="modal-dialog modal-dialog-centered modal-sm">
-            <div className="modal-content">
-              <div className="modal-body text-center position-relative">
-                <div className="mb-2 position-relative z-1">
-                  <span className="avatar avatar-md bg-danger rounded-circle">
-                    <i className="ti ti-trash fs-24" />
-                  </span>
-                </div>
-                <h5 className="mb-1">Delete Confirmation</h5>
-                <p className="mb-3">Are you sure you want to delete?</p>
-                <div className="d-flex justify-content-center gap-2">
-                  <Link
-                    href="#"
-                    className="btn btn-white w-100 position-relative z-1"
-                    data-bs-dismiss="modal"
-                  >
-                    Cancel
-                  </Link>
-                  <Link
-                    href="#"
-                    className="btn btn-danger w-100 position-relative z-1"
-                    data-bs-dismiss="modal"
-                  
-                  >
-                    Yes, Delete
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* End Delete Modal  */}
-        {/* Start view Modal */}
-        <div id="view_modal" className="modal fade">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header justify-content-between">
-                <h5 className="modal-title text-truncate">Vital Details</h5>
-                <button
-                  type="button"
-                  className="btn-close btn-close-modal"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                >
-                  <i className="ti ti-circle-x-filled" />
-                </button>
-              </div>
-              <div className="modal-body">
-                <div className="row row-gap-4">
-                  <div className="col-sm-6">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar rounded bg-light text-dark flex-shrink-0 me-2">
-                        <i className="ti ti-droplet fs-16" />
-                      </span>
-                      <div>
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Blood Pressure
-                        </h6>
-                        <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          <i className="ti ti-point-filled me-1 text-success fs-18" />
-                          100/67 mmHg
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-sm-6">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar rounded bg-light text-dark flex-shrink-0 me-2">
-                        <i className="ti ti-heart-rate-monitor fs-16" />
-                      </span>
-                      <div>
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Heart Rate
-                        </h6>
-                        <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          <i className="ti ti-point-filled me-1 text-danger fs-18" />
-                          89 Bpm
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-sm-6">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar rounded bg-light text-dark flex-shrink-0 me-2">
-                        <i className="ti ti-hexagons fs-16" />
-                      </span>
-                      <div>
-                        <h6 className="fs-14 fw-semibold mb-1">SPO2</h6>
-                        <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          <i className="ti ti-point-filled me-1 text-success fs-18" />
-                          98 %
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-sm-6">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar rounded bg-light text-dark flex-shrink-0 me-2">
-                        <i className="ti ti-temperature fs-16" />
-                      </span>
-                      <div>
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Temperature
-                        </h6>
-                        <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          <i className="ti ti-point-filled me-1 text-success fs-18" />
-                          101 C
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-sm-6">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar rounded bg-light text-dark flex-shrink-0 me-2">
-                        <i className="ti ti-ease-in fs-16" />
-                      </span>
-                      <div>
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Respiratory Rate
-                        </h6>
-                        <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          <i className="ti ti-point-filled me-1 text-danger fs-18" />
-                          24 rpm
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-sm-6">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar rounded bg-light text-dark flex-shrink-0 me-2">
-                        <i className="ti ti-circuit-switch-open fs-16" />
-                      </span>
-                      <div>
-                        <h6 className="fs-14 fw-semibold mb-1 text-truncate">
-                          Weight
-                        </h6>
-                        <p className="mb-0 fs-13 d-inline-flex align-items-center text-truncate">
-                          <i className="ti ti-point-filled me-1 text-success fs-18" />
-                          100 kg
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* End view Modal */}
-      </>
+      <CommonFooter />
     </>
   );
 };
