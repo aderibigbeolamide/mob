@@ -98,6 +98,7 @@ export default function LoginPage() {
                   width={120}
                   height={120}
                   className="mb-4"
+                  priority={true}
                 />
                 <h1 className="fw-bold text-white mb-3">Life Point Medical Centre</h1>
                 <p className="lead text-white mb-4">Electronic Medical Records System</p>
@@ -120,6 +121,7 @@ export default function LoginPage() {
                 width={80}
                 height={80}
                 className="mb-3"
+                priority={true}
               />
               <h2 className="fw-bold mb-2" style={{ color: 'var(--lifepoint-blue)' }}>
                 Life Point Medical Centre

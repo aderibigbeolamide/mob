@@ -123,6 +123,30 @@ The EMR system is built on Next.js 15 with the App Router, TypeScript, and React
   - UPDATE: Supports all fields including profileImage, syncs branchId, checks permissions
   - DELETE: Soft delete (isActive: false), admin-only access, branch permissions enforced
 
+### Patient Management UI Enhancement (October 5, 2025)
+- **Icon Button Implementation**:
+  - Replaced dropdown menus (three dots) with direct icon buttons in both grid and list views
+  - Matches doctor list view implementation for consistency
+  - Eye icon (ti-eye) for view, Edit icon (ti-edit) for edit, Trash icon (ti-trash) for delete
+  - All buttons use `btn btn-sm btn-icon btn-light` classes for consistency
+- **Mobile Responsive Design**:
+  - Buttons use flexbox with `d-flex gap-2` for proper spacing
+  - Small button size (btn-sm) optimized for mobile screens
+  - Right-aligned in list view with `justify-content-end`
+- **Access Control**:
+  - Delete button only visible to ADMIN users via isAdmin session check
+  - Delete confirmation modal properly wired with Bootstrap modal trigger
+  - Delete handler calls API, clears state, and refreshes patient list
+- **CRUD Operations**: All patient CRUD operations verified and working:
+  - CREATE: Validates required fields, checks duplicate patient IDs, handles image upload
+  - READ: Cross-branch viewing enabled, pagination and search working correctly
+  - UPDATE: Branch-level access control enforced, supports all fields including profile image
+  - DELETE: Admin-only soft delete (isActive: false), branch permissions enforced
+- **Performance Optimizations**:
+  - Added priority prop to life-point-logo.png images for LCP optimization
+  - Added data-scroll-behavior="smooth" to <html> element for future Next.js compatibility
+- **Build Verification**: Production build successful with no errors, only minor linting warnings
+
 ### Known Issues
 - Production build completed successfully (79s) - no blocking issues
 - ESLint warnings present (unused variables) - non-blocking, for future cleanup
