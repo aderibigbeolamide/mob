@@ -41,6 +41,44 @@ The EMR system utilizes Next.js 15 with the App Router, TypeScript, and React 19
 -   **API Endpoints**: Complete CRUD operations with read/write permission separation: GET endpoints allow cross-branch viewing, while POST/PUT/DELETE enforce strict branch isolation.
 -   **Docker Deployment**: The application is fully containerized using a multi-stage Dockerfile optimized for Next.js 15 for smaller image size and secure runtime.
 
+## Recent Changes (October 2025)
+
+### Migration & Stabilization Fixes
+1. **Appointments Component Error Fix** (Critical)
+   - Added defensive null safety checks using optional chaining for patientId, doctorId, and branchId fields
+   - Prevents runtime crashes when API data is loading or missing
+   - Graceful "N/A" fallbacks for missing data
+   - API already populates references correctly with `.populate()` calls
+
+2. **Accounting Module Implementation** (New Feature)
+   - Created new accounting department module accessible at `/accounting`
+   - Implemented role-based access control: only ADMIN, ACCOUNTING, and BILLING roles can access
+   - Integrated into sidebar navigation with role checking
+   - Displays payment transactions and revenue statistics
+   - Connected to `/api/billing/payments` endpoint
+
+3. **Database & API Fixes**
+   - Fixed Mongoose duplicate index warning in Pharmacy model
+   - Cleaned up 21+ API route files: removed unused imports, fixed TypeScript warnings
+   - Verified backend-database connectivity is working correctly
+   - All API endpoints properly populate referenced documents (patient, doctor, branch)
+
+4. **Build & Production Readiness**
+   - Successfully runs production build (compiles in ~3.7 minutes)
+   - Only non-blocking ESLint warnings remain (unused variables, missing dependencies)
+   - No critical errors blocking deployment
+
+5. **Translation and Localization**
+   - Added "Accounting" translation keys to i18n configuration
+   - Supports 4 languages: English, German (Buchhaltung), French (Comptabilité), Arabic (المحاسبة)
+   - Fixed sidebar label display from "sidebar.Accounting" to "Accounting"
+
+### Known Considerations
+- Invoice pages have UI in place but may need additional API wiring based on business requirements
+- Next.js config has deprecation warnings (devIndicators.buildActivityPosition) - non-blocking
+- Some ESLint warnings about unused variables and missing useEffect dependencies - code quality improvements for future iteration
+- Initial 401 errors on first page load are expected NextAuth behavior - session loads on subsequent requests
+
 ## External Dependencies
 -   **Database**: MongoDB (with Mongoose ORM)
 -   **Authentication**: NextAuth
