@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
       )
         .populate('patient', 'patientId firstName lastName phoneNumber email dateOfBirth gender')
         .populate('appointment')
-        .populate('branch', 'name address city state')
+        .populate('branchId', 'name address city state')
         .populate('stages.frontDesk.clockedInBy', 'firstName lastName email role')
         .populate('stages.frontDesk.clockedOutBy', 'firstName lastName email role')
         .populate('stages.nurse.clockedInBy', 'firstName lastName email role')
