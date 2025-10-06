@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -61,14 +61,10 @@ export const authOptions: NextAuthOptions = {
         token.lastName = user.lastName;
       }
       
-      if (trigger === 'signOut') {
-        return {};
-      }
-      
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.branch = token.branch as any;
@@ -77,11 +73,6 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     }
-  },
-  events: {
-    async signOut({ token }) {
-      token = {};
-    },
   },
   pages: {
     signIn: '/',
