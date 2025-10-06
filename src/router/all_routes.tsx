@@ -77,12 +77,7 @@ export const all_routes = {
   manageInvoices: "/manage-invoices",
   generalSettings: "/general-settings",
   securitySettings: "/security-settings",
-  preferencesSettings: "/preferences-settings",
-  appearanceSettings: "/appearance-settings",
   notificationsSettings: "/notifications-settings",
-  userPermissionsSettings: "/user-permissions-settings",
-  plansBillingsSettings: "/plans-billings-settings",
-  permissionSettings:"/permission-settings",
 
   // PAGES
   login: "/login",

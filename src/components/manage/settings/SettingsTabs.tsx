@@ -10,11 +10,7 @@ const SettingsTabs: React.FC = () => {
   const tabs = [
     { label: "General", route: all_routes.generalSettings },
     { label: "Security", route: all_routes.securitySettings }, 
-    { label: "Preferences", route: all_routes.preferencesSettings },
-    { label: "Appearance", route: all_routes.appearanceSettings },
     { label: "Notifications", route: all_routes.notificationsSettings },
-    { label: "User Permissions", route: all_routes.userPermissionsSettings },
-    { label: "Plans & Billing", route: all_routes.plansBillingsSettings },
   ];
 
   return (

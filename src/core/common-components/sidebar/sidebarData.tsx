@@ -201,11 +201,7 @@ export const SidebarData = [
         relatedRoutes: [
           route.generalSettings,
           route.securitySettings,
-          route.preferencesSettings,
-          route.appearanceSettings,
           route.notificationsSettings,
-          route.userPermissionsSettings,
-          route.plansBillingsSettings,
         ],
         submenu: false,
         icon: "settings",
