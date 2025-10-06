@@ -128,7 +128,16 @@ const AdminDashboard = () => {
       <div className="content">
         <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
           <div className="breadcrumb-arrow">
-            <h4 className="mb-1">Welcome, {userName}</h4>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <span className="badge" style={{ backgroundColor: '#003366', color: 'white', padding: '6px 12px', fontSize: '13px' }}>
+                <i className="ti ti-shield me-1" />
+                System Administrator
+              </span>
+            </div>
+            <h4 className="mb-1 d-flex align-items-center gap-2">
+              <i className="ti ti-crown text-primary" style={{ color: '#003366' }} />
+              Welcome, {userName}
+            </h4>
             <p className="mb-0">
               Today you have {loading ? '...' : stats?.visitsToday || 0} visits,{" "}
               <Link
@@ -153,7 +162,7 @@ const AdminDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-primary rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#003366' }}>
                     <i className="ti ti-user-exclamation fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">

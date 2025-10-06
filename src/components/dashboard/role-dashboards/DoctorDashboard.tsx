@@ -94,7 +94,16 @@ const DoctorDashboard = () => {
       <div className="content">
         <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
           <div className="breadcrumb-arrow">
-            <h4 className="mb-1">Welcome, Dr. {userName}</h4>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <span className="badge" style={{ backgroundColor: '#14A44D', color: 'white', padding: '6px 12px', fontSize: '13px' }}>
+                <i className="ti ti-heartbeat me-1" />
+                Doctor
+              </span>
+            </div>
+            <h4 className="mb-1 d-flex align-items-center gap-2">
+              <i className="ti ti-stethoscope" style={{ color: '#14A44D' }} />
+              Welcome, Dr. {userName}
+            </h4>
             <p className="mb-0">
               Today you have {loading ? '...' : stats?.myAppointmentsToday.total || 0} appointments
             </p>
@@ -113,7 +122,7 @@ const DoctorDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-primary rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#14A44D' }}>
                     <i className="ti ti-users fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">
@@ -141,7 +150,7 @@ const DoctorDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-orange rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#0DCAF0' }}>
                     <i className="ti ti-calendar-check fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">
@@ -169,7 +178,7 @@ const DoctorDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-purple rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#20C997' }}>
                     <i className="ti ti-prescription fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">
@@ -197,7 +206,7 @@ const DoctorDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-success rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#157347' }}>
                     <i className="ti ti-test-pipe-2 fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">

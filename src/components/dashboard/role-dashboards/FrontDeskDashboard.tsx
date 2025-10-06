@@ -89,7 +89,16 @@ const FrontDeskDashboard = () => {
       <div className="content">
         <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
           <div className="breadcrumb-arrow">
-            <h4 className="mb-1">Welcome, {userName}</h4>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <span className="badge" style={{ backgroundColor: '#CC0000', color: 'white', padding: '6px 12px', fontSize: '13px' }}>
+                <i className="ti ti-calendar-user me-1" />
+                Front Desk
+              </span>
+            </div>
+            <h4 className="mb-1 d-flex align-items-center gap-2">
+              <i className="ti ti-building-community" style={{ color: '#CC0000' }} />
+              Welcome, {userName}
+            </h4>
             <p className="mb-0">
               Today you have {loading ? '...' : stats?.appointmentsToday.total || 0} appointments
             </p>
@@ -108,7 +117,7 @@ const FrontDeskDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-primary rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#CC0000' }}>
                     <i className="ti ti-calendar-check fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">
@@ -136,7 +145,7 @@ const FrontDeskDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-success rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#DC2626' }}>
                     <i className="ti ti-user-plus fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">
@@ -164,7 +173,7 @@ const FrontDeskDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-warning rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#EF4444' }}>
                     <i className="ti ti-clipboard-check fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">

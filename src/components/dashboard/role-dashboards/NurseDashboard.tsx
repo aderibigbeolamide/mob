@@ -77,7 +77,16 @@ const NurseDashboard = () => {
       <div className="content">
         <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
           <div className="breadcrumb-arrow">
-            <h4 className="mb-1">Welcome, {userName}</h4>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <span className="badge" style={{ backgroundColor: '#0DCAF0', color: 'white', padding: '6px 12px', fontSize: '13px' }}>
+                <i className="ti ti-heart-rate-monitor me-1" />
+                Nurse
+              </span>
+            </div>
+            <h4 className="mb-1 d-flex align-items-center gap-2">
+              <i className="ti ti-heartbeat" style={{ color: '#0DCAF0' }} />
+              Welcome, Nurse {userName}
+            </h4>
             <p className="mb-0">
               Today you have {loading ? '...' : stats?.patientsToday.total || 0} patients
             </p>
@@ -96,7 +105,7 @@ const NurseDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-primary rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#0DCAF0' }}>
                     <i className="ti ti-users fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">
@@ -124,7 +133,7 @@ const NurseDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-success rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#0CB3D9' }}>
                     <i className="ti ti-heart-rate-monitor fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">
@@ -152,7 +161,7 @@ const NurseDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-warning rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#31D2F2' }}>
                     <i className="ti ti-clipboard-check fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">

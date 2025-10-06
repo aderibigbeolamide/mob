@@ -85,7 +85,16 @@ const LabDashboard = () => {
       <div className="content">
         <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
           <div className="breadcrumb-arrow">
-            <h4 className="mb-1">Welcome, {userName}</h4>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <span className="badge" style={{ backgroundColor: '#6F42C1', color: 'white', padding: '6px 12px', fontSize: '13px' }}>
+                <i className="ti ti-test-pipe-2 me-1" />
+                Lab Technician
+              </span>
+            </div>
+            <h4 className="mb-1 d-flex align-items-center gap-2">
+              <i className="ti ti-flask" style={{ color: '#6F42C1' }} />
+              Welcome, {userName}
+            </h4>
             <p className="mb-0">
               You have {loading ? '...' : stats?.pendingTests.total || 0} pending tests
             </p>
@@ -104,7 +113,7 @@ const LabDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-warning rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#6F42C1' }}>
                     <i className="ti ti-clock-hour-3 fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">
@@ -132,7 +141,7 @@ const LabDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-success rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#9461D1' }}>
                     <i className="ti ti-check fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">
@@ -160,7 +169,7 @@ const LabDashboard = () => {
             <div className="card pb-2 flex-fill">
               <div className="d-flex align-items-center justify-content-between gap-1 card-body pb-0 mb-1">
                 <div className="d-flex align-items-center overflow-hidden">
-                  <span className="avatar bg-primary rounded-circle flex-shrink-0">
+                  <span className="avatar rounded-circle flex-shrink-0" style={{ backgroundColor: '#8A56C4' }}>
                     <i className="ti ti-test-pipe-2 fs-20" />
                   </span>
                   <div className="ms-2 overflow-hidden">
