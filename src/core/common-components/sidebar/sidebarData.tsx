@@ -1,8 +1,21 @@
 "use client";
 
 import { all_routes } from "@/router/all_routes";
+import { UserRole } from "@/types/emr";
 
 const route = all_routes;
+
+const ALL_ROLES = [
+  UserRole.ADMIN,
+  UserRole.DOCTOR,
+  UserRole.NURSE,
+  UserRole.LAB,
+  UserRole.PHARMACY,
+  UserRole.BILLING,
+  UserRole.ACCOUNTING,
+  UserRole.FRONT_DESK
+];
+
 export const SidebarData = [
   {
     tittle: "MAIN",
@@ -13,30 +26,41 @@ export const SidebarData = [
         submenu: false,
         icon: "layout-board",
         submenuItems: [],
+        allowedRoles: ALL_ROLES,
       },
       {
         label: "Applications",
         link: "#",
         submenu: true,
         icon: "apps",
+        allowedRoles: ALL_ROLES,
         submenuItems: [
-          { label: "Chat", link: route.chat, submenu: false, submenuItems: [] },
+          { 
+            label: "Chat", 
+            link: route.chat, 
+            submenu: false, 
+            submenuItems: [],
+            allowedRoles: ALL_ROLES,
+          },
           {
             label: "Calls",
             link: "#",
             submenu: true,
+            allowedRoles: ALL_ROLES,
             submenuItems: [
               {
                 label: "Voice Call",
                 link: route.voiceCall,
                 submenu: false,
                 submenuItems: [],
+                allowedRoles: ALL_ROLES,
               },
               {
                 label: "Video Call",
                 link: route.videoCall,
                 submenu: false,
                 submenuItems: [],
+                allowedRoles: ALL_ROLES,
               },
             ],
           },
@@ -45,6 +69,7 @@ export const SidebarData = [
             link: route.calendar,
             submenu: false,
             submenuItems: [],
+            allowedRoles: ALL_ROLES,
           },
           {
             label: "Email",
@@ -55,6 +80,7 @@ export const SidebarData = [
             ], 
             submenu: false,
             submenuItems: [],
+            allowedRoles: ALL_ROLES,
           },
           {
             label: "Contacts",
@@ -64,11 +90,13 @@ export const SidebarData = [
             ], 
             submenu: false,
             submenuItems: [],
+            allowedRoles: ALL_ROLES,
           },
           {
             label: "Invoices",
             link: "#",
             submenu: true,
+            allowedRoles: [UserRole.ADMIN, UserRole.ACCOUNTING, UserRole.BILLING, UserRole.FRONT_DESK],
             submenuItems: [
               {
                 label: "Invoices",
@@ -79,12 +107,14 @@ export const SidebarData = [
                 ], 
                 submenu: false,
                 submenuItems: [],
+                allowedRoles: [UserRole.ADMIN, UserRole.ACCOUNTING, UserRole.BILLING, UserRole.FRONT_DESK],
               },
               {
                 label: "Invoice Details",
                 link: route.invoiceDetails,
                 submenu: false,
                 submenuItems: [],
+                allowedRoles: [UserRole.ADMIN, UserRole.ACCOUNTING, UserRole.BILLING, UserRole.FRONT_DESK],
               },
             ],
           },
@@ -93,36 +123,42 @@ export const SidebarData = [
             link: route.todo,
             submenu: false,
             submenuItems: [],
+            allowedRoles: ALL_ROLES,
           },
           {
             label: "Notes",
             link: route.notes,
             submenu: false,
             submenuItems: [],
+            allowedRoles: ALL_ROLES,
           },
           {
             label: "Kanban Board",
             link: route.kanbanView,
             submenu: false,
             submenuItems: [],
+            allowedRoles: ALL_ROLES,
           },
           {
             label: "File Manager",
             link: route.fileManager,
             submenu: false,
             submenuItems: [],
+            allowedRoles: ALL_ROLES,
           },
           {
             label: "Social Feed",
             link: route.socialFeed,
             submenu: false,
             submenuItems: [],
+            allowedRoles: ALL_ROLES,
           },
           {
             label: "Search Result",
             link: route.searchResult,
             submenu: false,
             submenuItems: [],
+            allowedRoles: ALL_ROLES,
           },
         ],
       },
@@ -150,6 +186,7 @@ export const SidebarData = [
         submenu: false,
         icon: "users",
         submenuItems: [],
+        allowedRoles: ALL_ROLES,
       },
       {
         label: "Doctors",
@@ -163,6 +200,7 @@ export const SidebarData = [
         submenu: false,
         icon: "stethoscope",
         submenuItems: [],
+        allowedRoles: [UserRole.ADMIN],
       },
       {
         label: "Appointments",
@@ -174,6 +212,7 @@ export const SidebarData = [
         submenu: false,
         icon: "calendar-time",
         submenuItems: [],
+        allowedRoles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.NURSE, UserRole.FRONT_DESK, UserRole.LAB, UserRole.PHARMACY],
       },
       {
         label: "Visits",
@@ -185,24 +224,28 @@ export const SidebarData = [
         submenu: false,
         icon: "e-passport",
         submenuItems: [],
+        allowedRoles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.NURSE, UserRole.FRONT_DESK],
       },
       {
         label: "Laboratory",
         link: "#",
         submenu: true,
         icon: "test-pipe",
+        allowedRoles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.LAB],
         submenuItems: [
           {
             label: "Lab Results",
             link: route.labResults,
             submenu: false,
             submenuItems: [],
+            allowedRoles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.LAB],
           },
           {
             label: "Medical Rsults",
             link: route.medicalResults,
             submenu: false,
             submenuItems: [],
+            allowedRoles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.LAB],
           },
         ],
       },
@@ -212,6 +255,7 @@ export const SidebarData = [
         submenu: false,
         icon: "prescription",
         submenuItems: [],
+        allowedRoles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.PHARMACY],
       },
     ],
   },
@@ -224,6 +268,7 @@ export const SidebarData = [
         submenu: false,
         icon: "users-group",
         submenuItems: [],
+        allowedRoles: [UserRole.ADMIN],
       },
       {
         label: "Accounting",
@@ -231,7 +276,7 @@ export const SidebarData = [
         submenu: false,
         icon: "calculator",
         submenuItems: [],
-        roles: ["ADMIN", "ACCOUNTING", "BILLING"],
+        allowedRoles: [UserRole.ADMIN, UserRole.ACCOUNTING],
       },
       {
         label: "Billing Department",
@@ -239,7 +284,7 @@ export const SidebarData = [
         submenu: false,
         icon: "file-invoice",
         submenuItems: [],
-        roles: ["ADMIN", "ACCOUNTING", "BILLING"],
+        allowedRoles: [UserRole.ADMIN, UserRole.ACCOUNTING, UserRole.BILLING, UserRole.FRONT_DESK],
       },
       {
         label: "Branch Management",
@@ -247,7 +292,7 @@ export const SidebarData = [
         submenu: false,
         icon: "building",
         submenuItems: [],
-        adminOnly: true,
+        allowedRoles: [UserRole.ADMIN],
       },
       {
         label: "Notifications",
@@ -255,6 +300,7 @@ export const SidebarData = [
         submenu: false,
         icon: "bell",
         submenuItems: [],
+        allowedRoles: ALL_ROLES,
       },
       {
         label: "Settings",
@@ -271,6 +317,7 @@ export const SidebarData = [
         submenu: false,
         icon: "settings",
         submenuItems: [],
+        allowedRoles: ALL_ROLES,
       },
     ],
   },
