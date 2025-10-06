@@ -249,14 +249,15 @@ async function getNurseDashboardStats(userId: string, branchFilter: any, today: 
     PatientVisit.countDocuments({
       ...branchFilter,
       visitDate: { $gte: today },
-      'vitals.recordedBy': userId
+      'stages.nurse.clockedInBy': userId,
+      'stages.nurse.vitalSigns': { $exists: true }
     }),
     PatientVisit.find({
       ...branchFilter,
       status: 'in_progress',
-      'vitals': { $exists: false }
+      'stages.nurse.vitalSigns': { $exists: false }
     })
-      .populate('patientId', 'firstName lastName profileImage patientId')
+      .populate('patient', 'firstName lastName profileImage patientId')
       .limit(10)
       .lean(),
   ]);
