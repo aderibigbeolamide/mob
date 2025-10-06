@@ -385,6 +385,24 @@ Implemented via `RoleDashboardRouter.tsx`
 
 ---
 
+## Test User Credentials
+
+For testing RBAC functionality, use these seeded accounts:
+
+| Role | Email | Password | Name |
+|------|-------|----------|------|
+| ADMIN | admin@lifepointmedical.com | admin123 | Super Administrator |
+| DOCTOR | dr.sarah@lifepointmedical.com | doctor123 | Dr. Sarah Johnson |
+| DOCTOR | dr.michael@lifepointmedical.com | doctor123 | Dr. Michael Chen |
+| NURSE | nurse@lifepointmedical.com | nurse123 | Mary Williams |
+| FRONT_DESK | frontdesk@lifepointmedical.com | desk123 | Jane Smith |
+| LAB | lab@lifepointmedical.com | lab123 | James Anderson |
+| PHARMACY | pharmacy@lifepointmedical.com | pharmacy123 | Patricia Brown |
+| BILLING | billing@lifepointmedical.com | billing123 | Robert Davis |
+| ACCOUNTING | accounting@lifepointmedical.com | accounting123 | Elizabeth Thompson |
+
+---
+
 ## Notes
 
 1. All API routes use NextAuth session for authentication
@@ -392,5 +410,16 @@ Implemented via `RoleDashboardRouter.tsx`
 3. Branch filtering ensures multi-location data isolation
 4. Permission checks happen both frontend (UX) and backend (security)
 5. Audit logging recommended for sensitive operations (future enhancement)
+
+## Security Enhancements Applied (October 6, 2025)
+
+Enhanced API endpoint protection for sensitive data:
+
+1. **Staff GET** (`/api/staff`) - Restricted to ADMIN only
+2. **Billing/Invoices GET** (`/api/billing/invoices`) - Restricted to BILLING, ACCOUNTING, ADMIN, FRONT_DESK
+3. **Prescriptions GET** (`/api/prescriptions`) - Restricted to DOCTOR, PHARMACY, NURSE, ADMIN
+4. **Documents GET** (`/api/documents`) - Restricted to ADMIN, DOCTOR, NURSE, FRONT_DESK
+
+All enhancements reviewed and approved by system architect.
 
 Last Updated: October 6, 2025

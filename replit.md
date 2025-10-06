@@ -25,6 +25,17 @@ The EMR system utilizes Next.js 15 with the App Router, TypeScript, and React 19
 
 **User Roles:** Eight distinct role-based access levels are supported: ADMIN, FRONT_DESK, NURSE, DOCTOR, LAB, PHARMACY, BILLING, and ACCOUNTING, each with specific permissions.
 
+**Role-Based Access Control (RBAC) - Completed October 6, 2025:**
+-   **Comprehensive Permission System**: Complete ROLE_PERMISSIONS mapping in `rbac.ts` defining granular permissions for all 8 roles across patients, appointments, vitals, prescriptions, lab tests, pharmacy, billing, accounting, and system management.
+-   **Sidebar Menu Filtering**: Dynamic sidebar menu filtering via `filterMenuByRole()` function ensures each role only sees authorized menu items based on their `allowedRoles` configuration.
+-   **Role-Specific Dashboards**: Dedicated dashboard components for each role (AdminDashboard, DoctorDashboard, NurseDashboard, LabDashboard, PharmacyDashboard, BillingDashboard, AccountingDashboard, FrontDeskDashboard) with `RoleDashboardRouter` handling role-based routing.
+-   **API Route Protection**: All API routes protected with `checkRole` middleware for write operations (POST/PUT/DELETE) and enhanced GET endpoint protection for sensitive data (staff, billing/invoices, prescriptions, patient documents).
+-   **Security Enhancements**: Applied role-based access control to sensitive GET endpoints - Staff (admin-only), Billing/Invoices (billing, accounting, admin, front desk), Prescriptions (doctor, pharmacy, nurse, admin), Documents (admin, doctor, nurse, front desk).
+-   **Permission Utilities**: `usePermissions` hook for frontend permission checks, `PermissionGate` component for conditional UI rendering, and comprehensive middleware stack (`requireAuth`, `checkRole`, `requirePermission`, `withBranchScope`, `canModifyResource`).
+-   **Data-Level Security**: Branch-scoped queries via `buildRoleScopedFilters()` ensure multi-location data isolation; role hierarchy system for permission inheritance; owner-based access control for user data.
+-   **Documentation**: Comprehensive RBAC verification matrix (`RBAC_VERIFICATION_MATRIX.md`) documenting all roles, permissions, sidebar access, dashboard features, API permissions, and test credentials.
+-   **Architect Review**: All RBAC implementations reviewed and approved by system architect with PASS verdict confirming production readiness.
+
 **Department Queue Dashboards (Completed - October 2025):**
 -   **Real-Time Queue Management**: Each department (Nurse, Doctor, Lab, Pharmacy, Billing) has a dedicated queue dashboard showing patients waiting at their stage.
 -   **Auto-Refresh System**: Configurable 30-second auto-refresh with countdown timer, toggle control, and automatic disabling during search operations to prevent data conflicts.
