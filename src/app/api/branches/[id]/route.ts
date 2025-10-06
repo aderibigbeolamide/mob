@@ -1,40 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/dbConnect';
 import Branch from '@/models/Branch';
-import { authOptions } from '@/lib/auth';
 import { UserRole } from '@/types/emr';
-import { checkRole } from '@/lib/middleware/auth';
+import { requireAuth, checkRole } from '@/lib/middleware/auth';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return requireAuth(req, async (req: NextRequest, session: any) => {
+    try {
+      await dbConnect();
+
+      const branch = await Branch.findById((await params).id)
+        .populate('manager', 'firstName lastName email phoneNumber')
+        .lean() as any;
+
+      if (!branch) {
+        return NextResponse.json({ error: 'Branch not found' }, { status: 404 });
+      }
+
+      return NextResponse.json(branch);
+    } catch (error: any) {
+      console.error('Error fetching branch:', error);
+      return NextResponse.json(
+        { error: error.message || 'Failed to fetch branch' },
+        { status: 500 }
+      );
     }
-
-    await dbConnect();
-
-    const branch = await Branch.findById((await params).id)
-      .populate('manager', 'firstName lastName email phoneNumber')
-      .lean() as any;
-
-    if (!branch) {
-      return NextResponse.json({ error: 'Branch not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(branch);
-  } catch (error: any) {
-    console.error('Error fetching branch:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch branch' },
-      { status: 500 }
-    );
-  }
+  });
 }
 
 export async function PUT(
