@@ -20,7 +20,7 @@ export interface UsePermissionsReturn {
   canAny: (permissions: ResourceAction[]) => boolean;
   canAll: (permissions: ResourceAction[]) => boolean;
   canEditResource: (resourceOwnerId?: string) => boolean;
-  canViewResource: (resourceOwnerId?: string) => boolean;
+  canViewResource: (resourceType: string, resourceOwnerId?: string) => boolean;
   getRoleFilters: () => RoleScopedFilter;
   isLoading: boolean;
   userRole: UserRole | null;
@@ -60,9 +60,9 @@ export function usePermissions(): UsePermissionsReturn {
     return utilCanEditResource(userRole, userId, resourceOwnerId);
   }, [userRole, userId]);
 
-  const canViewResource = useCallback((resourceOwnerId?: string): boolean => {
+  const canViewResource = useCallback((resourceType: string, resourceOwnerId?: string): boolean => {
     if (!userRole || !userId) return false;
-    return utilCanViewResource(userRole, userId, resourceOwnerId);
+    return utilCanViewResource(userRole, userId, resourceType, resourceOwnerId);
   }, [userRole, userId]);
 
   const getRoleFilters = useCallback((): RoleScopedFilter => {
