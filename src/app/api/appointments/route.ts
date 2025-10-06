@@ -54,7 +54,7 @@ async function checkSchedulingConflict(
 }
 
 export async function POST(req: NextRequest) {
-  return checkRole([UserRole.FRONT_DESK, UserRole.DOCTOR, UserRole.ADMIN])(
+  return checkRole([UserRole.FRONT_DESK, UserRole.ADMIN])(
     req,
     async (req: NextRequest, session: any) => {
       try {

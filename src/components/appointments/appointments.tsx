@@ -205,6 +205,7 @@ const AppointmentComponent = () => {
   };
 
   const isAdmin = session?.user?.role === "ADMIN";
+  const canCreateAppointment = session?.user?.role === "ADMIN" || session?.user?.role === "FRONT_DESK";
 
   return (
     <>
@@ -253,16 +254,18 @@ const AppointmentComponent = () => {
               >
                 <i className="ti ti-cloud-download" />
               </Link>
-              <Link
-                href="#"
-                className="btn btn-primary d-inline-flex align-items-center"
-                data-bs-toggle="modal"
-                data-bs-target="#add_modal"
-                onClick={() => setEditAppointmentId(null)}
-              >
-                <i className="ti ti-square-rounded-plus me-1" />
-                New Appointment
-              </Link>
+              {canCreateAppointment && (
+                <Link
+                  href="#"
+                  className="btn btn-primary d-inline-flex align-items-center"
+                  data-bs-toggle="modal"
+                  data-bs-target="#add_modal"
+                  onClick={() => setEditAppointmentId(null)}
+                >
+                  <i className="ti ti-square-rounded-plus me-1" />
+                  New Appointment
+                </Link>
+              )}
             </div>
           </div>
 
