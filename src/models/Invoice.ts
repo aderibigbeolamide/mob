@@ -175,6 +175,5 @@ InvoiceSchema.index({ patientId: 1 });
 InvoiceSchema.index({ branchId: 1 });
 InvoiceSchema.index({ status: 1 });
 InvoiceSchema.index({ createdAt: -1 });
-InvoiceSchema.index({ encounterId: 1 }, { unique: true, sparse: true });
 
 export default mongoose.models.Invoice || mongoose.model<IInvoice>('Invoice', InvoiceSchema);
