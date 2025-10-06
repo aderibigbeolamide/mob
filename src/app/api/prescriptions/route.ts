@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  return requireAuth(req, async (req: NextRequest, session: any) => {
+  return checkRole([UserRole.DOCTOR, UserRole.PHARMACY, UserRole.NURSE, UserRole.ADMIN])(req, async (req: NextRequest, session: any) => {
     try {
       await dbConnect();
 
