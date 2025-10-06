@@ -7,9 +7,10 @@ import {
   applyBranchFilter, 
   buildPaginationResponse 
 } from '@/lib/utils/queryHelpers';
+import { buildRoleScopedFilters } from '@/lib/utils/roleFilters';
 
 export async function POST(req: NextRequest) {
-  return checkRole([UserRole.FRONT_DESK, UserRole.DOCTOR, UserRole.ADMIN])(
+  return checkRole([UserRole.FRONT_DESK, UserRole.ADMIN])(
     req,
     async (req: NextRequest, session: any) => {
       try {
@@ -161,8 +162,10 @@ export async function GET(req: NextRequest) {
         query.isActive = false;
       }
 
-      const allowCrossBranch = true;
-      applyBranchFilter(query, session.user, allowCrossBranch);
+      const roleScopedFilters = buildRoleScopedFilters(session);
+      if (roleScopedFilters.patientFilter) {
+        Object.assign(query, roleScopedFilters.patientFilter);
+      }
 
       const skip = (page - 1) * limit;
 

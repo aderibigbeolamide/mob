@@ -114,7 +114,17 @@ export async function PUT(
 
         const updateData: any = {};
 
-        const allowedFields = [
+        const isDoctor = session.user.role === UserRole.DOCTOR;
+
+        const medicalFields = [
+          'allergies',
+          'chronicConditions',
+          'medications',
+          'notes',
+          'chiefComplaint'
+        ];
+
+        const demographicFields = [
           'firstName',
           'lastName',
           'middleName',
@@ -128,11 +138,19 @@ export async function PUT(
           'state',
           'country',
           'emergencyContact',
-          'allergies',
-          'chronicConditions',
-          'medications',
-          'insurance'
+          'insurance',
+          'zipCode',
+          'address2',
+          'maritalStatus',
+          'patientType',
+          'companyName',
+          'referredBy',
+          'referredOn',
+          'department',
+          'branchId'
         ];
+
+        const allowedFields = isDoctor ? medicalFields : [...medicalFields, ...demographicFields];
 
         allowedFields.forEach(field => {
           if (body[field] !== undefined) {

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import PatientDetailsHeader from "./PatientDetailsHeader";
 import { all_routes } from "@/router/all_routes";
@@ -11,6 +12,7 @@ import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { IPrescription } from "@/models/Prescription";
 import PrescriptionModal from "./modals/prescriptionModal";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface PopulatedPrescription extends Omit<IPrescription, 'doctor' | 'patient'> {
   doctor: {
@@ -28,6 +30,8 @@ interface PopulatedPrescription extends Omit<IPrescription, 'doctor' | 'patient'
 const PatientDetailsPrescriptionComponent = () => {
   const searchParams = useSearchParams();
   const patientId = searchParams.get("id");
+  const { data: session } = useSession();
+  const { can, userRole, userId } = usePermissions();
 
   const [prescriptions, setPrescriptions] = useState<PopulatedPrescription[]>([]);
   const [loading, setLoading] = useState(true);
@@ -320,13 +324,15 @@ const PatientDetailsPrescriptionComponent = () => {
                     </li>
                   </ul>
                 </div>
-                <button
-                  className="btn btn-md btn-primary d-inline-flex align-items-center"
-                  onClick={handleCreatePrescription}
-                >
-                  <i className="ti ti-plus me-1" />
-                  Create Prescription
-                </button>
+                {can('prescription:create') && (
+                  <button
+                    className="btn btn-md btn-primary d-inline-flex align-items-center"
+                    onClick={handleCreatePrescription}
+                  >
+                    <i className="ti ti-plus me-1" />
+                    Create Prescription
+                  </button>
+                )}
               </div>
             </div>
 
@@ -350,13 +356,15 @@ const PatientDetailsPrescriptionComponent = () => {
                   <p className="text-muted mb-3">
                     No prescriptions have been created for this patient yet.
                   </p>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleCreatePrescription}
-                  >
-                    <i className="ti ti-plus me-1" />
-                    Create First Prescription
-                  </button>
+                  {can('prescription:create') && (
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleCreatePrescription}
+                    >
+                      <i className="ti ti-plus me-1" />
+                      Create First Prescription
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="table-responsive table-nowrap">
@@ -445,20 +453,48 @@ const PatientDetailsPrescriptionComponent = () => {
                               >
                                 <i className="ti ti-eye" />
                               </button>
-                              <button
-                                className="btn btn-sm btn-icon btn-outline-success"
-                                onClick={() => handleEditPrescription(prescription)}
-                                title="Edit Prescription"
-                              >
-                                <i className="ti ti-edit" />
-                              </button>
-                              <button
-                                className="btn btn-sm btn-icon btn-outline-danger"
-                                onClick={() => handleDeletePrescription(prescription)}
-                                title="Delete Prescription"
-                              >
-                                <i className="ti ti-trash" />
-                              </button>
+                              {can('prescription:update') && (
+                                userRole === 'DOCTOR' 
+                                  ? prescription.doctor?._id === userId && (
+                                      <button
+                                        className="btn btn-sm btn-icon btn-outline-success"
+                                        onClick={() => handleEditPrescription(prescription)}
+                                        title="Edit Prescription"
+                                      >
+                                        <i className="ti ti-edit" />
+                                      </button>
+                                    )
+                                  : (
+                                      <button
+                                        className="btn btn-sm btn-icon btn-outline-success"
+                                        onClick={() => handleEditPrescription(prescription)}
+                                        title="Edit Prescription"
+                                      >
+                                        <i className="ti ti-edit" />
+                                      </button>
+                                    )
+                              )}
+                              {can('prescription:delete') && (
+                                userRole === 'DOCTOR'
+                                  ? prescription.doctor?._id === userId && (
+                                      <button
+                                        className="btn btn-sm btn-icon btn-outline-danger"
+                                        onClick={() => handleDeletePrescription(prescription)}
+                                        title="Delete Prescription"
+                                      >
+                                        <i className="ti ti-trash" />
+                                      </button>
+                                    )
+                                  : (
+                                      <button
+                                        className="btn btn-sm btn-icon btn-outline-danger"
+                                        onClick={() => handleDeletePrescription(prescription)}
+                                        title="Delete Prescription"
+                                      >
+                                        <i className="ti ti-trash" />
+                                      </button>
+                                    )
+                              )}
                             </div>
                           </td>
                         </tr>

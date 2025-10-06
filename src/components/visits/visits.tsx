@@ -7,6 +7,7 @@ import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import { apiClient } from "@/lib/services/api-client";
 import { PatientVisit, PaginationInfo } from "@/types/emr";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const VisitsModal = lazy(() => import("./modal/visitsModal"));
 
@@ -17,6 +18,7 @@ interface VisitsResponse {
 
 const VisitsComponent = () => {
   const { data: session } = useSession();
+  const { can } = usePermissions();
   const [visits, setVisits] = useState<PatientVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -158,15 +160,17 @@ const VisitsComponent = () => {
               >
                 <i className="ti ti-refresh" />
               </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#add_visit"
-              >
-                <i className="ti ti-square-rounded-plus me-1" />
-                New Visit
-              </button>
+              {can('appointment:update') && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#add_visit"
+                >
+                  <i className="ti ti-square-rounded-plus me-1" />
+                  New Visit
+                </button>
+              )}
             </div>
           </div>
 

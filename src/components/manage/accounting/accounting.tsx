@@ -6,6 +6,8 @@ import { all_routes } from "@/router/all_routes";
 import Link from "next/link";
 import { apiClient } from "@/lib/services/api-client";
 import { toast } from "react-toastify";
+import { PermissionGate } from "@/components/common/PermissionGate";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface Payment {
   _id: string;
@@ -29,26 +31,11 @@ interface Payment {
 
 const AccountingComponent = () => {
   const { data: session } = useSession();
+  const { can } = usePermissions();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-
-  const userRole = session?.user?.role as string;
-  const hasAccess = ["ADMIN", "ACCOUNTING", "BILLING"].includes(userRole);
-
-  if (!hasAccess) {
-    return (
-      <div className="page-wrapper">
-        <div className="content">
-          <div className="text-center py-5">
-            <h4>Access Denied</h4>
-            <p>You don't have permission to access this page.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const fetchPayments = async () => {
     try {
@@ -124,7 +111,19 @@ const AccountingComponent = () => {
   const totals = calculateTotals();
 
   return (
-    <>
+    <PermissionGate 
+      required="accounting:read"
+      fallback={
+        <div className="page-wrapper">
+          <div className="content">
+            <div className="text-center py-5">
+              <h4>Access Denied</h4>
+              <p>You don't have permission to access this page.</p>
+            </div>
+          </div>
+        </div>
+      }
+    >
       <div className="page-wrapper">
         <div className="content">
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
@@ -331,7 +330,7 @@ const AccountingComponent = () => {
                                     Download Receipt
                                   </Link>
                                 </li>
-                                {payment.status === 'completed' && (
+                                {payment.status === 'completed' && can('accounting:update') && (
                                   <li>
                                     <button className="dropdown-item text-danger">
                                       <i className="ti ti-arrow-back-up me-2" />
@@ -353,7 +352,7 @@ const AccountingComponent = () => {
         </div>
         <CommonFooter />
       </div>
-    </>
+    </PermissionGate>
   );
 };
 

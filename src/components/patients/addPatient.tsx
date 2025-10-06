@@ -24,6 +24,7 @@ import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import BranchSelect from "@/core/common-components/common-select/BranchSelect";
 import { apiClient } from "@/lib/services/api-client";
 import dayjs, { Dayjs } from "dayjs";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 const stepKeys = [
   "v-pills-info",
@@ -153,7 +154,17 @@ const AddPatientComponent = () => {
   };
 
   return (
-    <>
+    <PermissionGate required="patient:create" fallback={
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="alert alert-danger" role="alert">
+            <i className="ti ti-alert-circle me-2"></i>
+            You do not have permission to create patients.
+          </div>
+        </div>
+        <CommonFooter />
+      </div>
+    }>
       <div className="page-wrapper">
         <div className="content">
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
@@ -633,7 +644,7 @@ const AddPatientComponent = () => {
         </div>
         <CommonFooter />
       </div>
-    </>
+    </PermissionGate>
   );
 };
 

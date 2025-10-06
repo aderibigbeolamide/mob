@@ -7,6 +7,7 @@ import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import { apiClient } from "@/lib/services/api-client";
 import { Patient, PaginationInfo } from "@/types/emr";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface PatientsResponse {
   patients: Patient[];
@@ -15,6 +16,7 @@ interface PatientsResponse {
 
 const PatientsComponent = () => {
   const { data: session } = useSession();
+  const { can } = usePermissions();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -163,10 +165,12 @@ const PatientsComponent = () => {
               >
                 <i className="ti ti-refresh" />
               </button>
-              <Link href={all_routes.addPatient} className="btn btn-primary">
-                <i className="ti ti-square-rounded-plus me-1" />
-                Add New Patient
-              </Link>
+              {can('patient:create') && (
+                <Link href={all_routes.addPatient} className="btn btn-primary">
+                  <i className="ti ti-square-rounded-plus me-1" />
+                  Add New Patient
+                </Link>
+              )}
             </div>
           </div>
 
@@ -230,15 +234,17 @@ const PatientsComponent = () => {
                           >
                             <i className="ti ti-eye" />
                           </Link>
-                          <Link
-                            href={`${all_routes.editPatient}?id=${patient._id}`}
-                            className="btn btn-sm btn-icon btn-light"
-                            data-bs-toggle="tooltip"
-                            title="Edit"
-                          >
-                            <i className="ti ti-edit" />
-                          </Link>
-                          {isAdmin && (
+                          {can('patient:update') && (
+                            <Link
+                              href={`${all_routes.editPatient}?id=${patient._id}`}
+                              className="btn btn-sm btn-icon btn-light"
+                              data-bs-toggle="tooltip"
+                              title="Edit"
+                            >
+                              <i className="ti ti-edit" />
+                            </Link>
+                          )}
+                          {can('patient:delete') && (
                             <button
                               onClick={() => setDeleteConfirmId(patient._id || null)}
                               className="btn btn-sm btn-icon btn-light"

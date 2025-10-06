@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Suspense, lazy } from "react";
 import { apiClient } from "@/lib/services/api-client";
 import { Pharmacy, PaginationInfo, Branch } from "@/types/emr";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const PharmacyModal = lazy(() => import("./modal/pharmacyModal"));
 
@@ -17,6 +18,7 @@ interface PharmacyResponse {
 
 const PharmacyComponent = () => {
   const { data: session } = useSession();
+  const { can } = usePermissions();
   const [products, setProducts] = useState<Pharmacy[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -164,17 +166,19 @@ const PharmacyComponent = () => {
               >
                 <i className="ti ti-refresh" />
               </Link>
-              <Link
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  openModal("add");
-                }}
-                className="btn btn-primary"
-              >
-                <i className="ti ti-square-rounded-plus me-1" />
-                New Product
-              </Link>
+              {can('pharmacy:create') && (
+                <Link
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openModal("add");
+                  }}
+                  className="btn btn-primary"
+                >
+                  <i className="ti ti-square-rounded-plus me-1" />
+                  New Product
+                </Link>
+              )}
             </div>
           </div>
 
@@ -328,30 +332,34 @@ const PharmacyComponent = () => {
                               >
                                 <i className="ti ti-eye" />
                               </Link>
-                              <Link
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  openModal("edit", product);
-                                }}
-                                className="btn btn-icon btn-sm btn-light"
-                                data-bs-toggle="tooltip"
-                                title="Edit"
-                              >
-                                <i className="ti ti-edit" />
-                              </Link>
-                              <Link
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  openModal("delete", product);
-                                }}
-                                className="btn btn-icon btn-sm btn-light"
-                                data-bs-toggle="tooltip"
-                                title="Delete"
-                              >
-                                <i className="ti ti-trash" />
-                              </Link>
+                              {can('pharmacy:update') && (
+                                <Link
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    openModal("edit", product);
+                                  }}
+                                  className="btn btn-icon btn-sm btn-light"
+                                  data-bs-toggle="tooltip"
+                                  title="Edit"
+                                >
+                                  <i className="ti ti-edit" />
+                                </Link>
+                              )}
+                              {can('pharmacy:update') && (
+                                <Link
+                                  href="#"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    openModal("delete", product);
+                                  }}
+                                  className="btn btn-icon btn-sm btn-light"
+                                  data-bs-toggle="tooltip"
+                                  title="Delete"
+                                >
+                                  <i className="ti ti-trash" />
+                                </Link>
+                              )}
                             </div>
                           </td>
                         </tr>

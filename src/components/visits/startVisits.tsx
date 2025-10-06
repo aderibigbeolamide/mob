@@ -10,6 +10,7 @@ import { apiClient } from "@/lib/services/api-client";
 import { PatientVisit } from "@/types/emr";
 import HandoffButton from "./handoff/HandoffButton";
 import VisitTimeline from "./VisitTimeline";
+import { PermissionGate } from "@/components/common/PermissionGate";
 
 interface VisitDetailsResponse {
   visit: PatientVisit;
@@ -244,7 +245,23 @@ const StartVisitsComponent = () => {
   const branch = typeof visit?.branchId === 'object' ? visit.branchId : null;
 
   return (
-    <>
+    <PermissionGate
+      required="appointment:update"
+      fallback={
+        <div className="page-wrapper">
+          <div className="content">
+            <div className="text-center py-5">
+              <i className="ti ti-lock fs-1 text-muted d-block mb-3"></i>
+              <h5>Access Denied</h5>
+              <p className="text-muted">You don't have permission to access visit details.</p>
+              <Link href={all_routes.dashboard} className="btn btn-primary">
+                Back to Dashboard
+              </Link>
+            </div>
+          </div>
+        </div>
+      }
+    >
       <div className="page-wrapper">
         <div className="content">
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
@@ -439,7 +456,7 @@ const StartVisitsComponent = () => {
         </div>
         <CommonFooter />
       </div>
-    </>
+    </PermissionGate>
   );
 };
 

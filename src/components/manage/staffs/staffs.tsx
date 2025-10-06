@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Suspense, lazy } from "react";
 import { apiClient } from "@/lib/services/api-client";
 import { Staff, PaginationInfo, Branch, UserRole } from "@/types/emr";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const StaffsModal = lazy(() => import("./modal/staffsModal"));
 
@@ -18,6 +19,7 @@ interface StaffResponse {
 
 const StaffsComponent = () => {
   const { data: session } = useSession();
+  const { can } = usePermissions();
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -177,13 +179,15 @@ const StaffsComponent = () => {
               >
                 <i className="ti ti-cloud-download" />
               </Link>
-              <button
-                onClick={() => openModal("add")}
-                className="btn btn-primary"
-              >
-                <i className="ti ti-square-rounded-plus me-1" />
-                New Staff
-              </button>
+              {can('user:create') && (
+                <button
+                  onClick={() => openModal("add")}
+                  className="btn btn-primary"
+                >
+                  <i className="ti ti-square-rounded-plus me-1" />
+                  New Staff
+                </button>
+              )}
             </div>
           </div>
 
@@ -328,28 +332,32 @@ const StaffsComponent = () => {
                               >
                                 <i className="ti ti-eye" />
                               </button>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  openModal("edit", staff);
-                                }}
-                                className="btn btn-sm btn-icon btn-light"
-                                data-bs-toggle="tooltip"
-                                title="Edit"
-                              >
-                                <i className="ti ti-edit" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  openModal("delete", staff);
-                                }}
-                                className="btn btn-sm btn-icon btn-light"
-                                data-bs-toggle="tooltip"
-                                title="Delete"
-                              >
-                                <i className="ti ti-trash" />
-                              </button>
+                              {can('user:update') && (
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    openModal("edit", staff);
+                                  }}
+                                  className="btn btn-sm btn-icon btn-light"
+                                  data-bs-toggle="tooltip"
+                                  title="Edit"
+                                >
+                                  <i className="ti ti-edit" />
+                                </button>
+                              )}
+                              {can('user:delete') && (
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    openModal("delete", staff);
+                                  }}
+                                  className="btn btn-sm btn-icon btn-light"
+                                  data-bs-toggle="tooltip"
+                                  title="Delete"
+                                >
+                                  <i className="ti ti-trash" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

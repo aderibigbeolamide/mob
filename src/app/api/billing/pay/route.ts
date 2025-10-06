@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Invoice from '@/models/Invoice';
 import Payment, { PaymentMethod, PaymentStatus } from '@/models/Payment';
-import { requireAuth } from '@/lib/middleware/auth';
+import { checkRole, UserRole } from '@/lib/middleware/auth';
 import { initializePayment } from '@/lib/services/paystack';
 
 export async function POST(req: NextRequest) {
-  return requireAuth(req, async (req: NextRequest, session: any) => {
+  return checkRole([UserRole.BILLING, UserRole.ADMIN])(req, async (req: NextRequest, session: any) => {
     try {
       await dbConnect();
 

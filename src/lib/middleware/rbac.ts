@@ -114,6 +114,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, ResourceAction[]> = {
     'appointment:update',
     'appointment:assign',
     'billing:read',
+    'billing:create',
     'reports:read',
   ],
   [UserRole.NURSE]: [

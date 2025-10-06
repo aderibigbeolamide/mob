@@ -171,7 +171,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return checkRole([UserRole.DOCTOR, UserRole.ADMIN])(
+  return checkRole([UserRole.ADMIN])(
     req,
     async (req: NextRequest, session: any) => {
       try {

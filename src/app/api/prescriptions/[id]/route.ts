@@ -95,6 +95,13 @@ export async function PUT(
           );
         }
 
+        if (session.user.role === UserRole.DOCTOR && existingPrescription.doctor?.toString() !== session.user.id) {
+          return NextResponse.json(
+            { error: 'Forbidden. Doctors can only edit their own prescriptions.' },
+            { status: 403 }
+          );
+        }
+
         const body = await req.json();
 
         const updateData: any = {};
@@ -182,6 +189,13 @@ export async function DELETE(
         if (!hasAccess) {
           return NextResponse.json(
             { error: 'Forbidden. You do not have access to this branch resource.' },
+            { status: 403 }
+          );
+        }
+
+        if (session.user.role === UserRole.DOCTOR && prescription.doctor?.toString() !== session.user.id) {
+          return NextResponse.json(
+            { error: 'Forbidden. Doctors can only delete their own prescriptions.' },
             { status: 403 }
           );
         }

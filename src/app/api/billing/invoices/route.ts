@@ -9,7 +9,7 @@ import {
 } from '@/lib/utils/queryHelpers';
 
 export async function POST(req: NextRequest) {
-  return checkRole([UserRole.BILLING, UserRole.DOCTOR, UserRole.ADMIN])(
+  return checkRole([UserRole.BILLING, UserRole.ADMIN, UserRole.FRONT_DESK])(
     req,
     async (req: NextRequest, session: any) => {
       try {

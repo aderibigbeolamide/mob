@@ -147,6 +147,14 @@ export async function GET(req: NextRequest) {
         query.status = status;
       }
 
+      if (session.user.role === 'DOCTOR') {
+        query.doctor = session.user.id;
+      }
+
+      if (session.user.role === 'PHARMACY') {
+        query.status = 'active';
+      }
+
       const allowCrossBranch = true;
       applyBranchFilter(query, session.user, allowCrossBranch);
 

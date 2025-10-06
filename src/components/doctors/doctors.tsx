@@ -7,10 +7,14 @@ import { all_routes } from "@/router/all_routes";
 import { apiClient } from "@/lib/services/api-client";
 import { Doctor } from "@/types/emr";
 import Link from "next/link";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const DoctorsComponent = () => {
+  const { userRole } = usePermissions();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const isAdmin = userRole === 'ADMIN';
 
   useEffect(() => {
     fetchDoctors();
@@ -113,10 +117,12 @@ const DoctorsComponent = () => {
               >
                 <i className="ti ti-cloud-download" />
               </Link>
-              <Link href={all_routes.addDoctors} className="btn btn-primary">
-                <i className="ti ti-square-rounded-plus me-1" />
-                New Doctor
-              </Link>
+              {isAdmin && (
+                <Link href={all_routes.addDoctors} className="btn btn-primary">
+                  <i className="ti ti-square-rounded-plus me-1" />
+                  New Doctor
+                </Link>
+              )}
             </div>
           </div>
 
@@ -163,26 +169,30 @@ const DoctorsComponent = () => {
                                 View Details
                               </Link>
                             </li>
-                            <li>
-                              <Link
-                                href={`${all_routes.editDoctors}?id=${doctor._id}`}
-                                className="dropdown-item d-flex align-items-center"
-                              >
-                                <i className="ti ti-edit me-1" />
-                                Edit
-                              </Link>
-                            </li>
-                            <li>
-                              <Link
-                                href="#"
-                                className="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="modal"
-                                data-bs-target="#delete_modal"
-                              >
-                                <i className="ti ti-trash me-1" />
-                                Delete
-                              </Link>
-                            </li>
+                            {isAdmin && (
+                              <>
+                                <li>
+                                  <Link
+                                    href={`${all_routes.editDoctors}?id=${doctor._id}`}
+                                    className="dropdown-item d-flex align-items-center"
+                                  >
+                                    <i className="ti ti-edit me-1" />
+                                    Edit
+                                  </Link>
+                                </li>
+                                <li>
+                                  <Link
+                                    href="#"
+                                    className="dropdown-item d-flex align-items-center"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#delete_modal"
+                                  >
+                                    <i className="ti ti-trash me-1" />
+                                    Delete
+                                  </Link>
+                                </li>
+                              </>
+                            )}
                           </ul>
                         </div>
                       </div>

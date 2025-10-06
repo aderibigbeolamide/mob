@@ -8,10 +8,12 @@ import { labTestService, LabTestFilters } from "@/lib/services/labTestService";
 import { ILabTest } from "@/models/LabTest";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const LabResultsModal = lazy(() => import("./modal/labResultsModal"));
 
 const LabResultsComponent = () => {
+  const { can } = usePermissions();
   const [labTests, setLabTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -251,15 +253,17 @@ const LabResultsComponent = () => {
               </div>
             </div>
             <div className="gap-2 d-flex align-items-center flex-wrap">
-              <button
-                onClick={handleOpenCreateModal}
-                className="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#create_modal"
-              >
-                <i className="ti ti-plus me-1" />
-                Add Lab Test
-              </button>
+              {can('lab:create') && (
+                <button
+                  onClick={handleOpenCreateModal}
+                  className="btn btn-primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#create_modal"
+                >
+                  <i className="ti ti-plus me-1" />
+                  Add Lab Test
+                </button>
+              )}
               <button
                 onClick={handleRefresh}
                 className="btn btn-icon btn-white"
@@ -501,15 +505,32 @@ const LabResultsComponent = () => {
                                 >
                                   <i className="ti ti-eye" />
                                 </button>
-                                <button
-                                  onClick={() => handleOpenDeleteModal(labTest)}
-                                  className="btn btn-sm btn-icon btn-light"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#delete_modal"
-                                  aria-label="Delete lab result"
-                                >
-                                  <i className="ti ti-trash" />
-                                </button>
+                                {can('lab:update') && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedLabTest(labTest);
+                                      setIsEditing(true);
+                                      setModalType("view");
+                                    }}
+                                    className="btn btn-sm btn-icon btn-light"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#view_modal"
+                                    aria-label="Edit lab result"
+                                  >
+                                    <i className="ti ti-edit" />
+                                  </button>
+                                )}
+                                {can('lab:delete') && (
+                                  <button
+                                    onClick={() => handleOpenDeleteModal(labTest)}
+                                    className="btn btn-sm btn-icon btn-light"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#delete_modal"
+                                    aria-label="Delete lab result"
+                                  >
+                                    <i className="ti ti-trash" />
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>

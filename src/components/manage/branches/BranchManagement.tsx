@@ -16,6 +16,7 @@ import { Branch } from "@/types/emr";
 import { UserRole } from "@/types/emr";
 import { all_routes } from "@/router/all_routes";
 import BranchModal from "./BranchModal";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const { confirm } = Modal;
 const { Option } = Select;
@@ -23,6 +24,7 @@ const { Option } = Select;
 const BranchManagement = () => {
   const { data: session } = useSession();
   const router = useRouter();
+  const { can } = usePermissions();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
@@ -172,23 +174,27 @@ const BranchManagement = () => {
       key: "actions",
       render: (_: any, record: Branch) => (
         <div className="d-flex gap-2">
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            className="p-0"
-          >
-            Edit
-          </Button>
-          <Button
-            type="link"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-            className="p-0"
-          >
-            Delete
-          </Button>
+          {can('branch:update') && (
+            <Button
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              className="p-0"
+            >
+              Edit
+            </Button>
+          )}
+          {can('branch:delete') && (
+            <Button
+              type="link"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(record)}
+              className="p-0"
+            >
+              Delete
+            </Button>
+          )}
         </div>
       ),
     },
@@ -241,14 +247,16 @@ const BranchManagement = () => {
                   </Select>
                 </div>
                 <div className="col-lg-3 col-md-6 text-lg-end">
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleCreate}
-                    block
-                  >
-                    Add Branch
-                  </Button>
+                  {can('branch:create') && (
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleCreate}
+                      block
+                    >
+                      Add Branch
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -313,24 +321,28 @@ const BranchManagement = () => {
                             </div>
                           )}
                           <div className="d-flex gap-2">
-                            <Button
-                              type="primary"
-                              size="small"
-                              icon={<EditOutlined />}
-                              onClick={() => handleEdit(branch)}
-                              block
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              danger
-                              size="small"
-                              icon={<DeleteOutlined />}
-                              onClick={() => handleDelete(branch)}
-                              block
-                            >
-                              Delete
-                            </Button>
+                            {can('branch:update') && (
+                              <Button
+                                type="primary"
+                                size="small"
+                                icon={<EditOutlined />}
+                                onClick={() => handleEdit(branch)}
+                                block
+                              >
+                                Edit
+                              </Button>
+                            )}
+                            {can('branch:delete') && (
+                              <Button
+                                danger
+                                size="small"
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleDelete(branch)}
+                                block
+                              >
+                                Delete
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>

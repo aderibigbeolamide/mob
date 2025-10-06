@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  return requireAuth(req, async (req: NextRequest, session: any) => {
+  return checkRole([UserRole.ACCOUNTING, UserRole.ADMIN, UserRole.BILLING])(req, async (req: NextRequest, session: any) => {
     try {
       await dbConnect();
 

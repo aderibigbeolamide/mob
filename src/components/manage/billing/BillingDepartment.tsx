@@ -6,6 +6,7 @@ import { all_routes } from "@/router/all_routes";
 import { apiClient } from "@/lib/services/api-client";
 import { toast } from "react-toastify";
 import { Suspense, lazy } from "react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const BillingModal = lazy(() => import("./BillingModal"));
 const BillingViewModal = lazy(() => import("./BillingViewModal"));
@@ -73,6 +74,7 @@ interface PaginationInfo {
 
 const BillingDepartmentComponent = () => {
   const { data: session } = useSession();
+  const { can } = usePermissions();
   const [billingRecords, setBillingRecords] = useState<BillingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -89,8 +91,7 @@ const BillingDepartmentComponent = () => {
   const [modalType, setModalType] = useState<"add" | "edit" | "view" | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const userRole = session?.user?.role as string;
-  const hasAccess = ["ADMIN", "ACCOUNTING", "BILLING"].includes(userRole);
+  const hasAccess = can('billing:read');
 
   const fetchBillingRecords = async () => {
     try {
@@ -268,13 +269,15 @@ const BillingDepartmentComponent = () => {
               <button className="btn btn-icon btn-white">
                 <i className="ti ti-download" />
               </button>
-              <button
-                onClick={() => openModal("add")}
-                className="btn btn-primary"
-              >
-                <i className="ti ti-square-rounded-plus me-1" />
-                New Billing Record
-              </button>
+              {can('billing:create') && (
+                <button
+                  onClick={() => openModal("add")}
+                  className="btn btn-primary"
+                >
+                  <i className="ti ti-square-rounded-plus me-1" />
+                  New Billing Record
+                </button>
+              )}
             </div>
           </div>
 
@@ -439,24 +442,28 @@ const BillingDepartmentComponent = () => {
                               >
                                 <i className="ti ti-eye" />
                               </button>
-                              <button
-                                onClick={() => openModal("edit", record)}
-                                className="btn btn-icon btn-sm btn-white"
-                                data-bs-toggle="tooltip"
-                                data-bs-placement="top"
-                                title="Edit"
-                              >
-                                <i className="ti ti-edit" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(record._id)}
-                                className={`btn btn-icon btn-sm ${deleteConfirmId === record._id ? 'btn-danger' : 'btn-white'}`}
-                                data-bs-toggle="tooltip"
-                                data-bs-placement="top"
-                                title={deleteConfirmId === record._id ? "Click again to confirm" : "Delete"}
-                              >
-                                <i className="ti ti-trash" />
-                              </button>
+                              {can('billing:update') && (
+                                <button
+                                  onClick={() => openModal("edit", record)}
+                                  className="btn btn-icon btn-sm btn-white"
+                                  data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
+                                  title="Edit"
+                                >
+                                  <i className="ti ti-edit" />
+                                </button>
+                              )}
+                              {can('billing:delete') && (
+                                <button
+                                  onClick={() => handleDelete(record._id)}
+                                  className={`btn btn-icon btn-sm ${deleteConfirmId === record._id ? 'btn-danger' : 'btn-white'}`}
+                                  data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
+                                  title={deleteConfirmId === record._id ? "Click again to confirm" : "Delete"}
+                                >
+                                  <i className="ti ti-trash" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

@@ -25,6 +25,8 @@ import BranchSelect from "@/core/common-components/common-select/BranchSelect";
 import { apiClient } from "@/lib/services/api-client";
 import { Patient } from "@/types/emr";
 import dayjs, { Dayjs } from "dayjs";
+import { PermissionGate } from "@/components/common/PermissionGate";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const stepKeys = [
   "v-pills-info",
@@ -34,11 +36,13 @@ const stepKeys = [
 
 const EditPatientComponent = () => {
   const { data: session } = useSession();
+  const { userRole } = usePermissions();
   const router = useRouter();
   const searchParams = useSearchParams();
   const patientId = searchParams.get("id");
 
-  const [currentStep, setCurrentStep] = useState(0);
+  const isDoctor = userRole === 'DOCTOR';
+  const [currentStep, setCurrentStep] = useState(isDoctor ? 1 : 0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -168,38 +172,41 @@ const EditPatientComponent = () => {
 
     setSubmitting(true);
     try {
-      const updateData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        middleName: formData.middleName,
-        dateOfBirth: formData.dateOfBirth,
-        age: formData.age ? parseInt(formData.age) : undefined,
-        gender: formData.gender,
-        bloodGroup: formData.bloodGroup,
-        maritalStatus: formData.maritalStatus,
-        patientType: formData.patientType,
-        companyName: formData.companyName,
-        referredBy: formData.referredBy,
-        referredOn: formData.referredOn,
-        department: formData.department,
-        phoneNumber: formData.phoneNumber,
-        address: formData.address,
-        address2: formData.address2,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country,
-        zipCode: formData.pincode,
-        branchId: formData.branchId,
-        emergencyContact: {
-          name: formData.guardianName,
-          relationship: "Guardian",
-          phoneNumber: formData.emergencyNumber,
-        },
+      const updateData: any = {
         allergies: formData.allergies,
         chronicConditions: formData.chronicConditions,
         notes: formData.notes,
         chiefComplaint: formData.chiefComplaint,
       };
+
+      if (!isDoctor) {
+        updateData.firstName = formData.firstName;
+        updateData.lastName = formData.lastName;
+        updateData.middleName = formData.middleName;
+        updateData.dateOfBirth = formData.dateOfBirth;
+        updateData.age = formData.age ? parseInt(formData.age) : undefined;
+        updateData.gender = formData.gender;
+        updateData.bloodGroup = formData.bloodGroup;
+        updateData.maritalStatus = formData.maritalStatus;
+        updateData.patientType = formData.patientType;
+        updateData.companyName = formData.companyName;
+        updateData.referredBy = formData.referredBy;
+        updateData.referredOn = formData.referredOn;
+        updateData.department = formData.department;
+        updateData.phoneNumber = formData.phoneNumber;
+        updateData.address = formData.address;
+        updateData.address2 = formData.address2;
+        updateData.city = formData.city;
+        updateData.state = formData.state;
+        updateData.country = formData.country;
+        updateData.zipCode = formData.pincode;
+        updateData.branchId = formData.branchId;
+        updateData.emergencyContact = {
+          name: formData.guardianName,
+          relationship: "Guardian",
+          phoneNumber: formData.emergencyNumber,
+        };
+      }
 
       await apiClient.put(`/api/patients/${patientId}`, updateData, {
         successMessage: "Patient updated successfully",
@@ -238,7 +245,17 @@ const EditPatientComponent = () => {
   }
 
   return (
-    <>
+    <PermissionGate required="patient:update" fallback={
+      <div className="page-wrapper">
+        <div className="content">
+          <div className="alert alert-danger" role="alert">
+            <i className="ti ti-alert-circle me-2"></i>
+            You do not have permission to edit patients.
+          </div>
+        </div>
+        <CommonFooter />
+      </div>
+    }>
       <div className="page-wrapper">
         <div className="content">
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
@@ -265,22 +282,24 @@ const EditPatientComponent = () => {
           <div className="row vertical-tab">
             <div className="col-xl-3 col-lg-4">
               <div className="nav flex-column nav-pills vertical-tab mb-lg-0 mb-4" id="v-pills-tab">
-                <button
-                  className={`nav-link fw-medium d-flex align-items-center rounded${
-                    currentStep === 0
-                      ? " active"
-                      : currentStep > 0
-                      ? " activated"
-                      : ""
-                  }`}
-                  id="v-pills-info-tab"
-                  onClick={() => goToStep(0)}
-                  type="button"
-                >
-                  <span />
-                  <i className="ti ti-info-circle fs-16" />
-                  Basic Information
-                </button>
+                {!isDoctor && (
+                  <button
+                    className={`nav-link fw-medium d-flex align-items-center rounded${
+                      currentStep === 0
+                        ? " active"
+                        : currentStep > 0
+                        ? " activated"
+                        : ""
+                    }`}
+                    id="v-pills-info-tab"
+                    onClick={() => goToStep(0)}
+                    type="button"
+                  >
+                    <span />
+                    <i className="ti ti-info-circle fs-16" />
+                    Basic Information
+                  </button>
+                )}
                 <button
                   className={`nav-link fw-medium d-flex align-items-center rounded${
                     currentStep === 1
@@ -321,12 +340,13 @@ const EditPatientComponent = () => {
                 id="v-pills-tabContent"
               >
                 {/* Basic Information */}
-                <div
-                  className={`form-wizard-content${
-                    currentStep === 0 ? " active" : " d-none"
-                  }`}
-                  id="v-pills-info"
-                >
+                {!isDoctor && (
+                  <div
+                    className={`form-wizard-content${
+                      currentStep === 0 ? " active" : " d-none"
+                    }`}
+                    id="v-pills-info"
+                  >
                   <div className="card">
                     <div className="card-header">
                       <h5 className="mb-0">Basic Information</h5>
@@ -568,6 +588,7 @@ const EditPatientComponent = () => {
                     </button>
                   </div>
                 </div>
+                )}
 
                 {/* Medical History */}
                 <div
@@ -699,7 +720,7 @@ const EditPatientComponent = () => {
         </div>
         <CommonFooter />
       </div>
-    </>
+    </PermissionGate>
   );
 };
 
