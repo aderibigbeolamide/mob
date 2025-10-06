@@ -10,7 +10,9 @@ import { apiClient } from "@/lib/services/api-client";
 import { PatientVisit } from "@/types/emr";
 import HandoffButton from "./handoff/HandoffButton";
 import VisitTimeline from "./VisitTimeline";
-import { PermissionGate } from "@/components/common/PermissionGate";
+import { usePageGuard } from "@/hooks/usePageGuard";
+import { MissingResource } from "@/components/common/MissingResource";
+import { AccessDenied } from "@/components/common/AccessDenied";
 
 interface VisitDetailsResponse {
   visit: PatientVisit;
@@ -24,6 +26,12 @@ const StartVisitsComponent = () => {
   const { data: session } = useSession();
   const visitId = searchParams.get('id');
   const isEditMode = searchParams.get('edit') === 'true';
+
+  const { isReady, error } = usePageGuard({
+    requiredParams: ['id'],
+    permission: 'appointment:update',
+    redirectTo: all_routes.visits
+  });
 
   const [visit, setVisit] = useState<PatientVisit | null>(null);
   const [loading, setLoading] = useState(true);
@@ -212,6 +220,14 @@ const StartVisitsComponent = () => {
     );
   };
 
+  if (error === 'missing_param') {
+    return <MissingResource resourceName="Visit" backLink={all_routes.visits} />;
+  }
+
+  if (error === 'unauthorized') {
+    return <AccessDenied backLink={all_routes.dashboard} />;
+  }
+
   if (loading) {
     return (
       <div className="page-wrapper">
@@ -245,24 +261,7 @@ const StartVisitsComponent = () => {
   const branch = typeof visit?.branchId === 'object' ? visit.branchId : null;
 
   return (
-    <PermissionGate
-      required="appointment:update"
-      fallback={
-        <div className="page-wrapper">
-          <div className="content">
-            <div className="text-center py-5">
-              <i className="ti ti-lock fs-1 text-muted d-block mb-3"></i>
-              <h5>Access Denied</h5>
-              <p className="text-muted">You don't have permission to access visit details.</p>
-              <Link href={all_routes.dashboard} className="btn btn-primary">
-                Back to Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      }
-    >
-      <div className="page-wrapper">
+    <div className="page-wrapper">
         <div className="content">
           <div className="d-flex align-items-center justify-content-between gap-2 mb-4 flex-wrap">
             <div className="breadcrumb-arrow">
@@ -450,13 +449,12 @@ const StartVisitsComponent = () => {
                   />
                 )}
               </div>
-              <VisitTimeline visit={visit!} />
+              {visit && <VisitTimeline visit={visit} />}
             </>
           )}
         </div>
         <CommonFooter />
       </div>
-    </PermissionGate>
   );
 };
 
