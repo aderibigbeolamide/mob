@@ -88,7 +88,7 @@ const Header = () => {
   }, [session]);
 
   const handleLogout = useCallback(() => {
-    signOut({ callbackUrl: '/login' });
+    signOut({ callbackUrl: '/' });
   }, []);
 
   // Check if current page is a layout page

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
@@ -15,12 +15,13 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showSwitchUser, setShowSwitchUser] = useState(false);
 
   useEffect(() => {
-    if (status === 'authenticated' && session) {
+    if (status === 'authenticated' && session && !showSwitchUser) {
       router.push('/dashboard');
     }
-  }, [status, session, router]);
+  }, [status, session, router, showSwitchUser]);
 
   if (status === 'loading') {
     return (
@@ -35,9 +36,16 @@ export default function LoginPage() {
     );
   }
 
-  if (status === 'authenticated') {
+  if (status === 'authenticated' && !showSwitchUser) {
     return null;
   }
+
+  const handleSwitchUser = async () => {
+    await signOut({ redirect: false });
+    setShowSwitchUser(false);
+    setFormData({ email: '', password: '' });
+    setError('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +143,42 @@ export default function LoginPage() {
               </h2>
               <p className="text-muted">Sign in to access the EMR system</p>
             </div>
+
+            {status === 'authenticated' && showSwitchUser && (
+              <div className="alert alert-info d-flex align-items-center justify-content-between" role="alert">
+                <div>
+                  <i className="fas fa-user-circle me-2"></i>
+                  Currently logged in as <strong>{session?.user?.firstName} {session?.user?.lastName}</strong>
+                </div>
+                <button 
+                  type="button" 
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={handleSwitchUser}
+                >
+                  <i className="fas fa-sign-out-alt me-1"></i>
+                  Logout
+                </button>
+              </div>
+            )}
+
+            {status === 'authenticated' && !showSwitchUser && (
+              <div className="alert alert-success" role="alert">
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <i className="fas fa-check-circle me-2"></i>
+                    You are already logged in as <strong>{session?.user?.firstName} {session?.user?.lastName}</strong>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="btn btn-sm btn-primary"
+                    onClick={() => setShowSwitchUser(true)}
+                  >
+                    <i className="fas fa-exchange-alt me-1"></i>
+                    Switch User
+                  </button>
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="alert alert-danger" role="alert">
