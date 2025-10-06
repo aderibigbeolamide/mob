@@ -1,8 +1,10 @@
 "use client";
 import { Suspense, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { apiClient } from "@/lib/services/api-client";
+import { toast } from "react-toastify";
 
 import ChartOne from "../chart/chart1";
 import ChartTwo from "../chart/chart2";
@@ -51,9 +53,11 @@ interface DashboardStats {
 
 const FrontDeskDashboard = () => {
   const { data: session } = useSession();
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startingVisit, setStartingVisit] = useState<string | null>(null);
 
   const fetchDashboardStats = async () => {
     try {
@@ -73,6 +77,45 @@ const FrontDeskDashboard = () => {
   useEffect(() => {
     fetchDashboardStats();
   }, []);
+
+  const handleStartVisit = async (appointment: PendingCheckIn) => {
+    const appointmentId = appointment._id;
+    const patient = appointment.patient || appointment.patientId;
+    
+    if (!patient?._id) {
+      toast.error('Patient information is missing. Cannot start visit.');
+      return;
+    }
+
+    try {
+      setStartingVisit(appointmentId);
+      
+      const visitData = {
+        patient: patient._id,
+        branchId: session?.user?.branch?._id || session?.user?.branch,
+        visitDate: new Date().toISOString(),
+        appointment: appointmentId,
+      };
+
+      const response = await apiClient.post<{ visit: { _id: string } }>(
+        '/api/visits',
+        visitData,
+        { 
+          successMessage: 'Visit started successfully. Redirecting...',
+          showErrorToast: true 
+        }
+      );
+
+      if (response?.visit?._id) {
+        router.push(`${all_routes.startVisits}?id=${response.visit._id}`);
+      }
+    } catch (error: any) {
+      console.error('Failed to start visit:', error);
+      toast.error(error.message || 'Failed to start visit. Please try again.');
+    } finally {
+      setStartingVisit(null);
+    }
+  };
 
   const formatAppointmentDate = (dateString: string) => {
     try {
@@ -271,12 +314,20 @@ const FrontDeskDashboard = () => {
                                 </span>
                               </td>
                               <td className="text-end border-0">
-                                <Link
-                                  href={all_routes.startVisits}
+                                <button
+                                  onClick={() => handleStartVisit(appointment)}
                                   className="btn btn-sm btn-primary"
+                                  disabled={startingVisit === appointment._id}
                                 >
-                                  Start Visit
-                                </Link>
+                                  {startingVisit === appointment._id ? (
+                                    <>
+                                      <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                      Starting...
+                                    </>
+                                  ) : (
+                                    'Check In & Start Visit'
+                                  )}
+                                </button>
                               </td>
                             </tr>
                           );
