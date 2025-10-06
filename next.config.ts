@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: false,
+    dirs: ['src/app', 'src/components', 'src/lib', 'src/hooks'],
   },
   serverExternalPackages: ['mongoose', 'bcryptjs'],
   productionBrowserSourceMaps: false,

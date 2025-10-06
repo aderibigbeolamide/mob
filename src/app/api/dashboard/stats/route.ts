@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-async function getAdminDashboardStats(branchFilter: any, today: Date, lastMonth: Date, calculatePercentageChange: Function) {
+async function getAdminDashboardStats(branchFilter: any, today: Date, lastMonth: Date, calculatePercentageChange: (current: number, previous: number) => number) {
   const [
     totalPatients,
     patientsLastMonth,
@@ -165,7 +165,7 @@ async function getAdminDashboardStats(branchFilter: any, today: Date, lastMonth:
   return NextResponse.json(stats);
 }
 
-async function getDoctorDashboardStats(userId: string, branchFilter: any, today: Date, lastMonth: Date, calculatePercentageChange: Function) {
+async function getDoctorDashboardStats(userId: string, branchFilter: any, today: Date, lastMonth: Date, calculatePercentageChange: (current: number, previous: number) => number) {
   const [
     myPatientsTotal,
     myPatientsLastMonth,
@@ -235,7 +235,7 @@ async function getDoctorDashboardStats(userId: string, branchFilter: any, today:
   return NextResponse.json(stats);
 }
 
-async function getNurseDashboardStats(userId: string, branchFilter: any, today: Date, lastMonth: Date, calculatePercentageChange: Function) {
+async function getNurseDashboardStats(userId: string, branchFilter: any, today: Date, _lastMonth: Date, _calculatePercentageChange: (current: number, previous: number) => number) {
   const [
     patientsToday,
     vitalsRecorded,
@@ -286,7 +286,7 @@ async function getNurseDashboardStats(userId: string, branchFilter: any, today: 
   return NextResponse.json(stats);
 }
 
-async function getLabDashboardStats(userId: string, branchFilter: any, today: Date, lastMonth: Date, calculatePercentageChange: Function) {
+async function getLabDashboardStats(userId: string, branchFilter: any, today: Date, _lastMonth: Date, _calculatePercentageChange: (current: number, previous: number) => number) {
   const [
     pendingTests,
     completedToday,
@@ -341,7 +341,7 @@ async function getLabDashboardStats(userId: string, branchFilter: any, today: Da
   return NextResponse.json(stats);
 }
 
-async function getPharmacyDashboardStats(userId: string, branchFilter: any, today: Date, lastMonth: Date, calculatePercentageChange: Function) {
+async function getPharmacyDashboardStats(userId: string, branchFilter: any, today: Date, _lastMonth: Date, _calculatePercentageChange: (current: number, previous: number) => number) {
   const [
     pendingPrescriptions,
     dispensedToday,
@@ -396,7 +396,7 @@ async function getPharmacyDashboardStats(userId: string, branchFilter: any, toda
   return NextResponse.json(stats);
 }
 
-async function getBillingDashboardStats(userId: string, branchFilter: any, today: Date, lastMonth: Date, calculatePercentageChange: Function) {
+async function getBillingDashboardStats(userId: string, branchFilter: any, today: Date, _lastMonth: Date, _calculatePercentageChange: (current: number, previous: number) => number) {
   const [
     pendingInvoices,
     processedToday,
@@ -449,7 +449,7 @@ async function getBillingDashboardStats(userId: string, branchFilter: any, today
   return NextResponse.json(stats);
 }
 
-async function getAccountingDashboardStats(userId: string, branchFilter: any, today: Date, lastMonth: Date, calculatePercentageChange: Function) {
+async function getAccountingDashboardStats(_userId: string, branchFilter: any, today: Date, lastMonth: Date, _calculatePercentageChange: (current: number, previous: number) => number) {
   const [
     totalRevenueToday,
     totalRevenueMonth,
@@ -509,7 +509,7 @@ async function getAccountingDashboardStats(userId: string, branchFilter: any, to
   return NextResponse.json(stats);
 }
 
-async function getFrontDeskDashboardStats(userId: string, branchFilter: any, today: Date, lastMonth: Date, calculatePercentageChange: Function) {
+async function getFrontDeskDashboardStats(userId: string, branchFilter: any, today: Date, _lastMonth: Date, _calculatePercentageChange: (current: number, previous: number) => number) {
   const [
     appointmentsToday,
     newPatientsToday,

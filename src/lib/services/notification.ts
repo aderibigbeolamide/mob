@@ -1,6 +1,6 @@
 import Patient from '@/models/Patient';
 import User from '@/models/User';
-import { IAppointment, AppointmentStatus } from '@/models/Appointment';
+import { IAppointment } from '@/models/Appointment';
 
 export interface NotificationPayload {
   recipient: string;
@@ -60,7 +60,9 @@ export async function sendAppointmentNotification(
       subject,
       patientEmail: patient.email || patient.phone,
       doctorEmail: doctor.email,
-      appointmentNumber: appointment.appointmentNumber
+      appointmentNumber: appointment.appointmentNumber,
+      patientMessage,
+      doctorMessage
     });
 
   } catch (error) {
