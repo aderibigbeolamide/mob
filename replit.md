@@ -69,8 +69,28 @@ The EMR system utilizes Next.js 15 with the App Router, TypeScript, and React 19
 -   **Components**: Invoice generation service (`src/lib/services/invoiceService.ts`), API endpoint (`/api/billing/generate-from-visit`), integrated handoff logic (`/api/clocking/handoff`).
 -   **Testing**: Comprehensive Playwright test suite covering automatic generation, concurrent requests, and invoice uniqueness validation.
 
+**Real-Time Notification System (Completed - October 6, 2025):**
+-   **Header Notification Dropdown**: Live notification system integrated into the header navigation with auto-refresh every 30 seconds.
+-   **Department-Based Filtering**: Admin users see all notifications across their branch with `viewAll=true` parameter; other department staff see only notifications assigned to them (tasks handed off to their department).
+-   **Unread Notification Badge**: Dynamic badge displays count of unread notifications on the notification bell icon.
+-   **Interactive Notifications**: Click any notification to mark as read via PUT API endpoint; notifications show icons based on type (success, error, warning, appointment, info).
+-   **Real-Time Updates**: Notifications fetch on mount and refresh periodically to keep staff informed of patient handoffs, appointments, and system alerts.
+-   **Consistent UI**: Notification dropdown styling matches the main notifications page for a cohesive user experience.
+-   **API Integration**: `/api/notifications` endpoint with role-based filtering, pagination support, and mark-as-read functionality.
+
+**Logo & Branding (Updated - October 6, 2025):**
+-   **Logo Dimensions**: Fixed logo aspect ratio to 1:1 (square) across all states - Header (42×42 regular, 32×32 small), Sidebar (50×50 expanded, 36×36 collapsed).
+-   **Professional Appearance**: Logo now displays without distortion in both expanded and collapsed sidebar states, maintaining brand identity consistency.
+-   **Branding Colors**: Navy blue (`#003366`), red (`#CC0000`), and white (`#FFFFFF`) color scheme maintained throughout the application.
+
+**Settings Management (Streamlined - October 6, 2025):**
+-   **Essential Settings Only**: Reduced settings tabs from 7 to 3 core sections appropriate for medical EMR operations.
+-   **Kept Settings**: General Settings (profile, contact info, address), Security Settings (password, 2FA, authentication), Notifications Settings (push/email/SMS preferences).
+-   **Removed Settings**: Preferences (module toggles - minimal functionality), Appearance (theme customization - not critical), User Permissions (redundant with Staff management), Plans & Billing (subscription billing - inappropriate for EMR user settings).
+-   **Clean Navigation**: Updated sidebar and router configurations to only include essential settings routes, removing obsolete route constants and page components.
+-   **404 Handling**: Removed settings pages now properly return 404 errors, preventing access to deprecated functionality.
+
 **UI/UX Decisions:**
--   **Branding**: "Life Point Medical Centre" with a navy blue (`#003366`), red (`#CC0000`), and white (`#FFFFFF`) color scheme.
 -   **Components**: Leverages Ant Design and React Bootstrap.
 -   **Data Visualization**: ApexCharts for data presentation and FullCalendar for scheduling.
 
