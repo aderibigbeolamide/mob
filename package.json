@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "prebuild": "rm -rf .next",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' next build",
-    "start": "next start",
+    "start": "node dist/server.js",
     "lint": "eslint"
   },
   "dependencies": {
