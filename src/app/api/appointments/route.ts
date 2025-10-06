@@ -6,9 +6,9 @@ import User from '@/models/User';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { sendAppointmentNotification } from '@/lib/services/notification';
 import { 
-  applyBranchFilter, 
   buildPaginationResponse 
 } from '@/lib/utils/queryHelpers';
+import { buildRoleScopedFilters } from '@/lib/utils/roleFilters';
 
 async function checkSchedulingConflict(
   doctorId: string,
@@ -244,8 +244,10 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      const allowCrossBranch = true;
-      applyBranchFilter(query, session.user, allowCrossBranch);
+      const roleScopedFilters = buildRoleScopedFilters(session);
+      if (roleScopedFilters.appointmentFilter) {
+        Object.assign(query, roleScopedFilters.appointmentFilter);
+      }
 
       const skip = (page - 1) * limit;
 

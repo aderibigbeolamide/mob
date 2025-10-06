@@ -7,6 +7,7 @@ import { all_routes } from "@/router/all_routes";
 import Link from "next/link";
 import { apiClient } from "@/lib/services/api-client";
 import { PaginationInfo } from "@/types/emr";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const AppointmentModal = lazy(() => import("./modal/appointmentModal"));
 
@@ -49,6 +50,7 @@ interface AppointmentsResponse {
 
 const AppointmentComponent = () => {
   const { data: session } = useSession();
+  const { can, canEditResource, userRole } = usePermissions();
   const [appointments, setAppointments] = useState<AppointmentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -204,8 +206,7 @@ const AppointmentComponent = () => {
     ));
   };
 
-  const isAdmin = session?.user?.role === "ADMIN";
-  const canCreateAppointment = session?.user?.role === "ADMIN" || session?.user?.role === "FRONT_DESK";
+  const isAdmin = userRole === "ADMIN";
 
   return (
     <>
@@ -254,7 +255,7 @@ const AppointmentComponent = () => {
               >
                 <i className="ti ti-cloud-download" />
               </Link>
-              {canCreateAppointment && (
+              {can('appointment:create') && (
                 <Link
                   href="#"
                   className="btn btn-primary d-inline-flex align-items-center"
@@ -461,19 +462,39 @@ const AppointmentComponent = () => {
                               >
                                 <i className="ti ti-eye" />
                               </Link>
-                              <Link
-                                href="#"
-                                className="btn btn-sm btn-icon btn-light"
-                                data-bs-toggle="modal"
-                                data-bs-target="#edit_modal"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleEditAppointment(appointment._id);
-                                }}
-                                title="Edit"
-                              >
-                                <i className="ti ti-edit" />
-                              </Link>
+                              {can('appointment:update') && (
+                                userRole === 'DOCTOR' 
+                                  ? appointment.doctorId?._id === session?.user?.id && (
+                                      <Link
+                                        href="#"
+                                        className="btn btn-sm btn-icon btn-light"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#edit_modal"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          handleEditAppointment(appointment._id);
+                                        }}
+                                        title="Edit"
+                                      >
+                                        <i className="ti ti-edit" />
+                                      </Link>
+                                    )
+                                  : canEditResource(appointment.doctorId?._id) && (
+                                      <Link
+                                        href="#"
+                                        className="btn btn-sm btn-icon btn-light"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#edit_modal"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          handleEditAppointment(appointment._id);
+                                        }}
+                                        title="Edit"
+                                      >
+                                        <i className="ti ti-edit" />
+                                      </Link>
+                                    )
+                              )}
                               <Link
                                 href={all_routes.appointmentConsultation}
                                 className="btn btn-sm btn-icon btn-light"
@@ -481,16 +502,30 @@ const AppointmentComponent = () => {
                               >
                                 <i className="ti ti-stethoscope" />
                               </Link>
-                              {isAdmin && (
-                                <button
-                                  onClick={() => setDeleteConfirmId(appointment._id)}
-                                  className="btn btn-sm btn-icon btn-light"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#delete_modal"
-                                  title="Delete"
-                                >
-                                  <i className="ti ti-trash" />
-                                </button>
+                              {can('appointment:delete') && (
+                                userRole === 'DOCTOR'
+                                  ? appointment.doctorId?._id === session?.user?.id && (
+                                      <button
+                                        onClick={() => setDeleteConfirmId(appointment._id)}
+                                        className="btn btn-sm btn-icon btn-light"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#delete_modal"
+                                        title="Delete"
+                                      >
+                                        <i className="ti ti-trash" />
+                                      </button>
+                                    )
+                                  : canEditResource(appointment.doctorId?._id) && (
+                                      <button
+                                        onClick={() => setDeleteConfirmId(appointment._id)}
+                                        className="btn btn-sm btn-icon btn-light"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#delete_modal"
+                                        title="Delete"
+                                      >
+                                        <i className="ti ti-trash" />
+                                      </button>
+                                    )
                               )}
                             </div>
                           </td>
