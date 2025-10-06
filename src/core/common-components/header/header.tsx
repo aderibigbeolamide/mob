@@ -12,6 +12,8 @@ import { all_routes } from "@/router/all_routes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { apiClient } from "@/lib/services/api-client";
+import { UserRole } from "@/types/emr";
 
 
 // Function to load/unload RTL CSS
@@ -32,6 +34,32 @@ const unloadRTLStylesheet = () => {
     existingLink.remove();
   }
 };
+
+interface Notification {
+  _id: string;
+  title: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
+  sender?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+interface NotificationsResponse {
+  notifications: Notification[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
 
 const Header = () => {
   const location = usePathname();
@@ -111,7 +139,80 @@ const Header = () => {
   const [searchValue, setSearchValue] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const { t } = useTranslation();
+
+  const isAdmin = session?.user?.role === UserRole.ADMIN;
+
+  const formatTime = useCallback((date: string) => {
+    const now = new Date();
+    const notificationDate = new Date(date);
+    const diffInMs = now.getTime() - notificationDate.getTime();
+    const diffInMins = Math.floor(diffInMs / 60000);
+
+    if (diffInMins < 1) return "Just now";
+    if (diffInMins < 60) return `${diffInMins} min ago`;
+    if (diffInMins < 1440) return `${Math.floor(diffInMins / 60)} hours ago`;
+    return `${Math.floor(diffInMins / 1440)} days ago`;
+  }, []);
+
+  const getNotificationIcon = useCallback((type: string) => {
+    switch (type) {
+      case "success":
+        return "ti-check-circle";
+      case "error":
+        return "ti-alert-circle";
+      case "warning":
+        return "ti-alert-triangle";
+      case "appointment":
+        return "ti-calendar";
+      default:
+        return "ti-info-circle";
+    }
+  }, []);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!session?.user) return;
+
+    try {
+      const params = new URLSearchParams({
+        page: "1",
+        limit: "10",
+        ...(isAdmin && { viewAll: "true" }),
+      });
+
+      const response = await apiClient.get<NotificationsResponse>(
+        `/api/notifications?${params.toString()}`,
+        { showErrorToast: false }
+      );
+
+      const fetchedNotifications = response.notifications || [];
+      setNotifications(fetchedNotifications);
+      const unread = fetchedNotifications.filter((n) => !n.isRead).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+      setNotifications([]);
+      setUnreadCount(0);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [session?.user, isAdmin]);
+
+  const handleMarkAsRead = useCallback(async (id: string) => {
+    try {
+      await apiClient.put(`/api/notifications/${id}/read`, { isRead: true }, {
+        showSuccessToast: false,
+        showErrorToast: false,
+      });
+      fetchNotifications();
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
+  }, [fetchNotifications]);
 
   // Move inline event handlers to named functions
   const handleToggleBtn2Click = useCallback((e: React.MouseEvent) => {
@@ -192,6 +293,22 @@ const Header = () => {
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchNotifications();
+    }
+  }, [session?.user, fetchNotifications]);
+
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const intervalId = setInterval(() => {
+      fetchNotifications();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [session?.user, fetchNotifications]);
 
   return (
     <>
@@ -360,7 +477,11 @@ const Header = () => {
                   aria-label="Notifications"
                 >
                   <i className="ti ti-bell-check fs-16 animate-ring" aria-hidden="true" />
-                  <span className="notification-badge" aria-label="Unread notifications" />
+                  {unreadCount > 0 && (
+                    <span className="notification-badge" aria-label={`${unreadCount} unread notifications`}>
+                      {unreadCount}
+                    </span>
+                  )}
                 </button>
                 <div
                   className="dropdown-menu p-0 dropdown-menu-end dropdown-menu-lg"
@@ -382,194 +503,74 @@ const Header = () => {
                     data-simplebar=""
                   >
                     <OverlayScrollbarsComponent style={{ height: "280px" }}>
-                      {/* Item*/}
-                      <div
-                        className="dropdown-item notification-item py-3 text-wrap border-bottom"
-                        id="notification-1"
-                      >
-                        <div className="d-flex">
-                          <div className="me-2 position-relative flex-shrink-0">
-                            <ImageWithBasePath
-                              src="assets/img/users/user-01.jpg"
-                              className="avatar-md rounded-circle"
-                              alt=""
-                            />
+                      {notificationsLoading ? (
+                        <div className="text-center py-5">
+                          <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
                           </div>
-                          <div className="flex-grow-1">
-                            <p className="mb-0 fw-medium text-dark">
-                              {t("header.notificationUserJohn")}
-                            </p>
-                            <p className="mb-1 text-wrap">
-                              {t("header.notificationMessageJohn")}
-                            </p>
-                            <div className="d-flex justify-content-between align-items-center">
-                              <span className="fs-12">
-                                <i className="ti ti-clock me-1" />
-                                {t("header.timeAgo", { time: "4 min ago" })}
-                              </span>
-                              <div className="notification-action d-flex align-items-center float-end gap-2">
-                                <Link
-                                  href="#"
-                                  className="notification-read rounded-circle bg-danger"
-                                  data-bs-toggle="tooltip"
-                                  title=""
-                                  data-bs-original-title="Make as Read"
-                                  aria-label="Mark notification as read"
-                                />
-                                <button
-                                  className="btn rounded-circle p-0"
-                                  data-dismissible="#notification-1"
-                                  type="button"
-                                  aria-label="Dismiss notification"
-                                >
-                                  <i className="ti ti-x" aria-hidden="true" />
-                                </button>
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="text-center py-5">
+                          <i className="ti ti-bell-off fs-1 text-muted mb-2 d-block" />
+                          <p className="text-muted mb-0">No notifications</p>
+                        </div>
+                      ) : (
+                        notifications.map((notification, index) => (
+                          <div
+                            key={notification._id}
+                            className={`dropdown-item notification-item py-3 text-wrap ${
+                              index < notifications.length - 1 ? "border-bottom" : ""
+                            } ${!notification.isRead ? "bg-light-subtle" : ""}`}
+                            onClick={() => handleMarkAsRead(notification._id)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <div className="d-flex">
+                              <div className="me-2 position-relative flex-shrink-0">
+                                <div className="avatar">
+                                  <span 
+                                    className={`avatar-title rounded-circle bg-${
+                                      notification.type === "success"
+                                        ? "success"
+                                        : notification.type === "error"
+                                        ? "danger"
+                                        : notification.type === "warning"
+                                        ? "warning"
+                                        : "info"
+                                    }-transparent`}
+                                  >
+                                    <i className={`${getNotificationIcon(notification.type)} fs-20`} />
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex-grow-1">
+                                <div className="d-flex justify-content-between align-items-start mb-1">
+                                  <p className="mb-0 fw-medium text-dark">
+                                    {notification.title}
+                                  </p>
+                                  {!notification.isRead && (
+                                    <span className="badge bg-primary ms-2">New</span>
+                                  )}
+                                </div>
+                                <p className="mb-1 text-wrap fs-13">
+                                  {notification.message}
+                                </p>
+                                <div className="d-flex align-items-center gap-3 flex-wrap">
+                                  <span className="fs-12 text-muted">
+                                    <i className="ti ti-clock me-1" />
+                                    {formatTime(notification.createdAt)}
+                                  </span>
+                                  {notification.sender && (
+                                    <span className="fs-12 text-muted">
+                                      <i className="ti ti-user me-1" />
+                                      {notification.sender.firstName} {notification.sender.lastName}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                      {/* Item*/}
-                      <div
-                        className="dropdown-item notification-item py-3 text-wrap border-bottom"
-                        id="notification-2"
-                      >
-                        <div className="d-flex">
-                          <div className="me-2 position-relative flex-shrink-0">
-                            <ImageWithBasePath
-                              src="assets/img/users/user-12.jpg"
-                              className="avatar-md rounded-circle"
-                              alt=""
-                            />
-                          </div>
-                          <div className="flex-grow-1">
-                            <p className="mb-0 fw-medium text-dark">
-                              {t("header.notificationUserThomas")}
-                            </p>
-                            <p className="mb-1 text-wrap">
-                              {t("header.notificationMessageThomas")}
-                            </p>
-                            <div className="d-flex justify-content-between align-items-center">
-                              <span className="fs-12">
-                                <i className="ti ti-clock me-1" />
-                                {t("header.timeAgo", { time: "8 min ago" })}
-                              </span>
-                              <div className="notification-action d-flex align-items-center float-end gap-2">
-                                <Link
-                                  href="#"
-                                  className="notification-read rounded-circle bg-danger"
-                                  data-bs-toggle="tooltip"
-                                  title=""
-                                  data-bs-original-title="Make as Read"
-                                  aria-label="Mark notification as read"
-                                />
-                                <button
-                                  className="btn rounded-circle p-0"
-                                  data-dismissible="#notification-2"
-                                  type="button"
-                                  aria-label="Dismiss notification"
-                                >
-                                  <i className="ti ti-x" aria-hidden="true" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Item*/}
-                      <div
-                        className="dropdown-item notification-item py-3 text-wrap border-bottom"
-                        id="notification-3"
-                      >
-                        <div className="d-flex">
-                          <div className="me-2 position-relative flex-shrink-0">
-                            <ImageWithBasePath
-                              src="assets/img/profiles/avatar-12.jpg"
-                              className="avatar-md rounded-circle"
-                              alt=""
-                            />
-                          </div>
-                          <div className="flex-grow-1">
-                            <p className="mb-0 fw-medium text-dark">
-                              {t("header.notificationUserSarah")}
-                            </p>
-                            <p className="mb-1 text-wrap">
-                              {t("header.notificationMessageSarah")}
-                            </p>
-                            <div className="d-flex justify-content-between align-items-center">
-                              <span className="fs-12">
-                                <i className="ti ti-clock me-1" />
-                                {t("header.timeAgo", { time: "15 min ago" })}
-                              </span>
-                              <div className="notification-action d-flex align-items-center float-end gap-2">
-                                <Link
-                                  href="#"
-                                  className="notification-read rounded-circle bg-danger"
-                                  data-bs-toggle="tooltip"
-                                  title=""
-                                  data-bs-original-title="Make as Read"
-                                  aria-label="Mark notification as read"
-                                />
-                                <button
-                                  className="btn rounded-circle p-0"
-                                  data-dismissible="#notification-3"
-                                  type="button"
-                                  aria-label="Dismiss notification"
-                                >
-                                  <i className="ti ti-x" aria-hidden="true" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Item*/}
-                      <div
-                        className="dropdown-item notification-item py-3 text-wrap"
-                        id="notification-4"
-                      >
-                        <div className="d-flex">
-                          <div className="me-2 position-relative flex-shrink-0">
-                            <ImageWithBasePath
-                              src="assets/img/profiles/avatar-08.jpg"
-                              className="avatar-md rounded-circle"
-                              alt=""
-                            />
-                          </div>
-                          <div className="flex-grow-1">
-                            <p className="mb-0 fw-medium text-dark">
-                              {t("header.notificationUserAnn")}
-                            </p>
-                            <p className="mb-1 text-wrap">
-                              {t("header.notificationMessageAnn")}
-                            </p>
-                            <div className="d-flex justify-content-between align-items-center">
-                              <span className="fs-12">
-                                <i className="ti ti-clock me-1" />
-                                {t("header.timeAgo", { time: "20 min ago" })}
-                              </span>
-                              <div className="notification-action d-flex align-items-center float-end gap-2">
-                                <Link
-                                  href="#"
-                                  className="notification-read rounded-circle bg-danger"
-                                  data-bs-toggle="tooltip"
-                                  title=""
-                                  data-bs-original-title="Make as Read"
-                                  aria-label="Mark notification as read"
-                                />
-                                <button
-                                  className="btn rounded-circle p-0"
-                                  data-dismissible="#notification-4"
-                                  type="button"
-                                  aria-label="Dismiss notification"
-                                >
-                                  <i className="ti ti-x" aria-hidden="true" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                        ))
+                      )}
                     </OverlayScrollbarsComponent>
                   </div>
                   {/* View All*/}
