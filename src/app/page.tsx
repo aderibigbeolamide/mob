@@ -17,16 +17,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    const handleSessionOnLogin = async () => {
-      if (status === 'authenticated' && session) {
-        await signOut({ redirect: false });
-        setFormData({ email: '', password: '' });
-        setError('');
-      }
-    };
-    
-    handleSessionOnLogin();
-  }, [status, session]);
+    if (status === 'authenticated' && session) {
+      router.replace('/dashboard');
+    }
+  }, [status, session, router]);
 
   if (status === 'loading') {
     return (
@@ -42,16 +36,7 @@ export default function LoginPage() {
   }
 
   if (status === 'authenticated') {
-    return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
-        <div className="text-center">
-          <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
-            <span className="visually-hidden">Logging out...</span>
-          </div>
-          <p className="text-muted">Logging out previous session...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
