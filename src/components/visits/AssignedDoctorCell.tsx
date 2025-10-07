@@ -46,11 +46,11 @@ export default function AssignedDoctorCell({ visitId, assignedDoctor, onUpdate }
   const fetchDoctors = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get<{ users: Doctor[] }>(
-        '/api/users?role=DOCTOR',
+      const response = await apiClient.get<{ doctors: Doctor[] }>(
+        '/api/doctors?limit=1000',
         { showErrorToast: true }
       );
-      setDoctors(response.users || []);
+      setDoctors(response.doctors || []);
     } catch (error) {
       console.error('Failed to fetch doctors:', error);
     } finally {
