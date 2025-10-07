@@ -340,6 +340,82 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
       );
     }
 
+    if (isNurse && visit.currentStage === 'nurse' && hasNurseClockedIn) {
+      return (
+        <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
+          <HandoffButton
+            visitId={visit._id!}
+            currentStage={visit.currentStage}
+            onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
+          />
+        </>
+      );
+    }
+
+    if (isLab && visit.currentStage === 'lab' && hasLabClockedIn) {
+      return (
+        <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
+          <HandoffButton
+            visitId={visit._id!}
+            currentStage={visit.currentStage}
+            onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
+          />
+        </>
+      );
+    }
+
+    if (isPharmacy && visit.currentStage === 'pharmacy' && hasPharmacyClockedIn) {
+      return (
+        <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
+          <HandoffButton
+            visitId={visit._id!}
+            currentStage={visit.currentStage}
+            onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
+          />
+        </>
+      );
+    }
+
+    if (isBilling && visit.currentStage === 'billing' && hasBillingClockedIn) {
+      return (
+        <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
+          <HandoffButton
+            visitId={visit._id!}
+            currentStage={visit.currentStage}
+            onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
+          />
+        </>
+      );
+    }
+
     return (
       <>
         <button
