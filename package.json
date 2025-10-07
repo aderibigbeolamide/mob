@@ -7,7 +7,8 @@
     "prebuild": "rm -rf .next",
     "build": "NODE_OPTIONS='--max-old-space-size=16384' next build",
     "build:prod": "NODE_ENV=production NODE_OPTIONS='--max-old-space-size=16384' next build",
-    "start": "next start",
+    "start": "node server.js",
+    "start:default": "next start -H 0.0.0.0 -p ${PORT:-10000}",
     "lint": "eslint"
   },
   "dependencies": {
