@@ -4,6 +4,7 @@ export interface IPatientVisit extends Document {
   visitNumber: string;
   patient: mongoose.Types.ObjectId;
   appointment?: mongoose.Types.ObjectId;
+  assignedDoctor?: mongoose.Types.ObjectId;
   branchId: mongoose.Types.ObjectId;
   visitDate: Date;
   currentStage: 'front_desk' | 'nurse' | 'doctor' | 'lab' | 'pharmacy' | 'billing' | 'returned_to_front_desk' | 'completed';
@@ -93,6 +94,7 @@ const PatientVisitSchema = new Schema<IPatientVisit>({
   visitNumber: { type: String, required: true, unique: true },
   patient: { type: Schema.Types.ObjectId, ref: 'Patient', required: true },
   appointment: { type: Schema.Types.ObjectId, ref: 'Appointment' },
+  assignedDoctor: { type: Schema.Types.ObjectId, ref: 'User' },
   branchId: { type: Schema.Types.ObjectId, ref: 'Branch', required: true, index: true },
   visitDate: { type: Date, required: true, default: Date.now },
   currentStage: {

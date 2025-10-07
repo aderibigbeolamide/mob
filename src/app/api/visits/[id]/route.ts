@@ -28,6 +28,7 @@ export async function GET(
         .populate('patient', 'firstName lastName patientId phoneNumber email allergies chronicConditions')
         .populate('branchId', 'name address city state')
         .populate('appointment')
+        .populate('assignedDoctor', 'firstName lastName email role')
         .populate('stages.frontDesk.clockedInBy', 'firstName lastName')
         .populate('stages.frontDesk.clockedOutBy', 'firstName lastName')
         .populate('stages.nurse.clockedInBy', 'firstName lastName')
@@ -141,7 +142,7 @@ export async function PUT(
 
         const updateData: any = {};
 
-        const allowedFields = ['visitDate', 'currentStage', 'status'];
+        const allowedFields = ['visitDate', 'currentStage', 'status', 'assignedDoctor'];
 
         allowedFields.forEach(field => {
           if (body[field] !== undefined) {
@@ -168,6 +169,7 @@ export async function PUT(
           .populate('patient', 'firstName lastName patientId phoneNumber')
           .populate('branchId', 'name address city state')
           .populate('appointment')
+          .populate('assignedDoctor', 'firstName lastName email role')
           .populate('stages.frontDesk.clockedInBy', 'firstName lastName')
           .populate('stages.frontDesk.clockedOutBy', 'firstName lastName')
           .populate('stages.nurse.clockedInBy', 'firstName lastName')

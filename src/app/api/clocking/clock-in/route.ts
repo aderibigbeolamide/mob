@@ -73,10 +73,21 @@ export async function POST(req: NextRequest) {
 
         const visitNumber = await generateVisitNumber();
 
+        let assignedDoctor = body.assignedDoctor;
+
+        if (body.appointmentId && !assignedDoctor) {
+          const Appointment = (await import('@/models/Appointment')).default;
+          const appointment = await Appointment.findById(body.appointmentId);
+          if (appointment && appointment.doctorId) {
+            assignedDoctor = appointment.doctorId;
+          }
+        }
+
         const visitData = {
           visitNumber,
           patient: body.patientId,
           appointment: body.appointmentId,
+          assignedDoctor,
           branchId: body.branchId,
           visitDate: new Date(),
           currentStage: 'front_desk',
@@ -96,6 +107,7 @@ export async function POST(req: NextRequest) {
         const populatedVisit = await PatientVisit.findById(visit._id)
           .populate('patient', 'patientId firstName lastName phoneNumber email dateOfBirth gender')
           .populate('appointment')
+          .populate('assignedDoctor', 'firstName lastName email role')
           .populate('branchId', 'name address city state')
           .populate('stages.frontDesk.clockedInBy', 'firstName lastName email role');
 

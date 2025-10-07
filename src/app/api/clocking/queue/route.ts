@@ -74,6 +74,7 @@ export async function GET(req: NextRequest) {
         PatientVisit.find(query)
           .populate('patient', 'patientId firstName lastName phoneNumber email dateOfBirth gender')
           .populate('appointment', 'appointmentNumber reasonForVisit')
+          .populate('assignedDoctor', 'firstName lastName email role')
           .populate('branchId', 'name address city state')
           .populate('stages.frontDesk.clockedInBy', 'firstName lastName email role')
           .populate('stages.nurse.clockedInBy', 'firstName lastName email role')
