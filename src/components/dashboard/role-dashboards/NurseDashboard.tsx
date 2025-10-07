@@ -56,11 +56,13 @@ const NurseDashboard = () => {
       setLoading(true);
       setError(null);
       const data = await apiClient.get<DashboardStats>('/api/dashboard/stats', {
-        showErrorToast: false
+        showErrorToast: true
       });
       setStats(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load dashboard data');
+      const errorMessage = err.data?.error || err.message || 'Failed to load dashboard data';
+      setError(errorMessage);
+      console.error('Dashboard stats error:', err);
     } finally {
       setLoading(false);
     }

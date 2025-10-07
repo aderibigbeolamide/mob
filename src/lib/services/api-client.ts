@@ -43,6 +43,7 @@ class ApiClient {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       return await this.handleResponse<T>(response);
@@ -67,6 +68,7 @@ class ApiClient {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
@@ -103,6 +105,7 @@ class ApiClient {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
@@ -139,6 +142,7 @@ class ApiClient {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       const result = await this.handleResponse<T>(response);
