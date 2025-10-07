@@ -164,6 +164,7 @@ export interface PatientVisit {
   visitNumber: string;
   patient: string | Patient;
   appointment?: string | Appointment;
+  assignedDoctor?: string | Doctor | any;
   branchId: string | Branch;
   visitDate: Date;
   currentStage: 'front_desk' | 'nurse' | 'doctor' | 'lab' | 'pharmacy' | 'billing' | 'returned_to_front_desk' | 'completed';

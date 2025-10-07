@@ -10,6 +10,7 @@ import { apiClient } from "@/lib/services/api-client";
 import { PatientVisit } from "@/types/emr";
 import HandoffButton from "./handoff/HandoffButton";
 import VisitTimeline from "./VisitTimeline";
+import AssignedDoctorCell from "./AssignedDoctorCell";
 import { usePageGuard } from "@/hooks/usePageGuard";
 import { MissingResource } from "@/components/common/MissingResource";
 import { AccessDenied } from "@/components/common/AccessDenied";
@@ -400,6 +401,14 @@ const StartVisitsComponent = () => {
                         <div className="col-md-6">
                           <p className="mb-1 text-muted">Visit Number:</p>
                           <p className="mb-0 fw-medium">{visit?.visitNumber}</p>
+                        </div>
+                        <div className="col-md-6">
+                          <p className="mb-1 text-muted">Assigned Doctor:</p>
+                          <AssignedDoctorCell
+                            visitId={visit?._id!}
+                            assignedDoctor={visit?.assignedDoctor as any}
+                            onUpdate={fetchVisitDetails}
+                          />
                         </div>
                         <div className="col-md-6">
                           <p className="mb-1 text-muted">Visit Date:</p>

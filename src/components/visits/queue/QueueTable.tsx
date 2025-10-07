@@ -6,6 +6,7 @@ import { PatientVisit, Patient, UserRole } from '@/types/emr';
 import { getStageBadgeClass, getStageLabel } from '@/lib/constants/stages';
 import HandoffButton from './HandoffButton';
 import NurseClockInModal from './NurseClockInModal';
+import AssignedDoctorCell from '../AssignedDoctorCell';
 import { all_routes } from '@/router/all_routes';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -111,6 +112,7 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
       <td><span className="placeholder col-10"></span></td>
       <td><span className="placeholder col-6"></span></td>
       <td><span className="placeholder col-8"></span></td>
+      <td><span className="placeholder col-8"></span></td>
       <td><span className="placeholder col-6"></span></td>
       <td><span className="placeholder col-4"></span></td>
     </tr>
@@ -139,6 +141,14 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
           <div className="mb-2">
             <small className="text-muted d-block">Visit #: {visit.visitNumber}</small>
             <small className="text-muted d-block">Waiting: {formatTimeWaiting(clockInTime)}</small>
+            <div className="mt-1">
+              <small className="text-muted d-block">Assigned Doctor:</small>
+              <AssignedDoctorCell
+                visitId={visit._id!}
+                assignedDoctor={visit.assignedDoctor as any}
+                onUpdate={onClockInSuccess}
+              />
+            </div>
           </div>
           <div className="d-flex gap-2">
             <Link
@@ -165,6 +175,7 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
                 <th>Visit Number</th>
                 <th>Patient</th>
                 <th>Patient ID</th>
+                <th>Assigned Doctor</th>
                 <th>Current Stage</th>
                 <th>Time Waiting</th>
                 <th className="text-end">Actions</th>
@@ -175,7 +186,7 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
                 Array.from({ length: 5 }).map((_, index) => renderSkeletonRow(index))
               ) : queue.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-5">
+                  <td colSpan={7} className="text-center py-5">
                     <i className="ti ti-inbox fs-1 text-muted d-block mb-2"></i>
                     <p className="text-muted mb-0">No patients in queue</p>
                   </td>
@@ -198,6 +209,13 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
                         </Link>
                       </td>
                       <td>{getPatientId(patient)}</td>
+                      <td>
+                        <AssignedDoctorCell
+                          visitId={visit._id!}
+                          assignedDoctor={visit.assignedDoctor as any}
+                          onUpdate={onClockInSuccess}
+                        />
+                      </td>
                       <td>
                         <span className={`badge ${getStageBadgeClass(visit.currentStage)}`}>
                           {getStageLabel(visit.currentStage)}
