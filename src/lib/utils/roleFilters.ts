@@ -11,6 +11,7 @@ export interface RoleScopedFilter {
   accountingFilter?: Record<string, any>;
   appointmentFilter?: Record<string, any>;
   patientFilter?: Record<string, any>;
+  admissionFilter?: Record<string, any>;
 }
 
 export function buildRoleScopedFilters(session: Session): RoleScopedFilter {
@@ -28,6 +29,7 @@ export function buildRoleScopedFilters(session: Session): RoleScopedFilter {
         ...baseFilter,
         appointmentFilter: { branchId },
         patientFilter: { branchId, isActive: true },
+        admissionFilter: { branchId },
       };
 
     case UserRole.DOCTOR:
@@ -36,6 +38,7 @@ export function buildRoleScopedFilters(session: Session): RoleScopedFilter {
         doctorFilter: { doctorId: userId },
         appointmentFilter: { branchId, doctorId: userId },
         patientFilter: { branchId, isActive: true },
+        admissionFilter: { branchId },
       };
 
     case UserRole.NURSE:
@@ -44,6 +47,7 @@ export function buildRoleScopedFilters(session: Session): RoleScopedFilter {
         nurseFilter: { nurseId: userId },
         appointmentFilter: { branchId },
         patientFilter: { branchId, isActive: true },
+        admissionFilter: { branchId },
       };
 
     case UserRole.FRONT_DESK:
@@ -51,6 +55,7 @@ export function buildRoleScopedFilters(session: Session): RoleScopedFilter {
         ...baseFilter,
         appointmentFilter: { branchId },
         patientFilter: { branchId, isActive: true },
+        admissionFilter: { branchId },
       };
 
     case UserRole.LAB:

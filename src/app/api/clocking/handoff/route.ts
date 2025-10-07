@@ -87,31 +87,12 @@ export async function POST(req: NextRequest) {
       }
 
       const userRole = session.user.role as UserRole;
-      const expectedStage = ROLE_TO_STAGE[userRole];
-
-      if (!expectedStage) {
-        return NextResponse.json(
-          { error: 'Your role cannot perform handoffs' },
-          { status: 403 }
-        );
-      }
 
       if (visit.currentStage === 'returned_to_front_desk' && userRole === UserRole.FRONT_DESK) {
         return NextResponse.json(
           { 
             error: 'Patient has been returned to Front Desk. Please use the clock-out endpoint to complete the visit.',
             currentStage: visit.currentStage
-          },
-          { status: 400 }
-        );
-      }
-
-      if (visit.currentStage !== expectedStage) {
-        return NextResponse.json(
-          { 
-            error: `Cannot hand off from this stage. Patient is currently at ${visit.currentStage} stage`,
-            currentStage: visit.currentStage,
-            yourStage: expectedStage
           },
           { status: 400 }
         );
@@ -132,14 +113,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           { error: `Cannot transition from ${currentStage} to ${nextStage}. Allowed transitions: ${allowedNextStages.join(', ')}` },
           { status: 400 }
-        );
-      }
-
-      const requiredRole = STAGE_TO_ROLE[currentStage as keyof typeof STAGE_TO_ROLE];
-      if (requiredRole && session.user.role !== requiredRole && session.user.role !== UserRole.ADMIN) {
-        return NextResponse.json(
-          { error: 'You cannot hand off from this stage' },
-          { status: 403 }
         );
       }
 

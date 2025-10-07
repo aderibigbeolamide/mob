@@ -167,6 +167,8 @@ export interface PatientVisit {
   assignedDoctor?: string | Doctor | any;
   branchId: string | Branch;
   visitDate: Date;
+  visitType?: 'outpatient' | 'inpatient' | 'emergency';
+  admissionId?: string;
   currentStage: 'front_desk' | 'nurse' | 'doctor' | 'lab' | 'pharmacy' | 'billing' | 'returned_to_front_desk' | 'completed';
   status: 'in_progress' | 'completed' | 'cancelled';
   stages: {
