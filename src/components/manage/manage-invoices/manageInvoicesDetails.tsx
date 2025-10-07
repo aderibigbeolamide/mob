@@ -67,7 +67,7 @@ const ManageInvoicesDetails = () => {
                       <div className="col-lg-5">
                         <div>
                           <h6 className="mb-2 fs-16 fw-bold">Invoice From</h6>
-                          <h6 className="fs-14 mb-2">Dreams Medical Center</h6>
+                          <h6 className="fs-14 mb-2">Life Point Medical Centre</h6>
                           <p className="mb-1">
                             15 Hodges Mews, High Wycombe HP12 3JL, <br /> United
                             Kingdom
@@ -200,7 +200,8 @@ const ManageInvoicesDetails = () => {
                     <div className="mb-1 signature">
                       <ImageWithBasePath src="assets/img/icons/signature.svg" alt="sign" />
                     </div>
-                    <p className="mb-0">Authorized Sign</p>
+                    <p className="mb-0 fw-semibold">Authorized Signature</p>
+                    <p className="mb-0 text-muted fs-13">Life Point Medical Centre</p>
                   </div>
                 </div>
               </div>

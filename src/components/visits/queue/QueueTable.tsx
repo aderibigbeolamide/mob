@@ -9,6 +9,7 @@ import NurseClockInModal from './NurseClockInModal';
 import DoctorConsultationModal from './DoctorConsultationModal';
 import LabClockInModal from './LabClockInModal';
 import PharmacyClockInModal from './PharmacyClockInModal';
+import BillingClockInModal from './BillingClockInModal';
 import AdmitPatientModal from '@/components/visits/modal/AdmitPatientModal';
 import ViewDepartmentRecordModal from './ViewDepartmentRecordModal';
 import AssignedDoctorCell from '../AssignedDoctorCell';
@@ -33,6 +34,8 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
   const [selectedLabVisit, setSelectedLabVisit] = useState<PatientVisit | null>(null);
   const [showPharmacyModal, setShowPharmacyModal] = useState(false);
   const [selectedPharmacyVisit, setSelectedPharmacyVisit] = useState<PatientVisit | null>(null);
+  const [showBillingModal, setShowBillingModal] = useState(false);
+  const [selectedBillingVisit, setSelectedBillingVisit] = useState<PatientVisit | null>(null);
   const [showAdmitModal, setShowAdmitModal] = useState(false);
   const [selectedVisitForAdmission, setSelectedVisitForAdmission] = useState<PatientVisit | null>(null);
   const [showRecordModal, setShowRecordModal] = useState(false);
@@ -163,6 +166,23 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
     handleClosePharmacyModal();
   };
 
+  const handleOpenBillingModal = (visit: PatientVisit) => {
+    setSelectedBillingVisit(visit);
+    setShowBillingModal(true);
+  };
+
+  const handleCloseBillingModal = () => {
+    setShowBillingModal(false);
+    setSelectedBillingVisit(null);
+  };
+
+  const handleBillingClockInSuccess = () => {
+    if (onClockInSuccess) {
+      onClockInSuccess();
+    }
+    handleCloseBillingModal();
+  };
+
   const handleOpenRecordModal = (visit: PatientVisit) => {
     setSelectedVisitForRecord(visit);
     setShowRecordModal(true);
@@ -179,10 +199,12 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
     const isDoctor = userRole === UserRole.DOCTOR;
     const isLab = userRole === UserRole.LAB;
     const isPharmacy = userRole === UserRole.PHARMACY;
+    const isBilling = userRole === UserRole.BILLING;
     const hasNurseClockedIn = !!visit.stages.nurse?.clockedInAt;
     const hasDoctorClockedIn = !!visit.stages.doctor?.clockedInAt;
     const hasLabClockedIn = !!visit.stages.lab?.clockedInAt;
     const hasPharmacyClockedIn = !!visit.stages.pharmacy?.clockedInAt;
+    const hasBillingClockedIn = !!visit.stages.billing?.clockedInAt;
 
     if (isNurse && visit.currentStage === 'nurse' && !hasNurseClockedIn) {
       return (
@@ -265,6 +287,28 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
           >
             <i className="ti ti-pill me-1"></i>
             Clock In & Dispense
+          </button>
+        </>
+      );
+    }
+
+    if (isBilling && visit.currentStage === 'billing' && !hasBillingClockedIn) {
+      return (
+        <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
+          <button
+            className="btn btn-sm btn-success"
+            onClick={() => handleOpenBillingModal(visit)}
+            style={{ backgroundColor: '#F59E0B', borderColor: '#F59E0B' }}
+          >
+            <i className="ti ti-receipt me-1"></i>
+            Clock In & Process Payment
           </button>
         </>
       );
@@ -532,6 +576,19 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
           onSuccess={handlePharmacyClockInSuccess}
           show={showPharmacyModal}
           onHide={handleClosePharmacyModal}
+        />
+      )}
+
+      {selectedBillingVisit && (
+        <BillingClockInModal
+          visit={selectedBillingVisit}
+          patientInfo={{
+            name: getPatientName(selectedBillingVisit.patient),
+            patientId: getPatientId(selectedBillingVisit.patient),
+          }}
+          onSuccess={handleBillingClockInSuccess}
+          show={showBillingModal}
+          onHide={handleCloseBillingModal}
         />
       )}
 
