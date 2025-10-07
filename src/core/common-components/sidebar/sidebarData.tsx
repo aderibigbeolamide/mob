@@ -197,6 +197,14 @@ export const SidebarData = [
         allowedRoles: [UserRole.ADMIN],
       },
       {
+        label: "Queue Monitoring",
+        link: route.queueMonitoring,
+        submenu: false,
+        icon: "chart-bar",
+        submenuItems: [],
+        allowedRoles: [UserRole.ADMIN],
+      },
+      {
         label: "Notifications",
         link: route.notifications,
         submenu: false,
