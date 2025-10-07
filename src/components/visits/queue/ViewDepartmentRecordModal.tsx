@@ -144,7 +144,7 @@ export default function ViewDepartmentRecordModal({
 
   const renderFrontDeskRecord = () => {
     const stage = visitData?.stages?.frontDesk;
-    if (!stage?.clockedInAt) return null;
+    if (!stage?.clockedInAt && !stage?.clockedOutAt && !stage?.notes) return null;
 
     return (
       <div className="card mb-3">
@@ -184,7 +184,7 @@ export default function ViewDepartmentRecordModal({
 
   const renderNurseRecord = () => {
     const stage = visitData?.stages?.nurse;
-    if (!stage?.clockedInAt) return null;
+    if (!stage?.clockedInAt && !stage?.clockedOutAt && !stage?.vitalSigns && !stage?.notes) return null;
 
     return (
       <div className="card mb-3">
@@ -263,7 +263,7 @@ export default function ViewDepartmentRecordModal({
 
   const renderDoctorRecord = () => {
     const stage = visitData?.stages?.doctor;
-    if (!stage?.clockedInAt) return null;
+    if (!stage?.clockedInAt && !stage?.clockedOutAt && !stage?.diagnosis && !stage?.notes) return null;
 
     return (
       <div className="card mb-3">
@@ -332,7 +332,7 @@ export default function ViewDepartmentRecordModal({
 
   const renderLabRecord = () => {
     const stage = visitData?.stages?.lab;
-    if (!stage?.clockedInAt && labTests.length === 0) return null;
+    if (!stage?.clockedInAt && !stage?.clockedOutAt && !stage?.notes && labTests.length === 0) return null;
 
     return (
       <div className="card mb-3">
@@ -404,7 +404,7 @@ export default function ViewDepartmentRecordModal({
 
   const renderPharmacyRecord = () => {
     const stage = visitData?.stages?.pharmacy;
-    if (!stage?.clockedInAt) return null;
+    if (!stage?.clockedInAt && !stage?.clockedOutAt && !stage?.notes) return null;
 
     const dispensedPrescriptions = prescriptions.filter(p => p.status === 'dispensed');
 
@@ -466,7 +466,7 @@ export default function ViewDepartmentRecordModal({
 
   const renderBillingRecord = () => {
     const stage = visitData?.stages?.billing;
-    if (!stage?.clockedInAt) return null;
+    if (!stage?.clockedInAt && !stage?.clockedOutAt && !stage?.notes) return null;
 
     return (
       <div className="card mb-3">
