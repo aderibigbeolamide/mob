@@ -6,6 +6,7 @@ import { PatientVisit, Patient, UserRole } from '@/types/emr';
 import { getStageBadgeClass, getStageLabel } from '@/lib/constants/stages';
 import HandoffButton from './HandoffButton';
 import NurseClockInModal from './NurseClockInModal';
+import DoctorConsultationModal from './DoctorConsultationModal';
 import AdmitPatientModal from '@/components/visits/modal/AdmitPatientModal';
 import AssignedDoctorCell from '../AssignedDoctorCell';
 import { all_routes } from '@/router/all_routes';
@@ -23,6 +24,8 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
   const userRole = session?.user?.role as UserRole | undefined;
   const [showClockInModal, setShowClockInModal] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState<PatientVisit | null>(null);
+  const [showDoctorModal, setShowDoctorModal] = useState(false);
+  const [selectedDoctorVisit, setSelectedDoctorVisit] = useState<PatientVisit | null>(null);
   const [showAdmitModal, setShowAdmitModal] = useState(false);
   const [selectedVisitForAdmission, setSelectedVisitForAdmission] = useState<PatientVisit | null>(null);
   const formatTimeWaiting = (clockedInAt?: Date) => {
@@ -100,6 +103,23 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
     handleCloseAdmitModal();
   };
 
+  const handleOpenDoctorModal = (visit: PatientVisit) => {
+    setSelectedDoctorVisit(visit);
+    setShowDoctorModal(true);
+  };
+
+  const handleCloseDoctorModal = () => {
+    setShowDoctorModal(false);
+    setSelectedDoctorVisit(null);
+  };
+
+  const handleDoctorClockInSuccess = () => {
+    if (onClockInSuccess) {
+      onClockInSuccess();
+    }
+    handleCloseDoctorModal();
+  };
+
   const renderActionButtons = (visit: PatientVisit) => {
     const patient = visit.patient;
     const isNurse = userRole === UserRole.NURSE;
@@ -115,6 +135,18 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         >
           <i className="ti ti-stethoscope me-1"></i>
           Clock In & Record Vitals
+        </button>
+      );
+    }
+
+    if (isDoctor && visit.currentStage === 'doctor' && !hasDoctorClockedIn) {
+      return (
+        <button
+          className="btn btn-sm btn-success"
+          onClick={() => handleOpenDoctorModal(visit)}
+        >
+          <i className="ti ti-stethoscope me-1"></i>
+          Clock In & Start Consultation
         </button>
       );
     }
@@ -314,6 +346,19 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
           onSuccess={handleClockInSuccess}
           show={showClockInModal}
           onHide={handleCloseClockInModal}
+        />
+      )}
+
+      {selectedDoctorVisit && (
+        <DoctorConsultationModal
+          visit={selectedDoctorVisit}
+          patientInfo={{
+            name: getPatientName(selectedDoctorVisit.patient),
+            patientId: getPatientId(selectedDoctorVisit.patient),
+          }}
+          onSuccess={handleDoctorClockInSuccess}
+          show={showDoctorModal}
+          onHide={handleCloseDoctorModal}
         />
       )}
 

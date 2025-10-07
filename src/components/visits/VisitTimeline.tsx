@@ -259,10 +259,110 @@ export default function VisitTimeline({ visit }: VisitTimelineProps) {
                 </div>
               )}
 
-              {stageInfo.key === 'doctor' && (stage as any)?.diagnosis && (
+              {stageInfo.key === 'doctor' && (
                 <div className="mt-3 pt-3 border-top">
-                  <h6 className="mb-1 small text-muted">Diagnosis</h6>
-                  <p className="mb-0">{(stage as any).diagnosis}</p>
+                  <h6 className="mb-3 small text-muted fw-bold">Consultation Details</h6>
+                  
+                  {(stage as any)?.chiefComplaint && (
+                    <div className="mb-3">
+                      <h6 className="mb-1 small text-muted">Chief Complaint</h6>
+                      <p className="mb-0">{(stage as any).chiefComplaint}</p>
+                    </div>
+                  )}
+
+                  {(stage as any)?.historyOfPresentIllness && (
+                    <div className="mb-3">
+                      <h6 className="mb-1 small text-muted">History of Present Illness</h6>
+                      <p className="mb-0">{(stage as any).historyOfPresentIllness}</p>
+                    </div>
+                  )}
+
+                  {(stage as any)?.physicalExamination && (
+                    <div className="mb-3">
+                      <h6 className="mb-1 small text-muted">Physical Examination</h6>
+                      <p className="mb-0">{(stage as any).physicalExamination}</p>
+                    </div>
+                  )}
+
+                  {(stage as any)?.diagnosis && (
+                    <div className="mb-3">
+                      <h6 className="mb-1 small text-muted">Diagnosis</h6>
+                      <p className="mb-0 fw-medium text-success">{(stage as any).diagnosis}</p>
+                    </div>
+                  )}
+
+                  {(stage as any)?.treatmentPlan && (
+                    <div className="mb-3">
+                      <h6 className="mb-1 small text-muted">Treatment Plan</h6>
+                      <p className="mb-0">{(stage as any).treatmentPlan}</p>
+                    </div>
+                  )}
+
+                  {(stage as any)?.prescriptions && (stage as any).prescriptions.length > 0 && (
+                    <div className="mb-3">
+                      <h6 className="mb-2 small text-muted">Prescriptions</h6>
+                      <div className="row g-2">
+                        {(stage as any).prescriptions.map((prescription: any, index: number) => (
+                          <div key={index} className="col-12">
+                            <div className="card bg-light border-0">
+                              <div className="card-body p-2">
+                                <div className="d-flex align-items-start">
+                                  <i className="ti ti-pill text-primary me-2 mt-1"></i>
+                                  <div className="flex-grow-1">
+                                    <div className="fw-medium">{prescription.medicineName}</div>
+                                    <div className="small text-muted">
+                                      <span className="me-3">
+                                        <i className="ti ti-medicine-syrup me-1"></i>
+                                        {prescription.dosage}
+                                      </span>
+                                      <span className="me-3">
+                                        <i className="ti ti-clock me-1"></i>
+                                        {prescription.frequency}
+                                      </span>
+                                      <span>
+                                        <i className="ti ti-calendar me-1"></i>
+                                        {prescription.duration}
+                                      </span>
+                                    </div>
+                                    {prescription.instructions && (
+                                      <div className="small text-muted mt-1">
+                                        <i className="ti ti-info-circle me-1"></i>
+                                        {prescription.instructions}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(stage as any)?.labOrders && (stage as any).labOrders.length > 0 && (
+                    <div className="mb-3">
+                      <h6 className="mb-2 small text-muted">Lab Orders</h6>
+                      <div className="d-flex flex-wrap gap-2">
+                        {(stage as any).labOrders.map((order: string, index: number) => (
+                          <span key={index} className="badge bg-warning text-dark">
+                            <i className="ti ti-test-pipe me-1"></i>
+                            {order}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(stage as any)?.followUpInstructions && (
+                    <div className="mb-3">
+                      <h6 className="mb-1 small text-muted">Follow-up Instructions</h6>
+                      <div className="alert alert-info mb-0 py-2">
+                        <i className="ti ti-calendar-event me-2"></i>
+                        {(stage as any).followUpInstructions}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

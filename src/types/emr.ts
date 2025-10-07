@@ -201,7 +201,20 @@ export interface PatientVisit {
       clockedInAt?: Date;
       clockedOutBy?: string | any;
       clockedOutAt?: Date;
+      chiefComplaint?: string;
+      historyOfPresentIllness?: string;
+      physicalExamination?: string;
       diagnosis?: string;
+      treatmentPlan?: string;
+      prescriptions?: Array<{
+        medicineName: string;
+        dosage: string;
+        frequency: string;
+        duration: string;
+        instructions?: string;
+      }>;
+      labOrders?: string[];
+      followUpInstructions?: string;
       prescription?: string;
       labTests?: string[];
       notes?: string;
