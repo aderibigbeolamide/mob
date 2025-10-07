@@ -1,9 +1,11 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import { useReactToPrint } from 'react-to-print';
 import { apiClient } from '@/lib/services/api-client';
 import { PatientVisit } from '@/types/emr';
+import PaymentReceipt from '@/components/manage/billing/PaymentReceipt';
 
 interface BillingClockInModalProps {
   visit: PatientVisit;
@@ -61,22 +63,49 @@ export default function BillingClockInModal({
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentData, setPaymentData] = useState<any>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: receiptRef,
+    documentTitle: `Payment_Receipt_${paymentData?.payment?.paymentNumber || 'Receipt'}`,
+  });
 
   useEffect(() => {
     if (show) {
       fetchOrGenerateInvoice();
+      setPaymentSuccess(false);
+      setPaymentData(null);
     }
   }, [show, visit._id]);
 
   const fetchOrGenerateInvoice = async () => {
     setLoadingInvoice(true);
     try {
-      const response = await apiClient.get<{ invoice: Invoice }>(`/api/billing/generate-from-visit?visitId=${visit._id}`);
-      setInvoice(response.invoice);
-      setPaymentAmount(response.invoice.balance.toString());
+      const checkResponse = await apiClient.get<{ invoice: Invoice | null }>(`/api/billing/generate-from-visit?visitId=${visit._id}`);
+      
+      let invoiceData = checkResponse.invoice;
+      
+      if (!invoiceData) {
+        console.log('No existing invoice found, generating new invoice...');
+        const generateResponse = await apiClient.post<{ invoice: Invoice }>(
+          '/api/billing/generate-from-visit',
+          { visitId: visit._id }
+        );
+        invoiceData = generateResponse.invoice;
+      }
+      
+      if (!invoiceData) {
+        throw new Error('Failed to load or generate invoice');
+      }
+      
+      setInvoice(invoiceData);
+      setPaymentAmount(invoiceData.balance.toString());
     } catch (error: any) {
       console.error('Failed to fetch/generate invoice:', error);
       toast.error(error.message || 'Failed to load invoice');
+      setInvoice(null);
     } finally {
       setLoadingInvoice(false);
     }
@@ -116,7 +145,7 @@ export default function BillingClockInModal({
 
     setLoading(true);
     try {
-      await apiClient.post(
+      const response = await apiClient.post(
         '/api/clocking/billing-clock-in',
         {
           visitId: visit._id,
@@ -128,8 +157,8 @@ export default function BillingClockInModal({
         { successMessage: 'Payment processed and clocked in successfully' }
       );
 
-      handleClose();
-      onSuccess();
+      setPaymentData(response);
+      setPaymentSuccess(true);
     } catch (error: any) {
       console.error('Billing clock-in failed:', error);
       toast.error(error.message || 'Failed to process payment and clock in');
@@ -144,7 +173,14 @@ export default function BillingClockInModal({
     setNotes('');
     setErrors({});
     setInvoice(null);
+    setPaymentSuccess(false);
+    setPaymentData(null);
     onHide();
+  };
+
+  const handleComplete = () => {
+    handleClose();
+    onSuccess();
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -172,10 +208,112 @@ export default function BillingClockInModal({
   return (
     <Modal show={show} onHide={handleClose} centered size="lg">
       <Modal.Header closeButton>
-        <Modal.Title>Billing - Clock In & Process Payment</Modal.Title>
+        <Modal.Title>
+          {paymentSuccess ? 'Payment Receipt' : 'Billing - Clock In & Process Payment'}
+        </Modal.Title>
       </Modal.Header>
-      <form onSubmit={handleSubmit}>
-        <Modal.Body>
+      {paymentSuccess && paymentData ? (
+        <>
+          <Modal.Body>
+            <div className="alert alert-success mb-4">
+              <h5 className="alert-heading">
+                <i className="fa fa-check-circle me-2"></i>
+                Payment Successful!
+              </h5>
+              <p className="mb-0">
+                The payment has been processed successfully. You can now print or download the receipt.
+              </p>
+            </div>
+            
+            <div style={{ display: 'none' }}>
+              <PaymentReceipt
+                ref={receiptRef}
+                payment={{
+                  paymentNumber: paymentData.payment.paymentNumber,
+                  amount: paymentData.payment.amount,
+                  paymentMethod: paymentData.payment.paymentMethod,
+                  paymentReference: paymentData.payment.paymentReference,
+                  paymentDate: paymentData.payment.paymentDate,
+                  receivedBy: paymentData.payment.receivedBy,
+                }}
+                patient={{
+                  patientId: patientInfo.patientId,
+                  firstName: patientInfo.name.split(' ')[0],
+                  lastName: patientInfo.name.split(' ').slice(1).join(' '),
+                }}
+                visit={{
+                  visitNumber: visit.visitNumber,
+                  visitDate: visit.visitDate,
+                }}
+                invoice={{
+                  invoiceNumber: paymentData.invoice.invoiceNumber,
+                  items: paymentData.invoice.items,
+                  subtotal: paymentData.invoice.subtotal,
+                  tax: paymentData.invoice.tax,
+                  discount: paymentData.invoice.discount,
+                  grandTotal: paymentData.invoice.grandTotal,
+                  paidAmount: paymentData.invoice.paidAmount,
+                  balance: paymentData.invoice.balance,
+                  insuranceClaim: paymentData.invoice.insuranceClaim,
+                }}
+              />
+            </div>
+
+            <div className="receipt-preview border rounded p-3 bg-light" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              <PaymentReceipt
+                payment={{
+                  paymentNumber: paymentData.payment.paymentNumber,
+                  amount: paymentData.payment.amount,
+                  paymentMethod: paymentData.payment.paymentMethod,
+                  paymentReference: paymentData.payment.paymentReference,
+                  paymentDate: paymentData.payment.paymentDate,
+                  receivedBy: paymentData.payment.receivedBy,
+                }}
+                patient={{
+                  patientId: patientInfo.patientId,
+                  firstName: patientInfo.name.split(' ')[0],
+                  lastName: patientInfo.name.split(' ').slice(1).join(' '),
+                }}
+                visit={{
+                  visitNumber: visit.visitNumber,
+                  visitDate: visit.visitDate,
+                }}
+                invoice={{
+                  invoiceNumber: paymentData.invoice.invoiceNumber,
+                  items: paymentData.invoice.items,
+                  subtotal: paymentData.invoice.subtotal,
+                  tax: paymentData.invoice.tax,
+                  discount: paymentData.invoice.discount,
+                  grandTotal: paymentData.invoice.grandTotal,
+                  paidAmount: paymentData.invoice.paidAmount,
+                  balance: paymentData.invoice.balance,
+                  insuranceClaim: paymentData.invoice.insuranceClaim,
+                }}
+              />
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handlePrint}
+            >
+              <i className="fa fa-print me-2"></i>
+              Print Receipt
+            </button>
+            <button
+              type="button"
+              className="btn btn-success"
+              onClick={handleComplete}
+            >
+              <i className="fa fa-check me-2"></i>
+              Complete
+            </button>
+          </Modal.Footer>
+        </>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <Modal.Body>
           <div className="mb-4">
             <h6 className="mb-3">Patient Information</h6>
             <div className="row">
@@ -408,8 +546,9 @@ export default function BillingClockInModal({
               'Process Payment & Clock In'
             )}
           </button>
-        </Modal.Footer>
-      </form>
+          </Modal.Footer>
+        </form>
+      )}
     </Modal>
   );
 }

@@ -12,8 +12,17 @@ export async function POST(req: NextRequest) {
       await dbConnect();
 
       const body = await req.json();
+      console.log('[Billing Clock-In] Request received:', {
+        visitId: body.visitId,
+        invoiceId: body.invoiceId,
+        paymentAmount: body.paymentAmount,
+        paymentMethod: body.paymentMethod,
+        userId: session.user.id,
+        userRole: session.user.role
+      });
 
       if (!body.visitId) {
+        console.error('[Billing Clock-In] Missing visitId');
         return NextResponse.json(
           { error: 'Visit ID is required' },
           { status: 400 }
@@ -21,6 +30,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!body.invoiceId) {
+        console.error('[Billing Clock-In] Missing invoiceId');
         return NextResponse.json(
           { error: 'Invoice ID is required' },
           { status: 400 }
@@ -28,6 +38,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!body.paymentAmount || body.paymentAmount <= 0) {
+        console.error('[Billing Clock-In] Invalid payment amount:', body.paymentAmount);
         return NextResponse.json(
           { error: 'Valid payment amount is required' },
           { status: 400 }
@@ -35,6 +46,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!body.paymentMethod) {
+        console.error('[Billing Clock-In] Missing payment method');
         return NextResponse.json(
           { error: 'Payment method is required' },
           { status: 400 }
@@ -44,6 +56,7 @@ export async function POST(req: NextRequest) {
       const userRole = session.user.role as UserRole;
 
       if (userRole !== UserRole.BILLING && userRole !== UserRole.ADMIN) {
+        console.error('[Billing Clock-In] Unauthorized role:', userRole);
         return NextResponse.json(
           { error: 'Only billing staff can clock in for billing' },
           { status: 403 }
@@ -54,13 +67,22 @@ export async function POST(req: NextRequest) {
         .populate('patient', 'patientId firstName lastName phoneNumber email');
 
       if (!visit) {
+        console.error('[Billing Clock-In] Visit not found:', body.visitId);
         return NextResponse.json(
           { error: 'Visit not found' },
           { status: 404 }
         );
       }
 
+      console.log('[Billing Clock-In] Visit found:', {
+        visitId: visit._id,
+        status: visit.status,
+        currentStage: visit.currentStage,
+        billingStage: visit.stages?.billing
+      });
+
       if (visit.status !== 'in_progress') {
+        console.error('[Billing Clock-In] Invalid visit status:', visit.status);
         return NextResponse.json(
           { error: 'Visit is not in progress' },
           { status: 400 }
@@ -68,6 +90,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (visit.currentStage !== 'billing') {
+        console.error('[Billing Clock-In] Invalid current stage:', visit.currentStage);
         return NextResponse.json(
           { 
             error: `Cannot clock in. Patient is currently at ${visit.currentStage} stage`,
@@ -78,6 +101,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (visit.stages.billing?.clockedInAt) {
+        console.error('[Billing Clock-In] Already clocked in at:', visit.stages.billing.clockedInAt);
         return NextResponse.json(
           { error: 'Billing staff has already clocked in for this visit' },
           { status: 400 }
@@ -88,13 +112,25 @@ export async function POST(req: NextRequest) {
         .populate('patientId', 'patientId firstName lastName phoneNumber email');
 
       if (!invoice) {
+        console.error('[Billing Clock-In] Invoice not found:', body.invoiceId);
         return NextResponse.json(
           { error: 'Invoice not found' },
           { status: 404 }
         );
       }
 
+      console.log('[Billing Clock-In] Invoice found:', {
+        invoiceId: invoice._id,
+        balance: invoice.balance,
+        paidAmount: invoice.paidAmount,
+        status: invoice.status
+      });
+
       if (body.paymentAmount > invoice.balance) {
+        console.error('[Billing Clock-In] Payment exceeds balance:', {
+          paymentAmount: body.paymentAmount,
+          balance: invoice.balance
+        });
         return NextResponse.json(
           { error: `Payment amount (${body.paymentAmount}) cannot exceed invoice balance (${invoice.balance})` },
           { status: 400 }
@@ -176,6 +212,14 @@ export async function POST(req: NextRequest) {
         .populate('branchId', 'name address city state')
         .populate('generatedBy', 'firstName lastName email');
 
+      console.log('[Billing Clock-In] Success:', {
+        visitId: updatedVisit._id,
+        paymentId: payment._id,
+        invoiceId: updatedInvoice._id,
+        newBalance: updatedInvoice.balance,
+        newStatus: updatedInvoice.status
+      });
+
       return NextResponse.json(
         {
           message: 'Payment processed and clocked in successfully',
@@ -187,7 +231,12 @@ export async function POST(req: NextRequest) {
       );
 
     } catch (error: any) {
-      console.error('Billing clock-in error:', error);
+      console.error('[Billing Clock-In] Error:', error);
+      console.error('[Billing Clock-In] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       return NextResponse.json(
         { error: 'Failed to process payment and clock in', message: error.message },
         { status: 500 }

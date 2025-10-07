@@ -14,8 +14,14 @@ export async function POST(req: NextRequest) {
         await dbConnect();
 
         const body = await req.json();
+        console.log('[Generate Invoice] Request received:', {
+          visitId: body.visitId,
+          userId: session.user.id,
+          force: body.force
+        });
 
         if (!body.visitId) {
+          console.error('[Generate Invoice] Missing visitId');
           return NextResponse.json(
             { error: 'Visit ID is required' },
             { status: 400 }
@@ -24,12 +30,13 @@ export async function POST(req: NextRequest) {
 
         const existingInvoice = await checkExistingInvoice(body.visitId);
         if (existingInvoice && !body.force) {
+          console.log('[Generate Invoice] Invoice already exists:', existingInvoice._id);
           return NextResponse.json(
             { 
-              error: 'Invoice already exists for this visit',
+              message: 'Invoice already exists for this visit',
               invoice: existingInvoice
             },
-            { status: 409 }
+            { status: 200 }
           );
         }
 
@@ -39,12 +46,14 @@ export async function POST(req: NextRequest) {
           pharmacyMarkup: body.pharmacyMarkup
         };
 
+        console.log('[Generate Invoice] Generating invoice with pricing:', pricing);
         const invoice = await generateInvoiceFromVisit(
           body.visitId,
           session.user.id,
           pricing
         );
 
+        console.log('[Generate Invoice] Invoice generated successfully:', invoice._id);
         return NextResponse.json(
           {
             message: 'Invoice generated successfully from visit',
@@ -54,7 +63,11 @@ export async function POST(req: NextRequest) {
         );
 
       } catch (error: any) {
-        console.error('Generate invoice from visit error:', error);
+        console.error('[Generate Invoice] Error:', error);
+        console.error('[Generate Invoice] Error details:', {
+          message: error.message,
+          stack: error.stack
+        });
 
         if (error.message.includes('not found')) {
           return NextResponse.json(

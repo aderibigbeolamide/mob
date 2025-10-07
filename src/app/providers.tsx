@@ -3,6 +3,8 @@
 import { StrictMode, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
+import { I18nextProvider } from "react-i18next";
+import i18n from "@/i18n";
 import ClientStoreProvider from "@/core/redux/clientStore";
 import ErrorBoundary from "@/core/common-components/common-error-boundary/ErrorBoundary";
 import ToastProvider from "@/components/ui-intrerface/ToastProvider";
@@ -45,13 +47,15 @@ export default function ClientProviders({
 }) {
   return (
     <StrictMode>
-      <SessionProvider>
-        <ClientStoreProvider>
-          <GlobalTooltipInit />
-          <ToastProvider />
-          <ErrorBoundary>{children}</ErrorBoundary>
-        </ClientStoreProvider>
-      </SessionProvider>
+      <I18nextProvider i18n={i18n}>
+        <SessionProvider>
+          <ClientStoreProvider>
+            <GlobalTooltipInit />
+            <ToastProvider />
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </ClientStoreProvider>
+        </SessionProvider>
+      </I18nextProvider>
     </StrictMode>
   );
 }
