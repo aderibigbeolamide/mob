@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
     '*.replit.dev',
     '*.janeway.replit.dev',
     '*.spock.replit.dev',
+    'localhost',
+    '127.0.0.1',
     process.env.REPLIT_DOMAINS || '',
   ].filter(Boolean),
   typescript: {

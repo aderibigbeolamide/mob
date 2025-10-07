@@ -244,7 +244,8 @@ async function getNurseDashboardStats(userId: string, branchFilter: any, today: 
     PatientVisit.countDocuments({
       ...branchFilter,
       visitDate: { $gte: today },
-      status: { $in: ['in_progress'] }
+      status: { $in: ['in_progress'] },
+      currentStage: 'nurse'
     }),
     PatientVisit.countDocuments({
       ...branchFilter,
@@ -255,9 +256,10 @@ async function getNurseDashboardStats(userId: string, branchFilter: any, today: 
     PatientVisit.find({
       ...branchFilter,
       status: 'in_progress',
-      'stages.nurse.vitalSigns': { $exists: false }
+      currentStage: 'nurse'
     })
       .populate('patient', 'firstName lastName profileImage patientId')
+      .sort({ visitDate: 1 })
       .limit(10)
       .lean(),
   ]);
