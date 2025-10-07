@@ -61,3 +61,24 @@ logs
 tmp
 temp
 .tmp
+
+# Replit specific
+.replit
+replit.nix
+.config
+.upm
+.cache
+.local
+
+# Test files
+tests
+test-results
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Assets and uploads
+attached_assets
+public/uploads

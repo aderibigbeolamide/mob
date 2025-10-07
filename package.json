@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "prebuild": "rm -rf .next",
-    "build": "NODE_OPTIONS='--max-old-space-size=8192' next build",
+    "build": "NODE_OPTIONS='--max-old-space-size=16384' next build",
+    "build:prod": "NODE_ENV=production NODE_OPTIONS='--max-old-space-size=16384' next build",
     "start": "next start",
     "lint": "eslint"
   },
