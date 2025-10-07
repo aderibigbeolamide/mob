@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  allowedDevOrigins: [
+    '*.replit.dev',
+    '*.janeway.replit.dev',
+    '*.spock.replit.dev',
+    process.env.REPLIT_DOMAINS || '',
+  ].filter(Boolean),
   typescript: {
     ignoreBuildErrors: false,
   },
