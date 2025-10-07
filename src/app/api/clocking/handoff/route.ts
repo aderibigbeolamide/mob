@@ -6,7 +6,7 @@ import { requireAuth, UserRole } from '@/lib/middleware/auth';
 import { sendBulkNotifications, createInAppNotification } from '@/lib/services/notification';
 import { generateInvoiceFromVisit, checkExistingInvoice } from '@/lib/services/invoiceService';
 
-const STAGE_WORKFLOW: Record<string, string> = {
+const DEFAULT_STAGE_WORKFLOW: Record<string, string> = {
   'front_desk': 'nurse',
   'nurse': 'doctor',
   'doctor': 'lab',
@@ -31,6 +31,15 @@ const STAGE_TO_ROLE: Record<string, UserRole> = {
   'pharmacy': UserRole.PHARMACY,
   'billing': UserRole.BILLING,
   'returned_to_front_desk': UserRole.FRONT_DESK
+};
+
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  'front_desk': ['nurse', 'doctor', 'completed'],
+  'nurse': ['doctor', 'lab', 'pharmacy', 'billing', 'completed'],
+  'doctor': ['nurse', 'lab', 'pharmacy', 'billing', 'completed'],
+  'lab': ['doctor', 'pharmacy', 'billing', 'completed'],
+  'pharmacy': ['billing', 'completed'],
+  'billing': ['returned_to_front_desk', 'completed']
 };
 
 function getStageFieldName(stage: string): string {
@@ -109,7 +118,7 @@ export async function POST(req: NextRequest) {
       }
 
       const currentStage = visit.currentStage;
-      let nextStage = body.targetStage || STAGE_WORKFLOW[currentStage as keyof typeof STAGE_WORKFLOW];
+      let nextStage = body.targetStage || DEFAULT_STAGE_WORKFLOW[currentStage as keyof typeof DEFAULT_STAGE_WORKFLOW];
       
       if (!nextStage) {
         return NextResponse.json(
@@ -118,10 +127,10 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const validStages = ['nurse', 'doctor', 'lab', 'pharmacy', 'billing', 'returned_to_front_desk'];
-      if (body.targetStage && !validStages.includes(body.targetStage)) {
+      const allowedNextStages = ALLOWED_TRANSITIONS[currentStage] || [];
+      if (!allowedNextStages.includes(nextStage)) {
         return NextResponse.json(
-          { error: 'Invalid target stage' },
+          { error: `Cannot transition from ${currentStage} to ${nextStage}. Allowed transitions: ${allowedNextStages.join(', ')}` },
           { status: 400 }
         );
       }
@@ -136,10 +145,16 @@ export async function POST(req: NextRequest) {
 
       const currentStageField = getStageFieldName(visit.currentStage);
       const updateData: any = {
-        currentStage: nextStage,
         [`stages.${currentStageField}.clockedOutBy`]: session.user.id,
         [`stages.${currentStageField}.clockedOutAt`]: new Date()
       };
+
+      if (nextStage === 'completed') {
+        updateData.currentStage = 'completed';
+        updateData.status = 'completed';
+      } else {
+        updateData.currentStage = nextStage;
+      }
 
       if (body.notes) {
         updateData[`stages.${currentStageField}.notes`] = body.notes;
@@ -195,8 +210,6 @@ export async function POST(req: NextRequest) {
             }
           }
         }
-      } else {
-        updateData.status = 'completed';
       }
 
       const updatedVisit = await PatientVisit.findByIdAndUpdate(
@@ -240,8 +253,12 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      const responseMessage = nextStage === 'completed' 
+        ? 'Visit completed successfully'
+        : `Patient handed off to ${nextStage.replace('_', ' ')} successfully`;
+      
       const response: any = {
-        message: `Patient handed off to ${nextStage} successfully`,
+        message: responseMessage,
         visit: updatedVisit
       };
 

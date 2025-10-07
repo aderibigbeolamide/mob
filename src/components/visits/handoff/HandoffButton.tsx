@@ -17,27 +17,27 @@ interface HandoffButtonProps {
 const STAGE_OPTIONS: Record<string, { label: string; nextStages: string[] }> = {
   'front_desk': { 
     label: 'Front Desk', 
-    nextStages: ['nurse'] 
+    nextStages: ['nurse', 'doctor', 'completed'] 
   },
   'nurse': { 
     label: 'Nurse', 
-    nextStages: ['doctor'] 
+    nextStages: ['doctor', 'lab', 'pharmacy', 'billing', 'completed'] 
   },
   'doctor': { 
     label: 'Doctor', 
-    nextStages: ['lab', 'pharmacy', 'billing'] 
+    nextStages: ['nurse', 'lab', 'pharmacy', 'billing', 'completed'] 
   },
   'lab': { 
     label: 'Lab', 
-    nextStages: ['pharmacy', 'billing'] 
+    nextStages: ['doctor', 'pharmacy', 'billing', 'completed'] 
   },
   'pharmacy': { 
     label: 'Pharmacy', 
-    nextStages: ['billing'] 
+    nextStages: ['billing', 'completed'] 
   },
   'billing': { 
     label: 'Billing', 
-    nextStages: ['returned_to_front_desk'] 
+    nextStages: ['returned_to_front_desk', 'completed'] 
   }
 };
 
@@ -47,7 +47,8 @@ const STAGE_LABELS: Record<string, string> = {
   'lab': 'Lab',
   'pharmacy': 'Pharmacy',
   'billing': 'Billing',
-  'returned_to_front_desk': 'Returned to Front Desk'
+  'returned_to_front_desk': 'Returned to Front Desk',
+  'completed': 'Complete Visit'
 };
 
 export default function HandoffButton({
@@ -83,6 +84,10 @@ export default function HandoffButton({
   const handleHandoff = async () => {
     setLoading(true);
     try {
+      const successMessage = targetStage === 'completed' 
+        ? 'Visit completed successfully' 
+        : `Patient successfully handed off to ${STAGE_LABELS[targetStage] || 'next stage'}`;
+      
       const response = await apiClient.post(
         '/api/clocking/handoff',
         {
@@ -91,7 +96,7 @@ export default function HandoffButton({
           notes,
           nextAction
         },
-        { successMessage: `Patient successfully handed off to ${STAGE_LABELS[targetStage] || 'next stage'}` }
+        { successMessage }
       );
 
       handleClose();
