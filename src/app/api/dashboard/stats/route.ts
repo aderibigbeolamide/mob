@@ -8,6 +8,7 @@ import Payment from '@/models/Payment';
 import LabTest from '@/models/LabTest';
 import Prescription from '@/models/Prescription';
 import Billing from '@/models/Billing';
+import Invoice from '@/models/Invoice';
 import { requireAuth, UserRole } from '@/lib/middleware/auth';
 
 export async function GET(req: NextRequest) {
@@ -405,9 +406,9 @@ async function getBillingDashboardStats(userId: string, branchFilter: any, today
     totalRevenueToday,
     pendingInvoicesList,
   ] = await Promise.all([
-    Billing.countDocuments({
+    Invoice.countDocuments({
       ...branchFilter,
-      status: { $in: ['pending', 'partial'] }
+      status: { $in: ['PENDING', 'PARTIALLY_PAID'] }
     }),
     Payment.countDocuments({
       ...branchFilter,
@@ -417,11 +418,11 @@ async function getBillingDashboardStats(userId: string, branchFilter: any, today
       { $match: { ...branchFilter, createdAt: { $gte: today } } },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]),
-    Billing.find({
+    Invoice.find({
       ...branchFilter,
-      status: { $in: ['pending', 'partial'] }
+      status: { $in: ['PENDING', 'PARTIALLY_PAID'] }
     })
-      .populate('patient', 'firstName lastName profileImage patientId')
+      .populate('patientId', 'firstName lastName profileImage patientId')
       .sort({ createdAt: 1 })
       .limit(10)
       .lean(),

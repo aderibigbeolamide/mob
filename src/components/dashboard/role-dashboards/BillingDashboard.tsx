@@ -21,7 +21,7 @@ interface PatientInfo {
 interface PendingInvoice {
   _id: string;
   patientId: PatientInfo;
-  totalAmount: number;
+  grandTotal: number;
   status: string;
   dueDate: string;
 }
@@ -239,7 +239,7 @@ const BillingDashboard = () => {
                                       </Link>
                                     </h6>
                                     <p className="mb-0 fs-13 text-muted">
-                                      Amount: ${invoice.totalAmount?.toFixed(2) || '0.00'}
+                                      Amount: ${invoice.grandTotal?.toFixed(2) || '0.00'}
                                     </p>
                                   </div>
                                 </div>
