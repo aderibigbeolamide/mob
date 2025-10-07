@@ -283,15 +283,33 @@ const Header = () => {
 
   // Initialize Bootstrap dropdowns
   useEffect(() => {
-    // @ts-ignore
-    if (typeof window !== 'undefined' && window.bootstrap) {
-      const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    const initializeDropdowns = () => {
       // @ts-ignore
-      dropdownElementList.forEach(dropdownToggleEl => {
+      if (typeof window !== 'undefined' && window.bootstrap) {
+        const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
         // @ts-ignore
-        new window.bootstrap.Dropdown(dropdownToggleEl);
-      });
-    }
+        dropdownElementList.forEach(dropdownToggleEl => {
+          try {
+            // @ts-ignore
+            const existingDropdown = window.bootstrap.Dropdown.getInstance(dropdownToggleEl);
+            if (!existingDropdown) {
+              // @ts-ignore
+              new window.bootstrap.Dropdown(dropdownToggleEl);
+            }
+          } catch (error) {
+            console.error('Error initializing dropdown:', error);
+          }
+        });
+      }
+    };
+
+    // Initialize immediately
+    initializeDropdowns();
+
+    // Re-initialize after a short delay to ensure all elements are loaded
+    const timeoutId = setTimeout(initializeDropdowns, 100);
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {

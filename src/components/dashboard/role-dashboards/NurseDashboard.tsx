@@ -20,7 +20,7 @@ interface PatientInfo {
 
 interface PendingVisit {
   _id: string;
-  patientId: PatientInfo;
+  patient: PatientInfo;
   visitDate: string;
   status: string;
 }
@@ -209,8 +209,8 @@ const NurseDashboard = () => {
                   <div className="table-responsive table-nowrap">
                     <table className="table table-borderless mb-0">
                       <tbody>
-                        {stats.pendingAppointments.filter(visit => visit.patientId).map((visit) => {
-                          const patient = visit.patientId;
+                        {stats.pendingAppointments.filter(visit => visit.patient).map((visit) => {
+                          const patient = visit.patient;
                           return (
                             <tr key={visit._id}>
                               <td>
