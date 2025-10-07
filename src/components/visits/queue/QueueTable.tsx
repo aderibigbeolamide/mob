@@ -8,7 +8,9 @@ import HandoffButton from './HandoffButton';
 import NurseClockInModal from './NurseClockInModal';
 import DoctorConsultationModal from './DoctorConsultationModal';
 import LabClockInModal from './LabClockInModal';
+import PharmacyClockInModal from './PharmacyClockInModal';
 import AdmitPatientModal from '@/components/visits/modal/AdmitPatientModal';
+import ViewDepartmentRecordModal from './ViewDepartmentRecordModal';
 import AssignedDoctorCell from '../AssignedDoctorCell';
 import { all_routes } from '@/router/all_routes';
 import { formatDistanceToNow } from 'date-fns';
@@ -29,8 +31,12 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
   const [selectedDoctorVisit, setSelectedDoctorVisit] = useState<PatientVisit | null>(null);
   const [showLabModal, setShowLabModal] = useState(false);
   const [selectedLabVisit, setSelectedLabVisit] = useState<PatientVisit | null>(null);
+  const [showPharmacyModal, setShowPharmacyModal] = useState(false);
+  const [selectedPharmacyVisit, setSelectedPharmacyVisit] = useState<PatientVisit | null>(null);
   const [showAdmitModal, setShowAdmitModal] = useState(false);
   const [selectedVisitForAdmission, setSelectedVisitForAdmission] = useState<PatientVisit | null>(null);
+  const [showRecordModal, setShowRecordModal] = useState(false);
+  const [selectedVisitForRecord, setSelectedVisitForRecord] = useState<PatientVisit | null>(null);
   const formatTimeWaiting = (clockedInAt?: Date) => {
     if (!clockedInAt) return 'N/A';
     try {
@@ -140,55 +146,140 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
     handleCloseLabModal();
   };
 
+  const handleOpenPharmacyModal = (visit: PatientVisit) => {
+    setSelectedPharmacyVisit(visit);
+    setShowPharmacyModal(true);
+  };
+
+  const handleClosePharmacyModal = () => {
+    setShowPharmacyModal(false);
+    setSelectedPharmacyVisit(null);
+  };
+
+  const handlePharmacyClockInSuccess = () => {
+    if (onClockInSuccess) {
+      onClockInSuccess();
+    }
+    handleClosePharmacyModal();
+  };
+
+  const handleOpenRecordModal = (visit: PatientVisit) => {
+    setSelectedVisitForRecord(visit);
+    setShowRecordModal(true);
+  };
+
+  const handleCloseRecordModal = () => {
+    setShowRecordModal(false);
+    setSelectedVisitForRecord(null);
+  };
+
   const renderActionButtons = (visit: PatientVisit) => {
     const patient = visit.patient;
     const isNurse = userRole === UserRole.NURSE;
     const isDoctor = userRole === UserRole.DOCTOR;
     const isLab = userRole === UserRole.LAB;
+    const isPharmacy = userRole === UserRole.PHARMACY;
     const hasNurseClockedIn = !!visit.stages.nurse?.clockedInAt;
     const hasDoctorClockedIn = !!visit.stages.doctor?.clockedInAt;
     const hasLabClockedIn = !!visit.stages.lab?.clockedInAt;
+    const hasPharmacyClockedIn = !!visit.stages.pharmacy?.clockedInAt;
 
     if (isNurse && visit.currentStage === 'nurse' && !hasNurseClockedIn) {
       return (
-        <button
-          className="btn btn-sm btn-success"
-          onClick={() => handleOpenClockInModal(visit)}
-        >
-          <i className="ti ti-stethoscope me-1"></i>
-          Clock In & Record Vitals
-        </button>
+        <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
+          <button
+            className="btn btn-sm btn-success"
+            onClick={() => handleOpenClockInModal(visit)}
+          >
+            <i className="ti ti-stethoscope me-1"></i>
+            Clock In & Record Vitals
+          </button>
+        </>
       );
     }
 
     if (isDoctor && visit.currentStage === 'doctor' && !hasDoctorClockedIn) {
       return (
-        <button
-          className="btn btn-sm btn-success"
-          onClick={() => handleOpenDoctorModal(visit)}
-        >
-          <i className="ti ti-stethoscope me-1"></i>
-          Clock In & Start Consultation
-        </button>
+        <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
+          <button
+            className="btn btn-sm btn-success"
+            onClick={() => handleOpenDoctorModal(visit)}
+          >
+            <i className="ti ti-stethoscope me-1"></i>
+            Clock In & Start Consultation
+          </button>
+        </>
       );
     }
 
     if (isLab && visit.currentStage === 'lab' && !hasLabClockedIn) {
       return (
-        <button
-          className="btn btn-sm btn-success"
-          onClick={() => handleOpenLabModal(visit)}
-          style={{ backgroundColor: '#6F42C1', borderColor: '#6F42C1' }}
-        >
-          <i className="ti ti-test-pipe-2 me-1"></i>
-          Clock In & Add Results
-        </button>
+        <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
+          <button
+            className="btn btn-sm btn-success"
+            onClick={() => handleOpenLabModal(visit)}
+            style={{ backgroundColor: '#6F42C1', borderColor: '#6F42C1' }}
+          >
+            <i className="ti ti-test-pipe-2 me-1"></i>
+            Clock In & Add Results
+          </button>
+        </>
+      );
+    }
+
+    if (isPharmacy && visit.currentStage === 'pharmacy' && !hasPharmacyClockedIn) {
+      return (
+        <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
+          <button
+            className="btn btn-sm btn-success"
+            onClick={() => handleOpenPharmacyModal(visit)}
+            style={{ backgroundColor: '#8B5CF6', borderColor: '#8B5CF6' }}
+          >
+            <i className="ti ti-pill me-1"></i>
+            Clock In & Dispense
+          </button>
+        </>
       );
     }
 
     if (isDoctor && visit.currentStage === 'doctor' && hasDoctorClockedIn) {
       return (
         <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
           <button
             className="btn btn-sm btn-info"
             onClick={() => handleOpenAdmitModal(visit)}
@@ -206,11 +297,20 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
     }
 
     return (
-      <HandoffButton
-        visitId={visit._id!}
-        currentStage={visit.currentStage}
-        onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
-      />
+      <>
+        <button
+          className="btn btn-sm btn-outline-info"
+          onClick={() => handleOpenRecordModal(visit)}
+        >
+          <i className="ti ti-file-text me-1"></i>
+          View Record
+        </button>
+        <HandoffButton
+          visitId={visit._id!}
+          currentStage={visit.currentStage}
+          onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
+        />
+      </>
     );
   };
 
@@ -419,6 +519,31 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
           patientName={getPatientName(selectedVisitForAdmission.patient)}
           assignedDoctorId={typeof selectedVisitForAdmission.assignedDoctor === 'string' ? selectedVisitForAdmission.assignedDoctor : selectedVisitForAdmission.assignedDoctor?._id}
           onSuccess={handleAdmitSuccess}
+        />
+      )}
+
+      {selectedPharmacyVisit && (
+        <PharmacyClockInModal
+          visit={selectedPharmacyVisit}
+          patientInfo={{
+            name: getPatientName(selectedPharmacyVisit.patient),
+            patientId: getPatientId(selectedPharmacyVisit.patient),
+          }}
+          onSuccess={handlePharmacyClockInSuccess}
+          show={showPharmacyModal}
+          onHide={handleClosePharmacyModal}
+        />
+      )}
+
+      {selectedVisitForRecord && (
+        <ViewDepartmentRecordModal
+          visitId={selectedVisitForRecord._id!}
+          patientInfo={{
+            name: getPatientName(selectedVisitForRecord.patient),
+            patientId: getPatientId(selectedVisitForRecord.patient),
+          }}
+          show={showRecordModal}
+          onHide={handleCloseRecordModal}
         />
       )}
     </>
