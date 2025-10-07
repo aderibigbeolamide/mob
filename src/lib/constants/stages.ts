@@ -46,8 +46,21 @@ export const ROLE_TO_STAGE: Record<string, string> = {
   'BILLING': 'billing'
 };
 
+export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  'front_desk': ['nurse', 'doctor', 'completed'],
+  'nurse': ['doctor', 'lab', 'pharmacy', 'billing', 'completed'],
+  'doctor': ['nurse', 'lab', 'pharmacy', 'billing', 'completed'],
+  'lab': ['doctor', 'pharmacy', 'billing', 'completed'],
+  'pharmacy': ['billing', 'completed'],
+  'billing': ['returned_to_front_desk', 'completed']
+};
+
 export function getNextStage(currentStage: string): string | null {
   return STAGE_WORKFLOW[currentStage] || null;
+}
+
+export function getAllowedTransitions(currentStage: string): string[] {
+  return ALLOWED_TRANSITIONS[currentStage] || [];
 }
 
 export function getStageLabel(stage: string): string {

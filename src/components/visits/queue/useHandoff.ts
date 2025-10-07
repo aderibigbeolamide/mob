@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 
 interface HandoffOptions {
   visitId: string;
+  targetStage?: string;
   notes?: string;
   nextAction?: string;
   onSuccess?: () => void;
@@ -15,7 +16,7 @@ export function useHandoff() {
   const [error, setError] = useState<string | null>(null);
 
   const handoff = async (options: HandoffOptions) => {
-    const { visitId, notes, nextAction, onSuccess, onError } = options;
+    const { visitId, targetStage, notes, nextAction, onSuccess, onError } = options;
 
     setLoading(true);
     setError(null);
@@ -25,6 +26,7 @@ export function useHandoff() {
         '/api/clocking/handoff',
         {
           visitId,
+          targetStage,
           notes,
           nextAction,
         },
