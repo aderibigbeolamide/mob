@@ -7,8 +7,8 @@ const PrivacyPolicyComponent = () => {
   return (
     <>
       {/* ========================
-			Start Page Content
-		========================= */}
+                        Start Page Content
+                ========================= */}
       <div className="page-wrapper">
         {/* Start Content */}
         <div className="content">
@@ -18,7 +18,7 @@ const PrivacyPolicyComponent = () => {
           <div className="card mb-0">
             <div className="card-body">
               <p>
-                At Dreams EMR, we value your privacy and are committed to protecting
+                At Life Point Medical Centre, we value your privacy and are committed to protecting
                 your personal information. This Privacy Policy outlines how we
                 collect, use, share, and safeguard your data when you access
               </p>
@@ -106,7 +106,7 @@ const PrivacyPolicyComponent = () => {
               <h6 className="mb-3">Changes to This Policy</h6>
               <p className="mb-0">
                 We may update this policy from time to time. The latest version will
-                always be available on the platform. Continued use of the Dreams EMR
+                always be available on the platform. Continued use of the Life Point Medical Centre
                 platform signifies your acceptance of any updates.
               </p>
             </div>
@@ -120,8 +120,8 @@ const PrivacyPolicyComponent = () => {
           {/* End Footer */}
       </div>
       {/* ========================
-			End Page Content
-		========================= */}
+                        End Page Content
+                ========================= */}
     </>
   )
 }
