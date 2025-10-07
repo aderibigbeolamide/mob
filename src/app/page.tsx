@@ -204,47 +204,6 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
-
-            <div className="mt-4 p-3 bg-light rounded">
-              <p className="small mb-2 fw-semibold">Demo Credentials:</p>
-              <div className="row g-2">
-                <div className="col-md-6">
-                  <p className="small mb-1">
-                    <strong>Admin:</strong> admin@lifepointmedical.com / admin123
-                  </p>
-                </div>
-                <div className="col-md-6">
-                  <p className="small mb-1">
-                    <strong>Doctor:</strong> dr.sarah@lifepointmedical.com / doctor123
-                  </p>
-                </div>
-                <div className="col-md-6">
-                  <p className="small mb-1">
-                    <strong>Front Desk:</strong> frontdesk@lifepointmedical.com / desk123
-                  </p>
-                </div>
-                <div className="col-md-6">
-                  <p className="small mb-1">
-                    <strong>Nurse:</strong> nurse@lifepointmedical.com / nurse123
-                  </p>
-                </div>
-                <div className="col-md-6">
-                  <p className="small mb-1">
-                    <strong>Lab:</strong> lab@lifepointmedical.com / lab123
-                  </p>
-                </div>
-                <div className="col-md-6">
-                  <p className="small mb-1">
-                    <strong>Pharmacy:</strong> pharmacy@lifepointmedical.com / pharmacy123
-                  </p>
-                </div>
-                <div className="col-md-6">
-                  <p className="small mb-0">
-                    <strong>Billing:</strong> billing@lifepointmedical.com / billing123
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
