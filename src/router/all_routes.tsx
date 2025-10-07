@@ -52,6 +52,7 @@ export const all_routes = {
   doctorDetails: "/doctors-details",
   allDoctors: "/all-doctors",
   appointments: "/appointments",
+  admissions: "/admissions",
   visits: "/visits",
   startVisits: "/start-visits",
   labResults: "/lab-results",

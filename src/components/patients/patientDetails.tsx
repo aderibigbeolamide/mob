@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "react-toastify";
@@ -9,15 +9,20 @@ import { all_routes } from "@/router/all_routes";
 import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import { patientService } from "@/lib/services/patientService";
+import { usePermissions } from "@/hooks/usePermissions";
+
+const AdmissionModal = lazy(() => import("@/components/admissions/modal/admissionModal"));
 
 const PatientDetailsCompoent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const patientId = searchParams.get('id');
+  const { can } = usePermissions();
 
   const [patient, setPatient] = useState<any>(null);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAdmissionModal, setShowAdmissionModal] = useState(false);
 
   useEffect(() => {
     if (!patientId) {
@@ -146,10 +151,23 @@ const PatientDetailsCompoent = () => {
               </ol>
             </div>
           </div>
-          <Link href={all_routes.patients} className="fw-medium d-flex align-items-center">
-            <i className="ti ti-arrow-left me-1" />
-            Back to Patient
-          </Link>
+          <div className="d-flex gap-2 align-items-center">
+            {can('admission:create') && (
+              <button
+                className="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#admission_modal"
+                onClick={() => setShowAdmissionModal(true)}
+              >
+                <i className="ti ti-bed me-2" />
+                Admit Patient
+              </button>
+            )}
+            <Link href={all_routes.patients} className="fw-medium d-flex align-items-center">
+              <i className="ti ti-arrow-left me-1" />
+              Back to Patient
+            </Link>
+          </div>
         </div>
         {/* End Page Header */}
         {/* tabs start */}
@@ -488,6 +506,19 @@ const PatientDetailsCompoent = () => {
     {/* ========================
               End Page Content
           ========================= */}
+    
+    {showAdmissionModal && (
+      <Suspense fallback={<div>Loading...</div>}>
+        <AdmissionModal
+          onSuccess={() => {
+            setShowAdmissionModal(false);
+            fetchPatientData();
+          }}
+          preSelectedPatientId={patientId || undefined}
+          editAdmissionId={null}
+        />
+      </Suspense>
+    )}
   </>
   
   )

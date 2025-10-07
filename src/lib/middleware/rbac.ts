@@ -12,6 +12,10 @@ export type ResourceAction =
   | 'appointment:update'
   | 'appointment:delete'
   | 'appointment:assign'
+  | 'admission:read'
+  | 'admission:create'
+  | 'admission:update'
+  | 'admission:discharge'
   | 'vitals:read'
   | 'vitals:create'
   | 'vitals:update'
@@ -64,6 +68,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, ResourceAction[]> = {
     'appointment:update',
     'appointment:delete',
     'appointment:assign',
+    'admission:read',
+    'admission:create',
+    'admission:update',
+    'admission:discharge',
     'vitals:read',
     'vitals:create',
     'vitals:update',
@@ -113,6 +121,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, ResourceAction[]> = {
     'appointment:create',
     'appointment:update',
     'appointment:assign',
+    'admission:read',
+    'admission:create',
     'billing:read',
     'billing:create',
     'reports:read',
@@ -121,6 +131,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, ResourceAction[]> = {
     'patient:read',
     'appointment:read',
     'appointment:update',
+    'admission:read',
+    'admission:update',
     'vitals:read',
     'vitals:create',
     'vitals:update',
@@ -133,6 +145,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, ResourceAction[]> = {
     'patient:update',
     'appointment:read',
     'appointment:update',
+    'admission:read',
+    'admission:create',
+    'admission:update',
+    'admission:discharge',
     'vitals:read',
     'vitals:create',
     'vitals:update',

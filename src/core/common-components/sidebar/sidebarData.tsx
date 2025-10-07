@@ -81,6 +81,15 @@ export const SidebarData = [
         allowedRoles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.NURSE, UserRole.FRONT_DESK, UserRole.LAB, UserRole.PHARMACY, UserRole.BILLING, UserRole.ACCOUNTING],
       },
       {
+        label: "Admissions",
+        link: route.admissions,
+        relatedRoutes: [], 
+        submenu: false,
+        icon: "bed",
+        submenuItems: [],
+        allowedRoles: [UserRole.ADMIN, UserRole.DOCTOR, UserRole.NURSE, UserRole.FRONT_DESK],
+      },
+      {
         label: "Visits",
         link: route.visits,
          relatedRoutes: [
