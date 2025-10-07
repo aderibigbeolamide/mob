@@ -25,6 +25,7 @@ The EMR system utilizes Next.js 15 with the App Router, TypeScript, and React 19
 -   **Real-Time Queue Management**: Department-specific queue dashboards with auto-refresh, role-based filtering, and mobile responsiveness.
 -   **Admin Queue Monitoring**: Comprehensive real-time monitoring dashboard for administrators showing all department queues, wait times with color-coded status (green <30min, yellow 30-60min, red >60min), patient counts, and busiest department analytics. Features auto-refresh every 30 seconds with manual refresh option.
 -   **Patient Handoff System**: Flexible stage transfers with interactive UI, visual patient timelines, and in-app notifications.
+-   **Doctor Consultation Workflow**: Comprehensive doctor consultation system with clock-in functionality, patient vitals review, and detailed consultation forms. Doctors can record chief complaints, history of present illness, physical examination findings, diagnosis, treatment plans, prescriptions (with dosage, frequency, duration), lab orders, and follow-up instructions. All consultation data is saved to the visit record and displayed in the timeline.
 -   **Automatic Invoice Generation**: Invoices auto-generated on visit completion, combining all charges with intelligent pricing and insurance support.
 -   **Real-Time Notification System**: Header notification dropdown with department-based filtering, unread badges, and interactive read/unread functionality.
 -   **Session Management & Multi-User Support**: Robust session handling, proper role routing, and secure logout.
