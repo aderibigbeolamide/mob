@@ -1,9 +1,11 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { PatientVisit, Patient } from '@/types/emr';
+import { useSession } from 'next-auth/react';
+import { PatientVisit, Patient, UserRole } from '@/types/emr';
 import { getStageBadgeClass, getStageLabel } from '@/lib/constants/stages';
 import HandoffButton from './HandoffButton';
+import NurseClockInModal from './NurseClockInModal';
 import { all_routes } from '@/router/all_routes';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -14,6 +16,10 @@ interface QueueTableProps {
 }
 
 export default function QueueTable({ queue, loading, onHandoffSuccess }: QueueTableProps) {
+  const { data: session } = useSession();
+  const userRole = session?.user?.role as UserRole | undefined;
+  const [showClockInModal, setShowClockInModal] = useState(false);
+  const [selectedVisit, setSelectedVisit] = useState<PatientVisit | null>(null);
   const formatTimeWaiting = (clockedInAt?: Date) => {
     if (!clockedInAt) return 'N/A';
     try {
@@ -53,6 +59,49 @@ export default function QueueTable({ queue, loading, onHandoffSuccess }: QueueTa
       default:
         return undefined;
     }
+  };
+
+  const handleOpenClockInModal = (visit: PatientVisit) => {
+    setSelectedVisit(visit);
+    setShowClockInModal(true);
+  };
+
+  const handleCloseClockInModal = () => {
+    setShowClockInModal(false);
+    setSelectedVisit(null);
+  };
+
+  const handleClockInSuccess = () => {
+    if (selectedVisit?._id) {
+      onHandoffSuccess(selectedVisit._id);
+    }
+    handleCloseClockInModal();
+  };
+
+  const renderActionButtons = (visit: PatientVisit) => {
+    const patient = visit.patient;
+    const isNurse = userRole === UserRole.NURSE;
+    const hasNurseClockedIn = !!visit.stages.nurse?.clockedInAt;
+
+    if (isNurse && visit.currentStage === 'nurse' && !hasNurseClockedIn) {
+      return (
+        <button
+          className="btn btn-sm btn-success"
+          onClick={() => handleOpenClockInModal(visit)}
+        >
+          <i className="ti ti-stethoscope me-1"></i>
+          Clock In & Record Vitals
+        </button>
+      );
+    }
+
+    return (
+      <HandoffButton
+        visitId={visit._id!}
+        currentStage={visit.currentStage}
+        onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
+      />
+    );
   };
 
   const renderSkeletonRow = (key: number) => (
@@ -98,11 +147,7 @@ export default function QueueTable({ queue, loading, onHandoffSuccess }: QueueTa
               <i className="ti ti-eye me-1"></i>
               View
             </Link>
-            <HandoffButton
-              visitId={visit._id!}
-              currentStage={visit.currentStage}
-              onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
-            />
+            {renderActionButtons(visit)}
           </div>
         </div>
       </div>
@@ -166,11 +211,7 @@ export default function QueueTable({ queue, loading, onHandoffSuccess }: QueueTa
                           >
                             <i className="ti ti-eye"></i>
                           </Link>
-                          <HandoffButton
-                            visitId={visit._id!}
-                            currentStage={visit.currentStage}
-                            onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
-                          />
+                          {renderActionButtons(visit)}
                         </div>
                       </td>
                     </tr>
@@ -202,6 +243,19 @@ export default function QueueTable({ queue, loading, onHandoffSuccess }: QueueTa
           queue.map(renderMobileCard)
         )}
       </div>
+
+      {selectedVisit && (
+        <NurseClockInModal
+          visitId={selectedVisit._id!}
+          patientInfo={{
+            name: getPatientName(selectedVisit.patient),
+            patientId: getPatientId(selectedVisit.patient),
+          }}
+          onSuccess={handleClockInSuccess}
+          show={showClockInModal}
+          onHide={handleCloseClockInModal}
+        />
+      )}
     </>
   );
 }
