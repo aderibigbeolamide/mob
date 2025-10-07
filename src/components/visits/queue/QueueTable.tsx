@@ -13,9 +13,10 @@ interface QueueTableProps {
   queue: PatientVisit[];
   loading: boolean;
   onHandoffSuccess: (visitId: string) => void;
+  onClockInSuccess?: () => void;
 }
 
-export default function QueueTable({ queue, loading, onHandoffSuccess }: QueueTableProps) {
+export default function QueueTable({ queue, loading, onHandoffSuccess, onClockInSuccess }: QueueTableProps) {
   const { data: session } = useSession();
   const userRole = session?.user?.role as UserRole | undefined;
   const [showClockInModal, setShowClockInModal] = useState(false);
@@ -72,8 +73,8 @@ export default function QueueTable({ queue, loading, onHandoffSuccess }: QueueTa
   };
 
   const handleClockInSuccess = () => {
-    if (selectedVisit?._id) {
-      onHandoffSuccess(selectedVisit._id);
+    if (onClockInSuccess) {
+      onClockInSuccess();
     }
     handleCloseClockInModal();
   };

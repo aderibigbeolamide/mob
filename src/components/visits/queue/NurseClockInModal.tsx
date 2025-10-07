@@ -120,7 +120,7 @@ export default function NurseClockInModal({
       };
 
       await apiClient.post(
-        '/api/clocking/handoff',
+        '/api/clocking/nurse-clock-in',
         {
           visitId,
           vitalSigns,

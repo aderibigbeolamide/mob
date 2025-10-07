@@ -247,6 +247,7 @@ export default function QueuePage({ requiredRole, pageTitle, stageName }: QueueP
               queue={queue}
               loading={loading}
               onHandoffSuccess={handleHandoffSuccess}
+              onClockInSuccess={fetchQueue}
             />
           </div>
         </div>
