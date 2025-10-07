@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRole, UserRole } from '@/lib/middleware/auth';
 import { seedDatabase } from '@/lib/seed';
+import dbConnect from '@/lib/dbConnect';
+import { User } from '@/models';
 
 /**
  * SECURITY NOTICE: Database Seed Endpoint
  * 
  * This endpoint is ADMIN-ONLY and designed for initial setup and development.
+ * EXCEPTION: For initial setup, if no users exist in the database, seeding is allowed without authentication.
  * 
  * IMPORTANT SECURITY DECISION: The 'force' parameter has been removed from the API endpoint.
  * - Normal seeding is idempotent (won't overwrite existing data)
@@ -22,14 +25,23 @@ import { seedDatabase } from '@/lib/seed';
  * 3. Never expose force re-seeding through public APIs in production
  */
 export async function POST(req: NextRequest) {
+  try {
+    await dbConnect();
+    const userCount = await User.countDocuments();
+    
+    if (userCount === 0) {
+      const result = await seedDatabase(false);
+      return NextResponse.json(result);
+    }
+  } catch (error: any) {
+    console.error('Initial seed check error:', error);
+  }
+  
   return checkRole([UserRole.ADMIN])(
     req,
     async (_req: NextRequest, _session: any) => {
       try {
-        // Force parameter is intentionally not accepted from the API for security
-        // Only idempotent seeding is allowed through the API endpoint
         const result = await seedDatabase(false);
-        
         return NextResponse.json(result);
       } catch (error: any) {
         console.error('Seed endpoint error:', error);
