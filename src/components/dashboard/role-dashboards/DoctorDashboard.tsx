@@ -305,7 +305,7 @@ const DoctorDashboard = () => {
                               </td>
                               <td className="text-end border-0">
                                 <Link
-                                  href={all_routes.appointmentConsultation}
+                                  href={all_routes.doctorQueue}
                                   className="btn btn-sm btn-primary"
                                 >
                                   Start Consultation

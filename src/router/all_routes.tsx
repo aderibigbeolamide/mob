@@ -55,6 +55,7 @@ export const all_routes = {
   admissions: "/admissions",
   visits: "/visits",
   startVisits: "/start-visits",
+  doctorQueue: "/doctor-queue",
   labResults: "/lab-results",
   medicalResults: "/medical-results",
   pharmacy: "/pharmacy",
