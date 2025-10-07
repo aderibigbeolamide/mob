@@ -530,11 +530,27 @@ export default function ViewDepartmentRecordModal({
             {renderBillingRecord()}
 
             {!visitData?.stages?.frontDesk?.clockedInAt &&
+             !visitData?.stages?.frontDesk?.clockedOutAt &&
+             !visitData?.stages?.frontDesk?.notes &&
              !visitData?.stages?.nurse?.clockedInAt &&
+             !visitData?.stages?.nurse?.clockedOutAt &&
+             !visitData?.stages?.nurse?.vitalSigns &&
+             !visitData?.stages?.nurse?.notes &&
              !visitData?.stages?.doctor?.clockedInAt &&
+             !visitData?.stages?.doctor?.clockedOutAt &&
+             !visitData?.stages?.doctor?.diagnosis &&
+             !visitData?.stages?.doctor?.notes &&
              !visitData?.stages?.lab?.clockedInAt &&
+             !visitData?.stages?.lab?.clockedOutAt &&
+             !visitData?.stages?.lab?.notes &&
+             labTests.length === 0 &&
              !visitData?.stages?.pharmacy?.clockedInAt &&
-             !visitData?.stages?.billing?.clockedInAt && (
+             !visitData?.stages?.pharmacy?.clockedOutAt &&
+             !visitData?.stages?.pharmacy?.notes &&
+             prescriptions.length === 0 &&
+             !visitData?.stages?.billing?.clockedInAt &&
+             !visitData?.stages?.billing?.clockedOutAt &&
+             !visitData?.stages?.billing?.notes && (
               <div className="text-center py-5">
                 <i className="ti ti-info-circle fs-1 text-muted d-block mb-2"></i>
                 <p className="text-muted mb-0">No department records available yet</p>
