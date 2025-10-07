@@ -20,8 +20,9 @@ COPY . .
 # Environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=16384"
 
-# Build the Next.js application
+# Build the Next.js application with increased memory
 RUN npm run build
 
 # Production image, copy all the files and run next

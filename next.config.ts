@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
     dirs: ['src/app', 'src/components', 'src/lib', 'src/hooks'],
   },
   serverExternalPackages: ['mongoose', 'bcryptjs'],

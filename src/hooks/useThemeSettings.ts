@@ -19,7 +19,7 @@ export function useThemeSettings() {
       dispatch(updateTheme({ dir: "ltr" }));
     }
     dispatch(updateTheme({ [key]: value }));
-  }, [dispatch, themeSettings.dir]);
+  }, [dispatch, themeSettings]);
 
   const handleResetTheme = useCallback(() => {
     dispatch(resetTheme());
