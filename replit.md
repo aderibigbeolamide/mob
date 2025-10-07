@@ -23,6 +23,7 @@ The EMR system utilizes Next.js 15 with the App Router, TypeScript, and React 19
 -   **Messaging & Notifications**: In-app communication and event-driven notifications.
 -   **Staff Attendance**: Clock-in/out system.
 -   **Real-Time Queue Management**: Department-specific queue dashboards with auto-refresh, role-based filtering, and mobile responsiveness.
+-   **Admin Queue Monitoring**: Comprehensive real-time monitoring dashboard for administrators showing all department queues, wait times with color-coded status (green <30min, yellow 30-60min, red >60min), patient counts, and busiest department analytics. Features auto-refresh every 30 seconds with manual refresh option.
 -   **Patient Handoff System**: Flexible stage transfers with interactive UI, visual patient timelines, and in-app notifications.
 -   **Automatic Invoice Generation**: Invoices auto-generated on visit completion, combining all charges with intelligent pricing and insurance support.
 -   **Real-Time Notification System**: Header notification dropdown with department-based filtering, unread badges, and interactive read/unread functionality.
