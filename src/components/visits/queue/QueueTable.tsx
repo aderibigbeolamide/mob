@@ -7,6 +7,7 @@ import { getStageBadgeClass, getStageLabel } from '@/lib/constants/stages';
 import HandoffButton from './HandoffButton';
 import NurseClockInModal from './NurseClockInModal';
 import DoctorConsultationModal from './DoctorConsultationModal';
+import LabClockInModal from './LabClockInModal';
 import AdmitPatientModal from '@/components/visits/modal/AdmitPatientModal';
 import AssignedDoctorCell from '../AssignedDoctorCell';
 import { all_routes } from '@/router/all_routes';
@@ -26,6 +27,8 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
   const [selectedVisit, setSelectedVisit] = useState<PatientVisit | null>(null);
   const [showDoctorModal, setShowDoctorModal] = useState(false);
   const [selectedDoctorVisit, setSelectedDoctorVisit] = useState<PatientVisit | null>(null);
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [selectedLabVisit, setSelectedLabVisit] = useState<PatientVisit | null>(null);
   const [showAdmitModal, setShowAdmitModal] = useState(false);
   const [selectedVisitForAdmission, setSelectedVisitForAdmission] = useState<PatientVisit | null>(null);
   const formatTimeWaiting = (clockedInAt?: Date) => {
@@ -120,12 +123,31 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
     handleCloseDoctorModal();
   };
 
+  const handleOpenLabModal = (visit: PatientVisit) => {
+    setSelectedLabVisit(visit);
+    setShowLabModal(true);
+  };
+
+  const handleCloseLabModal = () => {
+    setShowLabModal(false);
+    setSelectedLabVisit(null);
+  };
+
+  const handleLabClockInSuccess = () => {
+    if (onClockInSuccess) {
+      onClockInSuccess();
+    }
+    handleCloseLabModal();
+  };
+
   const renderActionButtons = (visit: PatientVisit) => {
     const patient = visit.patient;
     const isNurse = userRole === UserRole.NURSE;
     const isDoctor = userRole === UserRole.DOCTOR;
+    const isLab = userRole === UserRole.LAB;
     const hasNurseClockedIn = !!visit.stages.nurse?.clockedInAt;
     const hasDoctorClockedIn = !!visit.stages.doctor?.clockedInAt;
+    const hasLabClockedIn = !!visit.stages.lab?.clockedInAt;
 
     if (isNurse && visit.currentStage === 'nurse' && !hasNurseClockedIn) {
       return (
@@ -147,6 +169,19 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         >
           <i className="ti ti-stethoscope me-1"></i>
           Clock In & Start Consultation
+        </button>
+      );
+    }
+
+    if (isLab && visit.currentStage === 'lab' && !hasLabClockedIn) {
+      return (
+        <button
+          className="btn btn-sm btn-success"
+          onClick={() => handleOpenLabModal(visit)}
+          style={{ backgroundColor: '#6F42C1', borderColor: '#6F42C1' }}
+        >
+          <i className="ti ti-test-pipe-2 me-1"></i>
+          Clock In & Add Results
         </button>
       );
     }
@@ -359,6 +394,19 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
           onSuccess={handleDoctorClockInSuccess}
           show={showDoctorModal}
           onHide={handleCloseDoctorModal}
+        />
+      )}
+
+      {selectedLabVisit && (
+        <LabClockInModal
+          visit={selectedLabVisit}
+          patientInfo={{
+            name: getPatientName(selectedLabVisit.patient),
+            patientId: getPatientId(selectedLabVisit.patient),
+          }}
+          onSuccess={handleLabClockInSuccess}
+          show={showLabModal}
+          onHide={handleCloseLabModal}
         />
       )}
 
