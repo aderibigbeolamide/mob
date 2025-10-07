@@ -34,7 +34,6 @@ export interface IPayment extends Document {
 const PaymentSchema = new Schema<IPayment>({
   paymentNumber: { 
     type: String, 
-    required: [true, 'Payment number is required'],
     unique: true,
     uppercase: true,
     trim: true
