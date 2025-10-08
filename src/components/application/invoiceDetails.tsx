@@ -88,9 +88,9 @@ const InvoiceDetailsComponent = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-NG', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'NGN'
     }).format(amount);
   };
 
@@ -317,7 +317,7 @@ const InvoiceDetailsComponent = () => {
                           </div>
                         )}
                         <div className="d-flex align-items-center justify-content-between border-top pt-3 mb-3">
-                          <h6 className="mb-0">Total (USD)</h6>
+                          <h6 className="mb-0">Total (NGN)</h6>
                           <h6 className="mb-0">{formatCurrency(invoice.grandTotal)}</h6>
                         </div>
                         {invoice.paidAmount > 0 && (

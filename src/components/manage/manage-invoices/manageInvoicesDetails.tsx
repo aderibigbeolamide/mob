@@ -118,29 +118,29 @@ const ManageInvoicesDetails = () => {
                           <td>1</td>
                           <td>Syringes &amp; Needles</td>
                           <td>2</td>
-                          <td>$200.00</td>
-                          <td>$396.00</td>
+                          <td>₦200.00</td>
+                          <td>₦396.00</td>
                         </tr>
                         <tr>
                           <td>2</td>
                           <td>Face Masks (3-ply/N95)</td>
                           <td>1</td>
-                          <td>$350.00</td>
-                          <td>$365.75</td>
+                          <td>₦350.00</td>
+                          <td>₦365.75</td>
                         </tr>
                         <tr>
                           <td>3</td>
                           <td>Catheters</td>
                           <td>1</td>
-                          <td>$399.00</td>
-                          <td>$398.90</td>
+                          <td>₦399.00</td>
+                          <td>₦398.90</td>
                         </tr>
                         <tr>
                           <td>4</td>
                           <td>Surgical Drapes</td>
                           <td>4</td>
-                          <td>$100.00</td>
-                          <td>$396.00</td>
+                          <td>₦100.00</td>
+                          <td>₦396.00</td>
                         </tr>
                       </tbody>
                     </table>
@@ -171,27 +171,27 @@ const ManageInvoicesDetails = () => {
                       <div className="mb-3">
                         <div className="d-flex align-items-center justify-content-between mb-3">
                           <h6 className="fs-14 mb-0 fw-semibold">Amount</h6>
-                          <h6 className="fs-14 mb-0 fw-semibold">$1,793.12</h6>
+                          <h6 className="fs-14 mb-0 fw-semibold">₦1,793.12</h6>
                         </div>
                         <div className="d-flex align-items-center justify-content-between mb-3">
                           <h6 className="fs-14 mb-0 fw-semibold">CGST (9%)</h6>
-                          <h6 className="fs-14 mb-0 fw-semibold">$18</h6>
+                          <h6 className="fs-14 mb-0 fw-semibold">₦18</h6>
                         </div>
                         <div className="d-flex align-items-center justify-content-between mb-3">
                           <h6 className="fs-14 mb-0 fw-semibold">SGST (9%)</h6>
-                          <h6 className="fs-14 mb-0 fw-semibold">$18</h6>
+                          <h6 className="fs-14 mb-0 fw-semibold">₦18</h6>
                         </div>
                         <div className="d-flex align-items-center justify-content-between mb-3">
                           <h6 className="fs-14 mb-0 fw-semibold">
                             Discount (25%)
                           </h6>
                           <h6 className="fs-14 mb-0 fw-semibold text-danger">
-                            - $18
+                            - ₦18
                           </h6>
                         </div>
                         <div className="d-flex align-items-center justify-content-between border-top pt-3">
-                          <h6 className="mb-0">Total (USD)</h6>
-                          <h6 className="mb-0">$1,972.43</h6>
+                          <h6 className="mb-0">Total (NGN)</h6>
+                          <h6 className="mb-0">₦1,972.43</h6>
                         </div>
                       </div>
                     </div>

@@ -5,6 +5,7 @@ Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR
 
 ## Recent Changes
 **Date: October 8, 2025**
+- **Currency System Update**: Changed all currency formatting from US Dollars ($) to Nigerian Naira (₦) across the entire application. Updated all invoice, billing, pharmacy, and accounting modules to use NGN currency with proper formatting (en-NG locale).
 - **Invoice System Enhancement**: Updated invoice components to fetch and display actual patient data from the database instead of static placeholders. Invoices now show real patient names, addresses, contact information, and dynamic line items.
 - **Branding Update**: Replaced Dreams EMR logo with custom Life Point Medical Centre logo (lifepoint-logo-dark.svg and lifepoint-logo.svg) across all invoice pages.
 - **Invoice Details Component**: Implemented dynamic data fetching from `/api/billing/invoices/[id]` with proper loading states, error handling, and patient address formatting with fallbacks.
