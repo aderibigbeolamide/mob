@@ -48,14 +48,14 @@ const ManageInvoicesDetails = () => {
                     <div className="d-flex align-items-center justify-content-between mb-4">
                       <div >
                         <ImageWithBasePath
-                          src="assets/img/logo-dark.svg"
+                          src="assets/img/lifepoint-logo-dark.svg"
                           className="invoice-logo"
-                          alt="logo"
+                          alt="Life Point Medical Centre"
                         />
                         <ImageWithBasePath
-                          src="assets/img/logo.svg"
+                          src="assets/img/lifepoint-logo.svg"
                           className="invoice-logo-white"
-                          alt="logo"
+                          alt="Life Point Medical Centre"
                         />
                       </div>
                       <div className="text-end">
