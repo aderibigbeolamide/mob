@@ -18,8 +18,8 @@ const EditInvoiceComponent = () => {
   return (
     <>
   {/* ========================
-			Start Page Content
-		========================= */}
+                        Start Page Content
+                ========================= */}
   <div className="page-wrapper">
     {/* Start Content */}
     <div className="content">
@@ -178,7 +178,7 @@ const EditInvoiceComponent = () => {
                           <input
                             type="text"
                             className="form-control"
-                            defaultValue="$10"
+                            defaultValue="₦10"
                           />
                         </div>
                       </td>
@@ -297,8 +297,8 @@ const EditInvoiceComponent = () => {
     {/* End Footer */}
   </div>
   {/* ========================
-			End Page Content
-		========================= */}
+                        End Page Content
+                ========================= */}
 </>
 
   )

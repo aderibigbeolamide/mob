@@ -638,17 +638,17 @@ const AppointmentConsultationComponent = () => {
                             <div className="row justify-content-end">
                                 <div className="col-lg-3 col-sm-5">
                                     <p className="text-dark mb-2 fw-semibold">
-                                        Amount :<span className="fw-normal float-end">$0.00</span>
+                                        Amount :<span className="fw-normal float-end">₦0.00</span>
                                     </p>
                                     <p className="text-dark mb-2 fw-semibold">
-                                        Tax (0%) :<span className="fw-normal float-end">$0.00</span>
+                                        Tax (0%) :<span className="fw-normal float-end">₦0.00</span>
                                     </p>
                                     <p className="text-dark mb-2 fw-semibold pb-2 border-bottom">
                                         Discount (0%) :
-                                        <span className="fw-normal float-end">$0.00</span>
+                                        <span className="fw-normal float-end">₦0.00</span>
                                     </p>
                                     <h6 className="mb-3">
-                                        Total :<span className="float-end">$0.00</span>
+                                        Total :<span className="float-end">₦0.00</span>
                                     </h6>
                                 </div>
                             </div>

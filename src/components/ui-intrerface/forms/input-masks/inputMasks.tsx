@@ -132,7 +132,7 @@ const FormMaskComponent = () => {
                       <div className="col-md-6">
                         <label className="form-label">Currency</label>
                         <IMaskInput
-                          mask="$ 000,000,000.00"
+                          mask="₦ 000,000,000.00"
                           id="currency"
                           name="currency"
                           className="form-control"
@@ -141,7 +141,7 @@ const FormMaskComponent = () => {
                           required
                         />
                         <span className="form-text text-muted">
-                          $ 999,999,999.99
+                          ₦ 999,999,999.99
                         </span>
                       </div>
                       {/* end col */}

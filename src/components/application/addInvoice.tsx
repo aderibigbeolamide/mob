@@ -174,7 +174,7 @@ const AddInvoiceComponent = () => {
                             <input
                               type="text"
                               className="form-control"
-                              defaultValue="$10"
+                              defaultValue="₦10"
                             />
                           </div>
                         </td>

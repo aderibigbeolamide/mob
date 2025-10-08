@@ -18,8 +18,8 @@ const WidgetsComponent = () => {
   return (
     <>
   {/* ========================
-			Start Page Content
-		========================= */}
+                        Start Page Content
+                ========================= */}
   <div className="page-wrapper">
     {/* Start Content */}
     <div className="content">
@@ -141,7 +141,7 @@ const WidgetsComponent = () => {
                 </span>
                 <div className="ms-2 overflow-hidden">
                   <p className="mb-1 text-truncate">Transactions</p>
-                  <h5 className="mb-0">$5,523.56</h5>
+                  <h5 className="mb-0">₦5,523.56</h5>
                 </div>
               </div>
               <div className="text-end">
@@ -165,7 +165,7 @@ const WidgetsComponent = () => {
               <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
                 <div>
                   <p className="mb-1">Total Invoice</p>
-                  <h6 className="mb-0">$2,45,445</h6>
+                  <h6 className="mb-0">₦2,45,445</h6>
                 </div>
                 <span className="avatar rounded-circle bg-soft-primary text-primary">
                   <i className="ti ti-components fs-24" />
@@ -189,7 +189,7 @@ const WidgetsComponent = () => {
               <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
                 <div>
                   <p className="mb-1">Unpaid Invoice</p>
-                  <h6 className="mb-0">$50,000</h6>
+                  <h6 className="mb-0">₦50,000</h6>
                 </div>
                 <span className="avatar rounded-circle bg-soft-pink text-pink">
                   <i className="ti ti-clipboard-data fs-24" />
@@ -213,7 +213,7 @@ const WidgetsComponent = () => {
               <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
                 <div>
                   <p className="mb-1">Pending Invoice</p>
-                  <h6 className="mb-0">$45,000</h6>
+                  <h6 className="mb-0">₦45,000</h6>
                 </div>
                 <span className="avatar rounded-circle bg-soft-indigo text-indigo">
                   <i className="ti ti-cards fs-24" />
@@ -237,7 +237,7 @@ const WidgetsComponent = () => {
               <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
                 <div>
                   <p className="mb-1">Overdue Invoice</p>
-                  <h6 className="mb-0">$2,50,550</h6>
+                  <h6 className="mb-0">₦2,50,550</h6>
                 </div>
                 <span className="avatar rounded-circle bg-soft-orange text-orange">
                   <i className="ti ti-calendar-event fs-24" />
@@ -308,7 +308,7 @@ const WidgetsComponent = () => {
               <div className="border rounded p-1">
                 <div className="row g-0">
                   <div className="col-6 p-2 border-end">
-                    <h5 className="mb-1">$2512.32</h5>
+                    <h5 className="mb-1">₦2512.32</h5>
                     <p className="mb-0">Revenue Generated</p>
                   </div>
                   <div className="col-6 p-2">
@@ -1094,8 +1094,8 @@ const WidgetsComponent = () => {
     {/* End Footer */}
   </div>
   {/* ========================
-			End Page Content
-		========================= */}
+                        End Page Content
+                ========================= */}
 </>
 
   )

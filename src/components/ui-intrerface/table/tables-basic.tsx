@@ -9,8 +9,8 @@ const TablesBasicComponent = () => {
   return (
     <>
   {/* ========================
-			Start Page Content
-		========================= */}
+                        Start Page Content
+                ========================= */}
   <div className="page-wrapper">
     {/* Start Content */}
     <div className="content pb-0">
@@ -1281,7 +1281,7 @@ const TablesBasicComponent = () => {
                       </td>
                       <td>13 May 2025</td>
                       <td>
-                        <span className="fw-semibold">$950</span>
+                        <span className="fw-semibold">₦950</span>
                       </td>
                       <td>
                         <h6 className="mb-0 fs-14 fw-semibold">
@@ -1330,7 +1330,7 @@ const TablesBasicComponent = () => {
                       </td>
                       <td>13 May 2025</td>
                       <td>
-                        <span className="fw-semibold">$950</span>
+                        <span className="fw-semibold">₦950</span>
                       </td>
                       <td>
                         <h6 className="mb-0 fs-14 fw-semibold">
@@ -1379,7 +1379,7 @@ const TablesBasicComponent = () => {
                       </td>
                       <td>13 May 2025</td>
                       <td>
-                        <span className="fw-semibold">$950</span>
+                        <span className="fw-semibold">₦950</span>
                       </td>
                       <td>
                         <h6 className="mb-0 fs-14 fw-semibold">Cheque</h6>
@@ -1424,8 +1424,8 @@ const TablesBasicComponent = () => {
     {/* End Footer */}
   </div>
   {/* ========================
-			End Page Content
-		========================= */}
+                        End Page Content
+                ========================= */}
 </>
 
   );

@@ -8,6 +8,8 @@ export const metadata: Metadata = {
     "Invoice Details | Dreams EMR - Responsive Bootstrap 5 Medical Admin Template",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function InvoiceDetailsPage() {
   return (
     <>

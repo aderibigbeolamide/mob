@@ -28,8 +28,8 @@ const SearchResultComponent = () => {
   return (
     <>
   {/* ========================
-			Start Page Content
-		========================= */}
+                        Start Page Content
+                ========================= */}
   <div className="page-wrapper">
     {/* Start Content */}
     <div className="content">
@@ -118,7 +118,7 @@ const SearchResultComponent = () => {
                       <span className="text-gray-9 me-2 pe-2 border-end">
                         1.7K Sales
                       </span>
-                      <span className="text-gray-9">$35</span>
+                      <span className="text-gray-9">₦35</span>
                     </div>
                     <div className="text-gray-9 d-flex align-items-center">
                       <i className="ti ti-star-filled text-warning me-1" />
@@ -154,7 +154,7 @@ const SearchResultComponent = () => {
                       <span className="text-gray-9 me-2 pe-2 border-end">
                         1.5K Sales
                       </span>
-                      <span className="text-gray-9">$40</span>
+                      <span className="text-gray-9">₦40</span>
                     </div>
                     <div className="text-gray-9 d-flex align-items-center">
                       <i className="ti ti-star-filled text-warning me-1" />
@@ -190,7 +190,7 @@ const SearchResultComponent = () => {
                       <span className="text-gray-9 me-2 pe-2 border-end">
                         1.2K Sales
                       </span>
-                      <span className="text-gray-9">$30</span>
+                      <span className="text-gray-9">₦30</span>
                     </div>
                     <div className="text-gray-9 d-flex align-items-center">
                       <i className="ti ti-star-filled text-warning me-1" />
@@ -226,7 +226,7 @@ const SearchResultComponent = () => {
                       <span className="text-gray-9 me-2 pe-2 border-end">
                         1.4K Sales
                       </span>
-                      <span className="text-gray-9">$35</span>
+                      <span className="text-gray-9">₦35</span>
                     </div>
                     <div className="text-gray-9 d-flex align-items-center">
                       <i className="ti ti-star-filled text-warning me-1" />
@@ -286,8 +286,8 @@ const SearchResultComponent = () => {
     {/* End Footer */}
   </div>
   {/* ========================
-			End Page Content
-		========================= */}
+                        End Page Content
+                ========================= */}
 </>
 
   )
