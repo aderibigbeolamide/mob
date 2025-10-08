@@ -3,6 +3,12 @@
 ## Overview
 Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR) system built with Next.js 15 and TypeScript. Its primary purpose is to streamline patient care, clinical workflows, billing, and inter-departmental communication within a medical center. The system supports branch-specific and role-based access, aiming to enhance efficiency and patient outcomes. Key capabilities include patient management, appointment scheduling, clinical workflow management, billing and payments, messaging, and staff attendance tracking.
 
+## Recent Changes
+**Date: October 8, 2025**
+- **Invoice System Enhancement**: Updated invoice components to fetch and display actual patient data from the database instead of static placeholders. Invoices now show real patient names, addresses, contact information, and dynamic line items.
+- **Branding Update**: Replaced Dreams EMR logo with custom Life Point Medical Centre logo (lifepoint-logo-dark.svg and lifepoint-logo.svg) across all invoice pages.
+- **Invoice Details Component**: Implemented dynamic data fetching from `/api/billing/invoices/[id]` with proper loading states, error handling, and patient address formatting with fallbacks.
+
 ## User Preferences
 The user prefers a development approach that emphasizes:
 - **Clarity**: Simple, clear explanations for any proposed changes or issues.
