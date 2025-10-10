@@ -96,23 +96,23 @@ const BranchSelect: React.FC<BranchSelectProps> = ({
   useEffect(() => {
     if (!isAdmin && userBranchId && !value && options.length > 0) {
       const userBranch = options.find(opt => opt.value === userBranchId);
-      if (userBranch && !selectedOption) {
+      if (userBranch) {
         setSelectedOption(userBranch);
         onChange(userBranchId);
       }
     }
-  }, [isAdmin, userBranchId, options]);
+  }, [isAdmin, userBranchId, options, value]);
 
   useEffect(() => {
     if (value && options.length > 0) {
       const selected = options.find(opt => opt.value === value);
-      if (selected && selected.value !== selectedOption?.value) {
+      if (selected) {
         setSelectedOption(selected);
       }
-    } else if (!value && selectedOption) {
+    } else if (!value && !loading) {
       setSelectedOption(null);
     }
-  }, [value, options]);
+  }, [value, options, loading]);
 
   const customStyles: StylesConfig<BranchOption, false> = {
     option: (base: any, state: any) => ({
@@ -150,7 +150,7 @@ const BranchSelect: React.FC<BranchSelectProps> = ({
     onChange(option?.value || '');
   }, [onChange]);
 
-  const isDisabled = disabled || (!isAdmin && !!userBranchId) || loading;
+  const isDisabled = disabled || loading;
 
   if (loading) {
     return (
