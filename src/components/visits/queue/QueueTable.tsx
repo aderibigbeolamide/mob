@@ -61,21 +61,29 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
 
   const getCurrentStageClockIn = (visit: PatientVisit) => {
     const stage = visit.currentStage;
+    
+    // If current stage has clocked in, use that time
     switch (stage) {
       case 'front_desk':
         return visit.stages.frontDesk?.clockedInAt;
       case 'nurse':
-        return visit.stages.nurse?.clockedInAt;
+        // If nurse has clocked in, use that. Otherwise, use when front desk handed off (clocked out)
+        return visit.stages.nurse?.clockedInAt || visit.stages.frontDesk?.clockedOutAt;
       case 'doctor':
-        return visit.stages.doctor?.clockedInAt;
+        // If doctor has clocked in, use that. Otherwise, use when nurse handed off (clocked out)
+        return visit.stages.doctor?.clockedInAt || visit.stages.nurse?.clockedOutAt;
       case 'lab':
-        return visit.stages.lab?.clockedInAt;
+        // If lab has clocked in, use that. Otherwise, use when doctor handed off (clocked out)
+        return visit.stages.lab?.clockedInAt || visit.stages.doctor?.clockedOutAt;
       case 'pharmacy':
-        return visit.stages.pharmacy?.clockedInAt;
+        // If pharmacy has clocked in, use that. Otherwise, use when lab handed off (clocked out)
+        return visit.stages.pharmacy?.clockedInAt || visit.stages.lab?.clockedOutAt;
       case 'billing':
-        return visit.stages.billing?.clockedInAt;
+        // If billing has clocked in, use that. Otherwise, use when pharmacy handed off (clocked out)
+        return visit.stages.billing?.clockedInAt || visit.stages.pharmacy?.clockedOutAt;
       case 'returned_to_front_desk':
-        return visit.stages.returnedToFrontDesk?.clockedInAt;
+        // Use when billing handed off (clocked out)
+        return visit.stages.returnedToFrontDesk?.clockedInAt || visit.stages.billing?.clockedOutAt;
       default:
         return undefined;
     }
