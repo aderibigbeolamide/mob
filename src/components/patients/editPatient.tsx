@@ -581,9 +581,9 @@ const EditPatientComponent = () => {
                               stateValue={formData.state}
                               lgaValue={formData.lga}
                               wardValue={formData.ward}
-                              onStateChange={(value) => setFormData({ ...formData, state: value })}
-                              onLGAChange={(value) => setFormData({ ...formData, lga: value })}
-                              onWardChange={(value) => setFormData({ ...formData, ward: value })}
+                              onStateChange={(value) => setFormData(prev => ({ ...prev, state: value, lga: '', ward: '' }))}
+                              onLGAChange={(value) => setFormData(prev => ({ ...prev, lga: value, ward: '' }))}
+                              onWardChange={(value) => setFormData(prev => ({ ...prev, ward: value }))}
                               stateRequired={false}
                               showLabels={true}
                             />

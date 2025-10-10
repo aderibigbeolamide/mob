@@ -209,9 +209,9 @@ const BranchModal: React.FC<BranchModalProps> = ({ visible, branch, onClose }) =
             stateValue={locationState.state}
             lgaValue={locationState.lga}
             wardValue={locationState.ward}
-            onStateChange={(value) => setLocationState({ ...locationState, state: value })}
-            onLGAChange={(value) => setLocationState({ ...locationState, lga: value })}
-            onWardChange={(value) => setLocationState({ ...locationState, ward: value })}
+            onStateChange={(value) => setLocationState(prev => ({ ...prev, state: value, lga: '', ward: '' }))}
+            onLGAChange={(value) => setLocationState(prev => ({ ...prev, lga: value, ward: '' }))}
+            onWardChange={(value) => setLocationState(prev => ({ ...prev, ward: value }))}
             stateRequired={true}
             showLabels={true}
           />
