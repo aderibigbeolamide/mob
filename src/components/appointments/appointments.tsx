@@ -495,13 +495,15 @@ const AppointmentComponent = () => {
                                       </Link>
                                     )
                               )}
-                              <Link
-                                href={all_routes.appointmentConsultation}
-                                className="btn btn-sm btn-icon btn-light"
-                                title="Start Consultation"
-                              >
-                                <i className="ti ti-stethoscope" />
-                              </Link>
+                              {userRole === 'DOCTOR' && appointment.doctorId?._id === session?.user?.id && (
+                                <Link
+                                  href={`${all_routes.doctorQueue}`}
+                                  className="btn btn-sm btn-icon btn-light"
+                                  title="View in Queue"
+                                >
+                                  <i className="ti ti-stethoscope" />
+                                </Link>
+                              )}
                               {can('appointment:delete') && (
                                 userRole === 'DOCTOR'
                                   ? appointment.doctorId?._id === session?.user?.id && (

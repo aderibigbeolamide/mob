@@ -376,13 +376,6 @@ const AppointmentModal = ({ onSuccess, selectedAppointment, editAppointmentId }:
               >
                 Close
               </button>
-              <Link
-                href={all_routes.appointmentConsultation}
-                type="submit"
-                className="btn btn-primary"
-              >
-                Start Consultation
-              </Link>
             </div>
           </div>
         </div>
