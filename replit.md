@@ -4,6 +4,17 @@
 Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR) system built with Next.js 15 and TypeScript. Its primary purpose is to streamline patient care, clinical workflows, billing, and inter-departmental communication within a medical center. The system supports branch-specific and role-based access, aiming to enhance efficiency and patient outcomes. Key capabilities include patient management, appointment scheduling, clinical workflow management, billing and payments, messaging, and staff attendance tracking.
 
 ## Recent Changes
+**Date: October 10, 2025**
+- **Nigerian Location Integration**: Implemented comprehensive Nigerian administrative location system with cascading dropdowns for State → LGA (Local Government Area) → Ward selection:
+  - Added complete Nigerian states, LGAs, and wards dataset (12,859 locations from all 36 states + FCT)
+  - Updated Patient and Branch models to include `lga` and `ward` fields
+  - Created utility functions in `src/lib/utils/nigerian-locations.ts` for location data handling with proper capitalization (e.g., "Abia", "Aba North")
+  - Built `NigerianLocationSelect` cascading component with three-level dependent dropdowns
+  - Updated patient registration, patient edit, and branch management forms to use new location selects
+  - Country defaults to "Nigeria" across all forms
+  - Implemented robust validation: formatNameToSlug handles punctuation, legacy data validation prevents broken prefills, ward validation ensures consistency
+  - Backward compatible with legacy city-only records
+
 **Date: October 8, 2025**
 - **Build Issue Resolution**: Fixed prerender error in invoice-details page by adding `export const dynamic = 'force-dynamic'` to support runtime rendering with useSearchParams(). Build now completes successfully without errors.
 - **Currency System Update**: Completed comprehensive conversion from US Dollars ($) to Nigerian Naira (₦) across the entire application:
