@@ -13,7 +13,7 @@ function formatDate(date: Date) {
 }
 
 export default function PredefinedDatePicker() {
-  const [displayValue, setDisplayValue] = useState('');
+  const [displayValue, setDisplayValue] = useState('Loading...');
   const [isClient, setIsClient] = useState(false);
 
   // Calculate dates in useMemo to avoid recalculating on every render
