@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import PatientVisit from '@/models/PatientVisit';
+import Appointment from '@/models/Appointment';
 import User from '@/models/User';
 import { requireAuth, UserRole } from '@/lib/middleware/auth';
 import { sendBulkNotifications, createInAppNotification } from '@/lib/services/notification';
@@ -183,6 +184,15 @@ export async function POST(req: NextRequest) {
             }
           }
         }
+      }
+
+      // Update appointment status to COMPLETED when visit is completed via handoff
+      if (nextStage === 'completed' && visit.appointment) {
+        await Appointment.findByIdAndUpdate(
+          visit.appointment,
+          { status: 'COMPLETED' },
+          { new: true }
+        );
       }
 
       const updatedVisit = await PatientVisit.findByIdAndUpdate(
