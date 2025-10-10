@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Modal, Form, Input, Select, Switch, Row, Col } from "antd";
+import { Modal, Form, Input, Select, Switch, Row, Col, message } from "antd";
 import { createBranch, updateBranch } from "@/lib/services/branches";
 import { Branch } from "@/types/emr";
+import NigerianLocationSelect from "@/core/common-components/common-select/NigerianLocationSelect";
+import { formatLocationName, formatNameToSlug, validateLocation, getWardsForLGA } from "@/lib/utils/nigerian-locations";
 
 const { Option } = Select;
 
@@ -16,38 +18,108 @@ const BranchModal: React.FC<BranchModalProps> = ({ visible, branch, onClose }) =
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
+  const [locationState, setLocationState] = useState({
+    state: "",
+    lga: "",
+    ward: "",
+  });
+
   useEffect(() => {
     if (visible && branch) {
       form.setFieldsValue({
         name: branch.name,
         code: branch.code,
         address: branch.address,
-        city: branch.city,
-        state: branch.state,
-        country: branch.country,
         phone: branch.phone,
         email: branch.email,
         manager: branch.manager ? (typeof branch.manager === 'object' ? branch.manager._id : branch.manager) : undefined,
         isActive: branch.isActive,
       });
+      
+      const branchLga = (branch as any).lga || "";
+      const branchWard = (branch as any).ward || "";
+      const branchState = branch.state || "";
+      
+      const derivedLga = branchLga || (branch.city && !branchLga ? branch.city : "");
+      
+      const stateSlug = formatNameToSlug(branchState);
+      const lgaSlug = formatNameToSlug(derivedLga);
+      const wardSlug = formatNameToSlug(branchWard);
+      
+      let validState = "";
+      let validLga = "";
+      let validWard = "";
+      let hasInvalidData = false;
+      
+      if (stateSlug && validateLocation(stateSlug)) {
+        validState = stateSlug;
+        
+        if (lgaSlug && validateLocation(stateSlug, lgaSlug)) {
+          validLga = lgaSlug;
+          
+          if (wardSlug && validateLocation(stateSlug, lgaSlug, wardSlug)) {
+            validWard = wardSlug;
+          } else if (wardSlug) {
+            hasInvalidData = true;
+          }
+        } else if (lgaSlug) {
+          hasInvalidData = true;
+        }
+      } else if (stateSlug) {
+        hasInvalidData = true;
+      }
+      
+      setLocationState({
+        state: validState,
+        lga: validLga,
+        ward: validWard,
+      });
+      
+      if (hasInvalidData) {
+        message.warning("Some location data is outdated. Please reselect the location.");
+      }
     } else if (visible) {
       form.resetFields();
-      form.setFieldsValue({ isActive: true, country: 'Nigeria' });
+      form.setFieldsValue({ isActive: true });
+      setLocationState({ state: "", lga: "", ward: "" });
     }
   }, [visible, branch, form]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      
+      if (!locationState.state) {
+        message.error("Please select a state");
+        return;
+      }
+      
+      if (!locationState.lga) {
+        message.error("Please select an LGA (Local Government Area)");
+        return;
+      }
+      
+      if (locationState.ward) {
+        const wardsForLGA = getWardsForLGA(locationState.state, locationState.lga);
+        const wardExists = wardsForLGA.some(w => w.value === locationState.ward);
+        
+        if (!wardExists) {
+          message.error("Selected ward does not belong to the chosen LGA. Please reselect the ward.");
+          return;
+        }
+      }
+      
       setLoading(true);
 
       const branchData = {
         name: values.name,
         code: values.code.toUpperCase(),
         address: values.address,
-        city: values.city,
-        state: values.state,
-        country: values.country || 'Nigeria',
+        city: formatLocationName(locationState.lga),
+        state: formatLocationName(locationState.state),
+        lga: formatLocationName(locationState.lga),
+        ward: formatLocationName(locationState.ward),
+        country: 'Nigeria',
         phone: values.phone,
         email: values.email,
         manager: values.manager || undefined,
@@ -129,32 +201,26 @@ const BranchModal: React.FC<BranchModalProps> = ({ visible, branch, onClose }) =
           <Input.TextArea rows={2} placeholder="Street address" />
         </Form.Item>
 
+        <div className="mb-3">
+          <label className="form-label d-block mb-2">
+            Location<span className="text-danger">*</span>
+          </label>
+          <NigerianLocationSelect
+            stateValue={locationState.state}
+            lgaValue={locationState.lga}
+            wardValue={locationState.ward}
+            onStateChange={(value) => setLocationState({ ...locationState, state: value })}
+            onLGAChange={(value) => setLocationState({ ...locationState, lga: value })}
+            onWardChange={(value) => setLocationState({ ...locationState, ward: value })}
+            stateRequired={true}
+            showLabels={true}
+          />
+        </div>
+        
         <Row gutter={16}>
-          <Col xs={24} md={8}>
-            <Form.Item
-              label="City"
-              name="city"
-              rules={[{ required: true, message: "Please enter city" }]}
-            >
-              <Input placeholder="e.g., Lagos" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={8}>
-            <Form.Item
-              label="State"
-              name="state"
-              rules={[{ required: true, message: "Please enter state" }]}
-            >
-              <Input placeholder="e.g., Lagos State" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={8}>
-            <Form.Item
-              label="Country"
-              name="country"
-              rules={[{ required: true, message: "Please enter country" }]}
-            >
-              <Input placeholder="e.g., Nigeria" />
+          <Col xs={24}>
+            <Form.Item label="Country">
+              <Input value="Nigeria" disabled />
             </Form.Item>
           </Col>
         </Row>

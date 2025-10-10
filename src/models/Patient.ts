@@ -15,6 +15,8 @@ export interface IPatient extends Document {
   address2?: string;
   city: string;
   state: string;
+  lga?: string;
+  ward?: string;
   country: string;
   zipCode?: string;
   maritalStatus?: string;
@@ -122,6 +124,14 @@ const PatientSchema = new Schema<IPatient>({
   state: { 
     type: String, 
     required: [true, 'State is required'],
+    trim: true
+  },
+  lga: { 
+    type: String,
+    trim: true
+  },
+  ward: { 
+    type: String,
     trim: true
   },
   country: { 

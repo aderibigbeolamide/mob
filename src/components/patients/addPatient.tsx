@@ -22,9 +22,11 @@ import CommonSelect from "@/core/common-components/common-select/commonSelect";
 import CommonDatePicker from "@/core/common-components/common-date-picker/commonDatePicker";
 import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import BranchSelect from "@/core/common-components/common-select/BranchSelect";
+import NigerianLocationSelect from "@/core/common-components/common-select/NigerianLocationSelect";
 import { apiClient } from "@/lib/services/api-client";
 import dayjs, { Dayjs } from "dayjs";
 import { PermissionGate } from "@/components/common/PermissionGate";
+import { formatLocationName, getWardsForLGA } from "@/lib/utils/nigerian-locations";
 
 const stepKeys = [
   "v-pills-info",
@@ -56,9 +58,11 @@ const AddPatientComponent = () => {
     guardianName: "",
     address: "",
     address2: "",
-    country: "",
+    country: "Nigeria",
     city: "",
     state: "",
+    lga: "",
+    ward: "",
     pincode: "",
     referredBy: "",
     referredOn: "",
@@ -98,6 +102,17 @@ const AddPatientComponent = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      if (formData.ward && formData.state && formData.lga) {
+        const wardsForLGA = getWardsForLGA(formData.state, formData.lga);
+        const wardExists = wardsForLGA.some(w => w.value === formData.ward);
+        
+        if (!wardExists) {
+          alert("Selected ward does not belong to the chosen LGA. Please reselect the ward.");
+          setLoading(false);
+          return;
+        }
+      }
+
       const branchId = formData.branchId || 
         (session?.user?.branch 
           ? (typeof session.user.branch === 'object' ? session.user.branch._id : session.user.branch)
@@ -125,9 +140,11 @@ const AddPatientComponent = () => {
         phoneNumber: formData.phoneNumber,
         address: formData.address,
         address2: formData.address2,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country,
+        city: formatLocationName(formData.lga) || formatLocationName(formData.city),
+        state: formatLocationName(formData.state),
+        lga: formatLocationName(formData.lga),
+        ward: formatLocationName(formData.ward),
+        country: formData.country || "Nigeria",
         zipCode: formData.pincode,
         emergencyContact: {
           name: formData.guardianName,
@@ -453,43 +470,35 @@ const AddPatientComponent = () => {
                             />
                           </div>
                         </div>
-                        <div className="col-xl-3 col-md-6">
+                        <div className="col-12">
+                          <div className="mb-3">
+                            <NigerianLocationSelect
+                              stateValue={formData.state}
+                              lgaValue={formData.lga}
+                              wardValue={formData.ward}
+                              onStateChange={(value) => setFormData({ ...formData, state: value })}
+                              onLGAChange={(value) => setFormData({ ...formData, lga: value })}
+                              onWardChange={(value) => setFormData({ ...formData, ward: value })}
+                              stateRequired={true}
+                              showLabels={true}
+                            />
+                          </div>
+                        </div>
+                        <div className="col-xl-6 col-md-6">
                           <div className="mb-3">
                             <label className="form-label">
                               Country<span className="text-danger ms-1">*</span>
                             </label>
-                            <CommonSelect
-                              options={Country}
-                              className="select"
-                              onChange={(val: any) => handleSelectChange("country", val)}
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="country"
+                              value={formData.country}
+                              disabled
                             />
                           </div>
                         </div>
-                        <div className="col-xl-3 col-md-6">
-                          <div className="mb-3">
-                            <label className="form-label">
-                              City<span className="text-danger ms-1">*</span>
-                            </label>
-                            <CommonSelect
-                              options={City}
-                              className="select"
-                              onChange={(val: any) => handleSelectChange("city", val)}
-                            />
-                          </div>
-                        </div>
-                        <div className="col-xl-3 col-md-6">
-                          <div className="mb-3">
-                            <label className="form-label">
-                              State<span className="text-danger ms-1">*</span>
-                            </label>
-                            <CommonSelect
-                              options={State}
-                              className="select"
-                              onChange={(val: any) => handleSelectChange("state", val)}
-                            />
-                          </div>
-                        </div>
-                        <div className="col-xl-3 col-md-6">
+                        <div className="col-xl-6 col-md-6">
                           <div className="mb-3">
                             <label className="form-label">Pincode</label>
                             <input
