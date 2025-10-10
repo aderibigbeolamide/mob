@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import PatientVisit from '@/models/PatientVisit';
 import Patient from '@/models/Patient';
+import Appointment from '@/models/Appointment';
 import { requireAuth, checkRole, UserRole } from '@/lib/middleware/auth';
 import { 
   applyBranchFilter, 
@@ -49,6 +50,13 @@ export async function POST(req: NextRequest) {
 
         if (body.appointment) {
           visitData.appointment = body.appointment;
+          
+          // Update appointment status to IN_PROGRESS
+          await Appointment.findByIdAndUpdate(
+            body.appointment,
+            { status: 'IN_PROGRESS' },
+            { new: true }
+          );
         }
 
         const visit = await PatientVisit.create(visitData);

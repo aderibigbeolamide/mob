@@ -516,7 +516,6 @@ async function getFrontDeskDashboardStats(userId: string, branchFilter: any, tod
   const [
     appointmentsToday,
     newPatientsToday,
-    pendingAppointments,
     todayAppointments,
   ] = await Promise.all([
     Appointment.countDocuments({
@@ -529,22 +528,45 @@ async function getFrontDeskDashboardStats(userId: string, branchFilter: any, tod
     }),
     Appointment.find({
       ...branchFilter,
-      status: 'SCHEDULED'
-    })
-      .populate('patientId', 'firstName lastName profileImage patientId')
-      .sort({ appointmentDate: 1 })
-      .limit(5)
-      .lean(),
-    Appointment.find({
-      ...branchFilter,
-      appointmentDate: { $gte: today, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
+      appointmentDate: { $gte: today, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) },
+      status: { $in: ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'] }
     })
       .populate('patientId', 'firstName lastName profileImage patientId')
       .populate('doctorId', 'firstName lastName')
       .sort({ appointmentTime: 1 })
-      .limit(10)
+      .limit(20)
       .lean(),
   ]);
+
+  // Fetch visit information for appointments
+  const appointmentIds = todayAppointments.map(apt => apt._id);
+  const visits = await PatientVisit.find({
+    appointment: { $in: appointmentIds },
+    status: { $in: ['in_progress', 'completed'] }
+  }).lean();
+
+  // Create a map of appointment ID to visit
+  const visitMap = new Map();
+  visits.forEach(visit => {
+    if (visit.appointment) {
+      visitMap.set(visit.appointment.toString(), visit);
+    }
+  });
+
+  // Enhance appointments with visit information
+  const enhancedAppointments = todayAppointments.map((apt: any) => {
+    const visit = visitMap.get(apt._id.toString());
+    return {
+      ...apt,
+      visit: visit || null,
+      currentStage: visit?.currentStage || null,
+      visitStatus: visit?.status || null
+    };
+  });
+
+  const pendingCheckIns = enhancedAppointments.filter((apt: any) => 
+    apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED'
+  ).length;
 
   const stats = {
     role: UserRole.FRONT_DESK,
@@ -559,12 +581,12 @@ async function getFrontDeskDashboardStats(userId: string, branchFilter: any, tod
       isIncrease: false
     },
     pendingCheckIns: {
-      total: pendingAppointments.length,
+      total: pendingCheckIns,
       change: 0,
       isIncrease: false
     },
     visitsToday: appointmentsToday,
-    pendingAppointments: todayAppointments,
+    pendingAppointments: enhancedAppointments,
   };
 
   return NextResponse.json(stats);

@@ -29,6 +29,9 @@ interface PendingCheckIn {
   appointmentTime: string;
   reasonForVisit: string;
   status: string;
+  visit?: any;
+  currentStage?: string;
+  visitStatus?: string;
 }
 
 interface DashboardStats {
@@ -115,6 +118,121 @@ const FrontDeskDashboard = () => {
     } finally {
       setStartingVisit(null);
     }
+  };
+
+  const handleCheckOut = async (appointment: PendingCheckIn) => {
+    const appointmentId = appointment._id;
+    const visitId = appointment.visit?._id;
+
+    if (!visitId) {
+      toast.error('Visit information is missing. Cannot check out patient.');
+      return;
+    }
+
+    try {
+      setStartingVisit(appointmentId);
+
+      await apiClient.post(
+        `/api/visits/${visitId}/checkout`,
+        {},
+        {
+          successMessage: 'Patient checked out successfully',
+          showErrorToast: true
+        }
+      );
+
+      // Refresh the dashboard
+      await fetchDashboardStats();
+    } catch (error: any) {
+      console.error('Failed to check out patient:', error);
+      toast.error(error.message || 'Failed to check out patient. Please try again.');
+    } finally {
+      setStartingVisit(null);
+    }
+  };
+
+  const getAppointmentActionButton = (appointment: PendingCheckIn) => {
+    const isLoading = startingVisit === appointment._id;
+
+    // SCHEDULED or CONFIRMED - Show Check In button
+    if (appointment.status === 'SCHEDULED' || appointment.status === 'CONFIRMED') {
+      return (
+        <button
+          onClick={() => handleStartVisit(appointment)}
+          className="btn btn-sm btn-primary"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              Starting...
+            </>
+          ) : (
+            'Check In & Start Visit'
+          )}
+        </button>
+      );
+    }
+
+    // IN_PROGRESS - Show status badge with current department
+    if (appointment.status === 'IN_PROGRESS' && appointment.visitStatus === 'in_progress') {
+      const stageLabels: Record<string, string> = {
+        front_desk: 'Front Desk',
+        nurse: 'With Nurse',
+        doctor: 'With Doctor',
+        lab: 'Laboratory',
+        pharmacy: 'Pharmacy',
+        billing: 'Billing'
+      };
+      
+      const stageLabel = stageLabels[appointment.currentStage || ''] || 'In Progress';
+      
+      return (
+        <span className="badge badge-soft-info">
+          <i className="ti ti-activity me-1"></i>
+          {stageLabel}
+        </span>
+      );
+    }
+
+    // COMPLETED - Show Check Out button
+    if (appointment.status === 'COMPLETED' || appointment.visitStatus === 'completed') {
+      return (
+        <button
+          onClick={() => handleCheckOut(appointment)}
+          className="btn btn-sm btn-success"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              Checking Out...
+            </>
+          ) : (
+            <>
+              <i className="ti ti-check me-1"></i>
+              Check Out Patient
+            </>
+          )}
+        </button>
+      );
+    }
+
+    // Default - Show status badge  
+    const statusLabels: Record<string, string> = {
+      'SCHEDULED': 'Scheduled',
+      'CONFIRMED': 'Confirmed',
+      'IN_PROGRESS': 'In Progress',
+      'COMPLETED': 'Completed',
+      'CANCELLED': 'Cancelled',
+      'NO_SHOW': 'No Show'
+    };
+    
+    return (
+      <span className="badge badge-soft-secondary">
+        {statusLabels[appointment.status] || appointment.status}
+      </span>
+    );
   };
 
   const formatAppointmentDate = (dateString: string) => {
@@ -245,7 +363,7 @@ const FrontDeskDashboard = () => {
           <div className="col-12">
             <div className="card flex-fill w-100">
               <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <h5 className="fw-bold mb-0">Pending Check-ins</h5>
+                <h5 className="fw-bold mb-0">Today's Patient Activity</h5>
                 <Link
                   href={all_routes.appointments}
                   className="btn btn-sm btn-outline-light flex-shrink-0"
@@ -314,20 +432,7 @@ const FrontDeskDashboard = () => {
                                 </span>
                               </td>
                               <td className="text-end border-0">
-                                <button
-                                  onClick={() => handleStartVisit(appointment)}
-                                  className="btn btn-sm btn-primary"
-                                  disabled={startingVisit === appointment._id}
-                                >
-                                  {startingVisit === appointment._id ? (
-                                    <>
-                                      <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                                      Starting...
-                                    </>
-                                  ) : (
-                                    'Check In & Start Visit'
-                                  )}
-                                </button>
+                                {getAppointmentActionButton(appointment)}
                               </td>
                             </tr>
                           );
@@ -337,7 +442,7 @@ const FrontDeskDashboard = () => {
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-muted mb-0">No pending check-ins</p>
+                    <p className="text-muted mb-0">No appointments today</p>
                   </div>
                 )}
               </div>

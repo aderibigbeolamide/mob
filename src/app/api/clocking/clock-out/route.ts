@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import PatientVisit from '@/models/PatientVisit';
+import Appointment from '@/models/Appointment';
 import { checkRole, UserRole } from '@/lib/middleware/auth';
 
 export async function POST(req: NextRequest) {
@@ -57,6 +58,15 @@ export async function POST(req: NextRequest) {
         }
 
         await PatientVisit.findByIdAndUpdate(body.visitId, updateData);
+
+        // Update appointment status to COMPLETED
+        if (visit.appointment) {
+          await Appointment.findByIdAndUpdate(
+            visit.appointment,
+            { status: 'COMPLETED' },
+            { new: true }
+          );
+        }
 
         const updatedVisit = await PatientVisit.findById(body.visitId)
           .populate('patient', 'patientId firstName lastName phoneNumber email')
