@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { UserRole } from '@/types/emr';
 import { 
@@ -11,8 +11,8 @@ import {
 export { UserRole };
 export type { ResourceAction };
 
-export async function getServerAuthSession() {
-  return await getServerSession(authOptions);
+export async function getServerAuthSession(req?: any, res?: any) {
+  return await getServerSession(req, res, authOptions);
 }
 
 export { getServerAuthSession as getServerSession };
@@ -22,9 +22,18 @@ export async function requireAuth(
   handler: (req: NextRequest, session: any) => Promise<NextResponse>
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    // Create a mock res object for NextAuth compatibility
+    const mockRes = {
+      getHeader: () => null,
+      setHeader: () => {},
+      getCookies: () => ({}),
+      setCookie: () => {},
+    };
+    
+    const session = await getServerSession(req as any, mockRes as any, authOptions);
 
     if (!session || !session.user) {
+      console.log('[requireAuth] No session found');
       return NextResponse.json(
         { error: 'Unauthorized. Please log in.' },
         { status: 401 }
@@ -33,6 +42,7 @@ export async function requireAuth(
 
     return await handler(req, session);
   } catch (error) {
+    console.error('[requireAuth] Authentication error:', error);
     return NextResponse.json(
       { error: 'Authentication error' },
       { status: 500 }
