@@ -104,8 +104,7 @@ export default function LoginPage() {
                 <p className="lead text-white mb-4">Electronic Medical Records System</p>
                 <div>
                   <p className="mb-2 text-white"><i className="fas fa-shield-alt me-2"></i>Secure & Confidential</p>
-                  <p className="mb-2 text-white"><i className="fas fa-clock me-2"></i>24/7 Access</p>
-                  <p className="mb-0 text-white"><i className="fas fa-users me-2"></i>Staff Portal</p>
+                  <p className="mb-0 text-white"><i className="fas fa-clock me-2"></i>24/7 Access</p>
                 </div>
               </div>
             </div>
