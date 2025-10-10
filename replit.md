@@ -5,6 +5,13 @@ Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR
 
 ## Recent Changes
 **Date: October 10, 2025**
+- **Patient Flow Status Synchronization Fix**: Fixed critical workflow issue where appointment status wasn't updating when visits were completed via handoff. Front desk dashboard now correctly displays real-time patient status:
+  - Added appointment status synchronization in handoff API (`src/app/api/clocking/handoff/route.ts`)
+  - When a visit is marked 'completed' via handoff, the associated appointment status is now updated to 'COMPLETED'
+  - Front desk dashboard button states: "Check In & Start Visit" → "With [Department]" badge → "Check Out Patient" button
+  - Real-time status tracking: Shows current department (Nurse, Doctor, Lab, Pharmacy, Billing) during patient journey
+  - Maintains data integrity with existing checkout workflow (idempotent operations)
+  - Dashboard stats properly hydrate visit information (currentStage, visitStatus) for accurate display
 - **Nigerian Location Integration**: Implemented comprehensive Nigerian administrative location system with cascading dropdowns for State → LGA (Local Government Area) → Ward selection:
   - Added complete Nigerian states, LGAs, and wards dataset (12,859 locations from all 36 states + FCT)
   - Updated Patient and Branch models to include `lga` and `ward` fields
