@@ -5,6 +5,17 @@ Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR
 
 ## Recent Changes
 **Date: October 11, 2025**
+- **Lab-Only Visit Workflow**: Implemented dedicated workflow for walk-in patients requesting lab tests without doctor consultation:
+  - Added 'lab_only' visit type to PatientVisit model with supervisingDoctor field
+  - Created `/api/visits/lab-only` endpoint for front desk to create lab-only visits and orders
+  - Front desk can now use "Lab Visit" button on dashboard to register walk-in lab test requests
+  - Modal allows selection of patient, supervising doctor, test details (name, category, priority)
+  - Workflow: Front Desk (registration) → Lab (testing) → Billing (payment) → Completed
+  - Skips nurse and doctor consultation stages entirely for efficiency
+  - Supervising doctor assigned for medical oversight and result review
+  - Billing auto-generates invoices with only lab test charges (no consultation fee)
+  - Lab queue automatically shows lab-only visits for processing
+  - Maintains full compliance and proper documentation requirements
 - **Lab Dashboard Pending Tests Filter Fixed**: Fixed the "Pending Lab Tests" section on the Lab Dashboard to only display tests with 'pending' status:
   - Updated `/api/dashboard/stats` route to filter pending lab tests correctly
   - Changed query from `status: { $in: ['pending', 'in_progress'] }` to `status: 'pending'`
@@ -73,7 +84,7 @@ The EMR system utilizes Next.js 15 with the App Router, TypeScript, and React 19
 **Core Features:**
 -   **Patient Management**: Registration, record keeping, document uploads, medical history, and vitals.
 -   **Appointment Scheduling**: Calendar-based booking and patient self-service.
--   **Clinical Workflow**: Structured patient clocking system (Checked In → Nurse → Doctor → Lab → Pharmacy → Billing → Returned to Front Desk → Completed) for seamless handoffs, managed by a central `PatientVisit` record.
+-   **Clinical Workflow**: Structured patient clocking system (Checked In → Nurse → Doctor → Lab → Pharmacy → Billing → Returned to Front Desk → Completed) for seamless handoffs, managed by a central `PatientVisit` record. Additionally supports Lab-Only visits (Front Desk → Lab → Billing → Completed) for walk-in lab test requests.
 -   **Billing & Payments**: Invoice generation, payment processing, insurance claims, and comprehensive debt management.
 -   **Messaging & Notifications**: In-app communication and event-driven notifications.
 -   **Staff Attendance**: Clock-in/out system.
