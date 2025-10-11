@@ -3,6 +3,20 @@
 ## Overview
 Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR) system built with Next.js 15 and TypeScript. Its primary purpose is to streamline patient care, clinical workflows, billing, and inter-departmental communication within a medical center. The system supports branch-specific and role-based access, aiming to enhance efficiency and patient outcomes. Key capabilities include patient management, appointment scheduling, clinical workflow management, billing and payments, messaging, and staff attendance tracking.
 
+## Recent Changes
+**Date: October 11, 2025**
+- **Real-Time Dashboard-Queue Synchronization**: Implemented comprehensive synchronization system ensuring "My Upcoming Appointments" on dashboards immediately reflects queue changes across all 8 departments:
+  - Created global event system (`src/lib/utils/queue-events.ts`) using CustomEvent API for instant communication between queue and dashboards
+  - Implemented `emitHandoffEvent()` and `useHandoffListener()` React hook for event-driven updates with automatic cleanup
+  - Handoff operations now dispatch events immediately after successful patient transfers via `useHandoff` hook
+  - All department dashboards (Doctor, Nurse, Lab, Pharmacy, Billing, Front Desk, Admin, Accounting) subscribe to handoff events for instant refresh
+  - Updated Doctor dashboard stats to query `PatientVisit` with `currentStage: 'doctor'` instead of Appointments for accurate queue state alignment
+  - Reduced dashboard auto-refresh interval from 30 seconds to 10 seconds as a safety fallback mechanism
+  - Dashboard data now matches queue data exactly - when a patient is transferred between departments, they immediately disappear from the previous department's dashboard (no 30-second delay)
+  - Proper React patterns with useCallback for stable references, cleanup handlers, and debounce guards to prevent race conditions
+  - System provides instant feedback to all departments when patients move through the clinical workflow
+- **Test Data Cleanup**: Removed all test/demo lab test records from database to ensure clean production state
+
 ## User Preferences
 The user prefers a development approach that emphasizes:
 - **Clarity**: Simple, clear explanations for any proposed changes or issues.
