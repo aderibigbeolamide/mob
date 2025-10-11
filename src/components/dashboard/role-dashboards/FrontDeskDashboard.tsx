@@ -12,6 +12,7 @@ import Link from "next/link";
 import { all_routes } from "@/router/all_routes";
 import PredefinedDatePicker from "@/core/common-components/common-date-range-picker/PredefinedDatePicker";
 import ImageWithBasePath from "@/core/common-components/image-with-base-path";
+import CreateLabVisitModal from "../CreateLabVisitModal";
 
 interface PatientInfo {
   _id: string;
@@ -62,6 +63,7 @@ const FrontDeskDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startingVisit, setStartingVisit] = useState<string | null>(null);
+  const [showLabVisitModal, setShowLabVisitModal] = useState(false);
   const isRefreshingRef = useRef(false);
 
   const fetchDashboardStats = async (isBackgroundRefresh = false) => {
@@ -399,12 +401,22 @@ const FrontDeskDashboard = () => {
             <div className="card flex-fill w-100">
               <div className="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <h5 className="fw-bold mb-0">Today's Patient Activity</h5>
-                <Link
-                  href={all_routes.appointments}
-                  className="btn btn-sm btn-outline-light flex-shrink-0"
-                >
-                  View All
-                </Link>
+                <div className="d-flex gap-2">
+                  <button
+                    onClick={() => setShowLabVisitModal(true)}
+                    className="btn btn-sm btn-primary flex-shrink-0"
+                    title="Create walk-in lab visit"
+                  >
+                    <i className="ti ti-test-pipe-2 me-1"></i>
+                    Lab Visit
+                  </button>
+                  <Link
+                    href={all_routes.appointments}
+                    className="btn btn-sm btn-outline-light flex-shrink-0"
+                  >
+                    View All
+                  </Link>
+                </div>
               </div>
               <div className="card-body p-1 py-2">
                 {loading ? (
@@ -485,6 +497,15 @@ const FrontDeskDashboard = () => {
           </div>
         </div>
       </div>
+
+      <CreateLabVisitModal
+        show={showLabVisitModal}
+        onHide={() => setShowLabVisitModal(false)}
+        onSuccess={() => {
+          setShowLabVisitModal(false);
+          fetchDashboardStats();
+        }}
+      />
     </div>
   );
 };
