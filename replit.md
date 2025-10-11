@@ -5,6 +5,11 @@ Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR
 
 ## Recent Changes
 **Date: October 11, 2025**
+- **Lab Dashboard Pending Tests Filter Fixed**: Fixed the "Pending Lab Tests" section on the Lab Dashboard to only display tests with 'pending' status:
+  - Updated `/api/dashboard/stats` route to filter pending lab tests correctly
+  - Changed query from `status: { $in: ['pending', 'in_progress'] }` to `status: 'pending'`
+  - Completed tests now automatically removed from the pending list on dashboard refresh (auto-refreshes every 30 seconds)
+  - Delete permission remains Admin-only for lab tests (DELETE endpoint restricted to ADMIN role)
 - **Doctor Lab Test Permissions Fixed**: Restricted Doctor role to view-only access for lab tests (cannot create or edit):
   - Removed `lab:create` and `lab:update` permissions from DOCTOR role in RBAC configuration
   - Updated API routes `/api/lab-tests` POST and PUT endpoints to enforce [LAB, ADMIN] roles only
