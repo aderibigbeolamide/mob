@@ -470,9 +470,16 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
               </h6>
               <p className="text-muted small mb-0">ID: {getPatientId(patient)}</p>
             </div>
-            <span className={`badge ${getStageBadgeClass(visit.currentStage)}`}>
-              {getStageLabel(visit.currentStage)}
-            </span>
+            <div className="d-flex flex-column align-items-end gap-1">
+              <span className={`badge ${getStageBadgeClass(visit.currentStage)}`}>
+                {getStageLabel(visit.currentStage)}
+              </span>
+              {visit.labOnly && (
+                <span className="badge bg-info" style={{ fontSize: '0.7rem' }}>
+                  <i className="ti ti-flask"></i> Lab Only
+                </span>
+              )}
+            </div>
           </div>
           <div className="mb-2">
             <small className="text-muted d-block">Visit #: {visit.visitNumber}</small>
@@ -538,6 +545,11 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
                         <Link href={`${all_routes.visits}?id=${visit._id}`} className="text-primary">
                           {visit.visitNumber}
                         </Link>
+                        {visit.labOnly && (
+                          <span className="badge bg-info ms-2" style={{ fontSize: '0.7rem' }}>
+                            <i className="ti ti-flask"></i> Lab Only
+                          </span>
+                        )}
                       </td>
                       <td>
                         <Link href={`${all_routes.patientDetails}?id=${typeof patient === 'string' ? patient : patient._id}`}>
