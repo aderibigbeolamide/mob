@@ -311,7 +311,7 @@ async function getLabDashboardStats(userId: string, branchFilter: any, today: Da
     }),
     LabTest.find({
       ...branchFilter,
-      status: { $in: ['pending', 'in_progress'] }
+      status: 'pending'
     })
       .populate('patient', 'firstName lastName profileImage patientId')
       .populate('doctor', 'firstName lastName')
