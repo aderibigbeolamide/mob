@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
 import { apiClient } from "@/lib/services/api-client";
@@ -43,11 +43,20 @@ const AccountingDashboard = () => {
   const { data: session } = useSession();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isRefreshingRef = useRef(false);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = async (isBackgroundRefresh = false) => {
+    if (isRefreshingRef.current) return;
+    
     try {
-      setLoading(true);
+      isRefreshingRef.current = true;
+      if (!isBackgroundRefresh) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
       setError(null);
       const data = await apiClient.get<DashboardStats>('/api/dashboard/stats', {
         showErrorToast: false
@@ -57,11 +66,19 @@ const AccountingDashboard = () => {
       setError(err.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      isRefreshingRef.current = false;
     }
   };
 
   useEffect(() => {
     fetchDashboardStats();
+
+    const refreshInterval = setInterval(() => {
+      fetchDashboardStats(true);
+    }, 30000);
+
+    return () => clearInterval(refreshInterval);
   }, []);
 
   const formatTransactionDate = (dateString: string) => {
@@ -93,8 +110,26 @@ const AccountingDashboard = () => {
               Revenue Today: {loading ? '...' : `$${stats?.revenueToday?.total?.toFixed(2) || '0.00'}`}
             </p>
           </div>
-          <PredefinedDatePicker />
+          <div className="d-flex align-items-center gap-2">
+            <button
+              onClick={() => fetchDashboardStats(false)}
+              className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
+              disabled={loading || refreshing}
+              title="Refresh dashboard"
+            >
+              <i className={`ti ti-refresh ${refreshing ? 'fa-spin' : ''}`} />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <PredefinedDatePicker />
+          </div>
         </div>
+
+        {refreshing && !loading && (
+          <div className="alert alert-info d-flex align-items-center gap-2 mb-3" role="status">
+            <i className="ti ti-refresh fa-spin" />
+            <span>Auto-refreshing dashboard data...</span>
+          </div>
+        )}
 
         {error && (
           <div className="alert alert-danger" role="alert">
