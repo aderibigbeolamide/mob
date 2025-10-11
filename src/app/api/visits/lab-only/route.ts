@@ -78,6 +78,11 @@ export async function POST(req: NextRequest) {
               clockedInAt: new Date(),
               notes: body.frontDeskNotes || 'Lab-only visit - Direct lab test request',
               nextAction: 'lab'
+            },
+            lab: {
+              clockedInBy: session.user.id,
+              clockedInAt: new Date(),
+              notes: 'Auto-clocked in for lab-only visit'
             }
           }
         });

@@ -173,10 +173,31 @@ export default function LabClockInModal({
       <form onSubmit={handleSubmit}>
         <Modal.Body style={{ maxHeight: '75vh', overflowY: 'auto' }}>
           <div className="mb-3">
-            <h6 className="mb-2">
-              Patient: <span className="text-primary">{patientInfo.name}</span>
-            </h6>
-            <p className="text-muted mb-0">ID: {patientInfo.patientId}</p>
+            <div className="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 className="mb-2">
+                  Patient: <span className="text-primary">{patientInfo.name}</span>
+                </h6>
+                <p className="text-muted mb-0">ID: {patientInfo.patientId}</p>
+              </div>
+              {visit.labOnly && (
+                <span className="badge bg-info">
+                  <i className="ti ti-flask me-1"></i>
+                  Lab-Only Visit
+                </span>
+              )}
+            </div>
+            
+            {visit.labOnly && visit.supervisingDoctor && (
+              <div className="mt-2">
+                <small className="text-muted">Supervising Doctor:</small>
+                <p className="mb-0">
+                  <strong>
+                    Dr. {(visit.supervisingDoctor as any).firstName} {(visit.supervisingDoctor as any).lastName}
+                  </strong>
+                </p>
+              </div>
+            )}
           </div>
 
           <hr />

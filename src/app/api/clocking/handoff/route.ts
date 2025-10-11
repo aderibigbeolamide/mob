@@ -102,6 +102,10 @@ export async function POST(req: NextRequest) {
       const currentStage = visit.currentStage;
       let nextStage = body.targetStage || DEFAULT_STAGE_WORKFLOW[currentStage as keyof typeof DEFAULT_STAGE_WORKFLOW];
       
+      if (visit.labOnly && currentStage === 'lab' && !body.targetStage) {
+        nextStage = 'billing';
+      }
+      
       if (!nextStage) {
         return NextResponse.json(
           { error: 'Invalid current stage or workflow' },
