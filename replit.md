@@ -4,6 +4,17 @@
 Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR) system built with Next.js 15 and TypeScript. Its primary purpose is to streamline patient care, clinical workflows, billing, and inter-departmental communication within a medical center. The system supports branch-specific and role-based access, aiming to enhance efficiency and patient outcomes. Key capabilities include patient management, appointment scheduling, clinical workflow management, billing and payments, messaging, and staff attendance tracking.
 
 ## Recent Changes
+**Date: October 11, 2025**
+- **Medicine Autocomplete for Prescriptions**: Enhanced doctor prescription workflow with intelligent medicine selection from pharmacy inventory:
+  - Created `MedicineAutocomplete` component with dropdown selection and manual entry support
+  - Doctors can now select medicines directly from available pharmacy inventory with real-time stock status
+  - Shows medicine details: product name, generic name, category, and stock quantity
+  - Displays "No matches found" hint when filtering yields no results, reinforcing manual entry option
+  - Graceful fallback to manual entry if medicine is not in inventory or if inventory fails to load
+  - Auto-fetches active pharmacy products (limit 1000) when doctor consultation modal opens
+  - Implements client-side filtering for responsive search experience
+  - Maintains all existing prescription validation and submission behavior
+
 **Date: October 10, 2025**
 - **Patient Flow Status Synchronization Fix**: Fixed critical workflow issue where appointment status wasn't updating when visits were completed via handoff. Front desk dashboard now correctly displays real-time patient status:
   - Added appointment status synchronization in handoff API (`src/app/api/clocking/handoff/route.ts`)
