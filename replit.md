@@ -10,6 +10,7 @@ Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR
   - Updated API routes `/api/lab-tests` POST and PUT endpoints to enforce [LAB, ADMIN] roles only
   - Doctors can only view lab tests; Lab Technicians and Admins can create/edit/approve tests
   - Frontend permission checks (`can('lab:create')`, `can('lab:update')`) hide add/edit buttons from Doctors
+  - Applied permission checks to BOTH Lab Results and Medical Results pages
   - Updated RBAC_VERIFICATION_MATRIX.md documentation to reflect view-only access
   - All changes verified: Backend enforces 403 Forbidden for unauthorized Doctor actions
 - **Medicine Autocomplete for Prescriptions**: Enhanced doctor prescription workflow with intelligent medicine selection from pharmacy inventory:
