@@ -7,10 +7,12 @@ export interface IPatientVisit extends Document {
   assignedDoctor?: mongoose.Types.ObjectId;
   branchId: mongoose.Types.ObjectId;
   visitDate: Date;
-  visitType?: 'outpatient' | 'inpatient' | 'emergency';
+  visitType?: 'outpatient' | 'inpatient' | 'emergency' | 'lab_only';
   admissionId?: mongoose.Types.ObjectId;
   currentStage: 'front_desk' | 'nurse' | 'doctor' | 'lab' | 'pharmacy' | 'billing' | 'returned_to_front_desk' | 'completed';
   status: 'in_progress' | 'completed' | 'cancelled';
+  labOnly?: boolean;
+  supervisingDoctor?: mongoose.Types.ObjectId;
   
   stages: {
     frontDesk?: {
@@ -101,10 +103,12 @@ const PatientVisitSchema = new Schema<IPatientVisit>({
   visitDate: { type: Date, required: true, default: Date.now },
   visitType: {
     type: String,
-    enum: ['outpatient', 'inpatient', 'emergency'],
+    enum: ['outpatient', 'inpatient', 'emergency', 'lab_only'],
     default: 'outpatient'
   },
   admissionId: { type: Schema.Types.ObjectId, ref: 'Admission' },
+  labOnly: { type: Boolean, default: false },
+  supervisingDoctor: { type: Schema.Types.ObjectId, ref: 'User' },
   currentStage: {
     type: String,
     enum: ['front_desk', 'nurse', 'doctor', 'lab', 'pharmacy', 'billing', 'returned_to_front_desk', 'completed'],
