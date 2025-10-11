@@ -30,6 +30,7 @@ export default function HandoffButton({ visitId, currentStage, onHandoffSuccess 
     try {
       await handoff({
         visitId,
+        currentStage,
         targetStage: selectedStage,
         notes: notes || undefined,
         onSuccess: () => {

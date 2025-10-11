@@ -170,10 +170,10 @@ async function getDoctorDashboardStats(userId: string, branchFilter: any, today:
   const [
     myPatientsTotal,
     myPatientsLastMonth,
-    myAppointmentsToday,
+    myVisitsToday,
     myAppointmentsTotal,
     myAppointmentsLastMonth,
-    myPendingAppointments,
+    myPendingVisits,
     myPrescriptionsTotal,
     myLabTestsTotal,
   ] = await Promise.all([
@@ -183,10 +183,10 @@ async function getDoctorDashboardStats(userId: string, branchFilter: any, today:
       doctorId: userId,
       createdAt: { $gte: lastMonth }
     }),
-    Appointment.countDocuments({
+    PatientVisit.countDocuments({
       ...branchFilter,
-      doctorId: userId,
-      appointmentDate: { $gte: today, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
+      currentStage: 'doctor',
+      status: 'in_progress'
     }),
     Appointment.countDocuments({ ...branchFilter, doctorId: userId }),
     Appointment.countDocuments({ 
@@ -194,13 +194,13 @@ async function getDoctorDashboardStats(userId: string, branchFilter: any, today:
       doctorId: userId,
       createdAt: { $gte: lastMonth }
     }),
-    Appointment.find({
+    PatientVisit.find({
       ...branchFilter,
-      doctorId: userId,
-      status: { $in: ['SCHEDULED', 'CONFIRMED'] }
+      currentStage: 'doctor',
+      status: 'in_progress'
     })
-      .populate('patientId', 'firstName lastName profileImage patientId')
-      .sort({ appointmentDate: 1, appointmentTime: 1 })
+      .populate('patient', 'firstName lastName profileImage patientId')
+      .sort({ visitDate: 1 })
       .limit(5)
       .lean(),
     Prescription.countDocuments({ ...branchFilter, doctor: userId }),
@@ -215,7 +215,7 @@ async function getDoctorDashboardStats(userId: string, branchFilter: any, today:
       isIncrease: myPatientsLastMonth.length > (myPatientsTotal.length - myPatientsLastMonth.length)
     },
     myAppointmentsToday: {
-      total: myAppointmentsToday,
+      total: myVisitsToday,
       change: 0,
       isIncrease: false
     },
@@ -229,8 +229,8 @@ async function getDoctorDashboardStats(userId: string, branchFilter: any, today:
       change: 0,
       isIncrease: false
     },
-    visitsToday: myAppointmentsToday,
-    pendingAppointments: myPendingAppointments,
+    visitsToday: myVisitsToday,
+    pendingAppointments: myPendingVisits,
   };
 
   return NextResponse.json(stats);

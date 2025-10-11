@@ -1,10 +1,11 @@
 "use client";
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { apiClient } from "@/lib/services/api-client";
 import { toast } from "react-toastify";
+import { useHandoffListener } from "@/lib/utils/queue-events";
 
 import ChartOne from "../chart/chart1";
 import ChartTwo from "../chart/chart2";
@@ -66,7 +67,7 @@ const FrontDeskDashboard = () => {
   const [showLabVisitModal, setShowLabVisitModal] = useState(false);
   const isRefreshingRef = useRef(false);
 
-  const fetchDashboardStats = async (isBackgroundRefresh = false) => {
+  const fetchDashboardStats = useCallback(async (isBackgroundRefresh = false) => {
     if (isRefreshingRef.current) return;
     
     try {
@@ -88,17 +89,22 @@ const FrontDeskDashboard = () => {
       setRefreshing(false);
       isRefreshingRef.current = false;
     }
-  };
+  }, []);
+
+  useHandoffListener(useCallback(() => {
+    console.log('[FrontDeskDashboard] Handoff event received, refreshing stats...');
+    fetchDashboardStats(true);
+  }, [fetchDashboardStats]));
 
   useEffect(() => {
     fetchDashboardStats();
 
     const refreshInterval = setInterval(() => {
       fetchDashboardStats(true);
-    }, 30000);
+    }, 10000);
 
     return () => clearInterval(refreshInterval);
-  }, []);
+  }, [fetchDashboardStats]);
 
   const handleStartVisit = async (appointment: PendingCheckIn) => {
     const appointmentId = appointment._id;

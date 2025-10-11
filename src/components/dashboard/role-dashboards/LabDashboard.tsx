@@ -1,7 +1,8 @@
 "use client";
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { apiClient } from "@/lib/services/api-client";
+import { useHandoffListener } from "@/lib/utils/queue-events";
 
 import ChartOne from "../chart/chart1";
 import ChartTwo from "../chart/chart2";
@@ -61,7 +62,7 @@ const LabDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const isRefreshingRef = useRef(false);
 
-  const fetchDashboardStats = async (isBackgroundRefresh = false) => {
+  const fetchDashboardStats = useCallback(async (isBackgroundRefresh = false) => {
     if (isRefreshingRef.current) return;
     
     try {
@@ -83,17 +84,22 @@ const LabDashboard = () => {
       setRefreshing(false);
       isRefreshingRef.current = false;
     }
-  };
+  }, []);
+
+  useHandoffListener(useCallback(() => {
+    console.log('[LabDashboard] Handoff event received, refreshing stats...');
+    fetchDashboardStats(true);
+  }, [fetchDashboardStats]));
 
   useEffect(() => {
     fetchDashboardStats();
 
     const refreshInterval = setInterval(() => {
       fetchDashboardStats(true);
-    }, 30000);
+    }, 10000);
 
     return () => clearInterval(refreshInterval);
-  }, []);
+  }, [fetchDashboardStats]);
 
   const userName = session?.user?.name || 'Lab Tech';
 

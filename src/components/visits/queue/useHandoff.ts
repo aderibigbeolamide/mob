@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { apiClient } from '@/lib/services/api-client';
 import { toast } from 'react-toastify';
+import { emitHandoffEvent } from '@/lib/utils/queue-events';
 
 interface HandoffOptions {
   visitId: string;
+  currentStage?: string;
   targetStage?: string;
   notes?: string;
   nextAction?: string;
@@ -16,7 +18,7 @@ export function useHandoff() {
   const [error, setError] = useState<string | null>(null);
 
   const handoff = async (options: HandoffOptions) => {
-    const { visitId, targetStage, notes, nextAction, onSuccess, onError } = options;
+    const { visitId, currentStage, targetStage, notes, nextAction, onSuccess, onError } = options;
 
     setLoading(true);
     setError(null);
@@ -35,6 +37,10 @@ export function useHandoff() {
           showErrorToast: true,
         }
       );
+
+      if (currentStage && targetStage) {
+        emitHandoffEvent(visitId, currentStage, targetStage);
+      }
 
       if (onSuccess) {
         onSuccess();

@@ -1,8 +1,9 @@
 "use client";
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
 import { apiClient } from "@/lib/services/api-client";
+import { useHandoffListener } from "@/lib/utils/queue-events";
 
 import ChartOne from "../chart/chart1";
 import ChartTwo from "../chart/chart2";
@@ -62,7 +63,7 @@ const DoctorDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const isRefreshingRef = useRef(false);
 
-  const fetchDashboardStats = async (isBackgroundRefresh = false) => {
+  const fetchDashboardStats = useCallback(async (isBackgroundRefresh = false) => {
     if (isRefreshingRef.current) return;
     
     try {
@@ -84,17 +85,22 @@ const DoctorDashboard = () => {
       setRefreshing(false);
       isRefreshingRef.current = false;
     }
-  };
+  }, []);
+
+  useHandoffListener(useCallback(() => {
+    console.log('[DoctorDashboard] Handoff event received, refreshing stats...');
+    fetchDashboardStats(true);
+  }, [fetchDashboardStats]));
 
   useEffect(() => {
     fetchDashboardStats();
 
     const refreshInterval = setInterval(() => {
       fetchDashboardStats(true);
-    }, 30000);
+    }, 10000);
 
     return () => clearInterval(refreshInterval);
-  }, []);
+  }, [fetchDashboardStats]);
 
   const formatAppointmentDate = (dateString: string) => {
     try {
