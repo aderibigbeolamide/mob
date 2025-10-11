@@ -1,9 +1,10 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { apiClient } from '@/lib/services/api-client';
 import { PatientVisit } from '@/types/emr';
+import MedicineAutocomplete from '@/components/shared/MedicineAutocomplete';
 
 interface DoctorConsultationModalProps {
   visit: PatientVisit;
@@ -22,6 +23,15 @@ interface Prescription {
   frequency: string;
   duration: string;
   instructions: string;
+}
+
+interface Medicine {
+  _id: string;
+  productName: string;
+  genericName?: string;
+  stock: number;
+  unit: string;
+  category?: string;
 }
 
 const FREQUENCY_OPTIONS = [
@@ -46,6 +56,8 @@ export default function DoctorConsultationModal({
   onHide,
 }: DoctorConsultationModalProps) {
   const [loading, setLoading] = useState(false);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [medicinesLoading, setMedicinesLoading] = useState(false);
   const [formData, setFormData] = useState({
     chiefComplaint: '',
     historyOfPresentIllness: '',
@@ -62,6 +74,30 @@ export default function DoctorConsultationModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const vitalSigns = visit.stages?.nurse?.vitalSigns;
+
+  // Fetch pharmacy inventory when modal opens
+  useEffect(() => {
+    if (show) {
+      fetchMedicines();
+    }
+  }, [show]);
+
+  const fetchMedicines = async () => {
+    setMedicinesLoading(true);
+    try {
+      const response = await apiClient.get<{ products: Medicine[] }>(
+        '/api/pharmacy?limit=1000&status=active',
+        { showErrorToast: false }
+      );
+      setMedicines(response.products || []);
+    } catch (error) {
+      console.error('Failed to fetch medicines:', error);
+      // Don't show error toast, just log it
+      setMedicines([]);
+    } finally {
+      setMedicinesLoading(false);
+    }
+  };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -364,13 +400,14 @@ export default function DoctorConsultationModal({
                   <div className="row g-2">
                     <div className="col-md-6">
                       <label className="form-label small">Medicine Name</label>
-                      <input
-                        type="text"
+                      <MedicineAutocomplete
+                        value={prescription.medicineName}
+                        onChange={(value) => handlePrescriptionChange(index, 'medicineName', value)}
                         className={`form-control ${errors[`prescription_${index}_medicineName`] ? 'is-invalid' : ''}`}
                         placeholder="e.g., Amoxicillin"
-                        value={prescription.medicineName}
-                        onChange={(e) => handlePrescriptionChange(index, 'medicineName', e.target.value)}
                         disabled={loading}
+                        medicines={medicines}
+                        loading={medicinesLoading}
                       />
                       {errors[`prescription_${index}_medicineName`] && (
                         <div className="invalid-feedback">{errors[`prescription_${index}_medicineName`]}</div>
