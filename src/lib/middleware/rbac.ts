@@ -160,8 +160,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, ResourceAction[]> = {
     'prescription:update',
     'prescription:delete',
     'lab:read',
-    'lab:create',
-    'lab:update',
     'pharmacy:read',
     'reports:read',
   ],

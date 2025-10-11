@@ -55,7 +55,7 @@ This document provides a comprehensive mapping of Role-Based Access Control (RBA
 ❌ Doctors (no access)  
 ✅ Appointments (view, update assigned)  
 ✅ Visits (conduct visits, document)  
-✅ Laboratory (view results, order tests)  
+✅ Laboratory (view results only)  
 ✅ Pharmacy (view dispensing status)  
 ❌ Staff Management (no access)  
 ❌ Accounting (no access)  
@@ -78,7 +78,7 @@ This document provides a comprehensive mapping of Role-Based Access Control (RBA
 - **Vitals**: READ, CREATE, UPDATE
 - **Diagnosis**: CREATE, READ, UPDATE
 - **Prescriptions**: CREATE, READ, UPDATE, DELETE
-- **Lab Tests**: CREATE, READ, UPDATE
+- **Lab Tests**: READ (view only)
 - **Pharmacy**: READ
 - **Reports**: READ
 
@@ -291,7 +291,7 @@ This document provides a comprehensive mapping of Role-Based Access Control (RBA
 ✅ `/api/appointments` - FRONT_DESK, ADMIN  
 ✅ `/api/prescriptions` - DOCTOR, ADMIN  
 ✅ `/api/pharmacy` - PHARMACY, ADMIN  
-✅ `/api/lab-tests` - DOCTOR, LAB, ADMIN  
+✅ `/api/lab-tests` - LAB, ADMIN (Doctors can only view)  
 ✅ `/api/billing/invoices` - BILLING, ADMIN, FRONT_DESK  
 ✅ `/api/staff` - ADMIN only  
 ✅ `/api/visits` - ADMIN, FRONT_DESK, NURSE, DOCTOR  
@@ -422,4 +422,4 @@ Enhanced API endpoint protection for sensitive data:
 
 All enhancements reviewed and approved by system architect.
 
-Last Updated: October 6, 2025
+Last Updated: October 11, 2025
