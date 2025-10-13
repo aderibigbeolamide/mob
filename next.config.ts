@@ -26,8 +26,10 @@ const nextConfig: NextConfig = {
     serverActions: {
       allowedOrigins: process.env.NODE_ENV === 'development' ? ['*'] : [],
     },
+    cpus: 1,
+    workerThreads: false,
+    serverSourceMaps: false,
     webpackMemoryOptimizations: true,
-    webpackBuildWorker: true,
     optimizePackageImports: [
       '@fortawesome/fontawesome-free',
       '@ant-design/icons',

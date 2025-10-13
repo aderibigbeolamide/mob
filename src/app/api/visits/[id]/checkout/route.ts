@@ -6,7 +6,7 @@ import { checkRole, UserRole } from '@/lib/middleware/auth';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return checkRole([UserRole.ADMIN, UserRole.FRONT_DESK, UserRole.BILLING])(
     req,
@@ -14,7 +14,8 @@ export async function POST(
       try {
         await dbConnect();
 
-        const visitId = params.id;
+        const { id } = await params;
+        const visitId = id;
 
         if (!visitId) {
           return NextResponse.json(
