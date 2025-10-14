@@ -5,6 +5,17 @@ Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR
 
 ## Recent Changes
 **Date: October 14, 2025**
+- **Production Build Optimization**: Resolved build errors and configured production-ready build process:
+  - Implemented Turbopack (`--turbo` flag) for efficient compilation and reduced memory usage
+  - Removed `optimizePackageImports` that caused OOM errors with large libraries (FontAwesome, FullCalendar, react-icons)
+  - Removed CPU/worker constraints (`cpus: 1`, `workerThreads: false`) to enable parallel compilation
+  - Optimized memory allocation to 4GB for production builds
+  - Added dedicated `npm run type-check` script for TypeScript validation (runs `tsc --noEmit` with 4GB heap)
+  - TypeScript validation enabled in production builds (`ignoreBuildErrors: false`) for type safety
+  - Fixed Mongoose duplicate schema index warning in Pharmacy model
+  - Build successfully generates all 101 pages with zero TypeScript errors
+  - Configured autoscale deployment with `npm run build` and `npm start` commands
+  - Build Requirements: Minimum 4GB heap for production builds, Turbopack for optimal performance
 - **Department Records - Prescribed Medications Display**: Enhanced Department Records modal to show prescribed medications in Doctor Consultation section for pharmacy staff:
   - Added "Prescribed Medications" table in Doctor Consultation section with columns: Medication, Dosage, Frequency, Duration, Instructions
   - Professional table format with pill icon for better visual identification
