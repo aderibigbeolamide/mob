@@ -27,8 +27,7 @@ const PharmacySchema = new Schema<IPharmacy>({
     type: String,
     required: [true, 'Product ID is required'],
     uppercase: true,
-    trim: true,
-    index: true
+    trim: true
   },
   productName: {
     type: String,

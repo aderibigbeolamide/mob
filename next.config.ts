@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     process.env.REPLIT_DOMAINS || '',
   ].filter(Boolean),
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
     ignoreDuringBuilds: true,
