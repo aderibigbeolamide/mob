@@ -5,6 +5,18 @@ Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR
 
 ## Recent Changes
 **Date: October 14, 2025**
+- **Insurance Integration in Patient Registration**: Implemented comprehensive insurance module allowing patients to select insurance providers during registration:
+  - Added Insurance Information section to patient registration form with fields: Insurance Provider dropdown, Policy Number, Group Number, Subscriber Name, Subscriber Relationship, Valid From/Until dates
+  - Insurance provider dropdown auto-fetches active insurance plans from database via /api/insurance endpoint
+  - All insurance fields are optional - patients can register without insurance
+  - Subscriber name defaults to patient name; relationship defaults to "Self"
+  - Insurance data properly saved to Patient model's insurance embedded document
+  - Admin users can manage insurance providers via Insurance Management page (create, edit, view, delete providers)
+  - Component: `src/components/patients/addPatient.tsx`
+  - Models: Patient model already had insurance schema; Insurance model with provider details
+  - Purpose: Streamline insurance verification and billing processes for patients with medical coverage
+
+**Date: October 14, 2025**
 - **Production Build Optimization**: Resolved build errors and configured production-ready build process:
   - Implemented Turbopack (`--turbo` flag) for efficient compilation and reduced memory usage
   - Removed `optimizePackageImports` that caused OOM errors with large libraries (FontAwesome, FullCalendar, react-icons)
