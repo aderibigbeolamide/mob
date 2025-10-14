@@ -21,6 +21,7 @@ const MedicalResultsComponent = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "in_progress" | "completed" | "cancelled">("completed");
   const [selectedLabTest, setSelectedLabTest] = useState<any | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [modalType, setModalType] = useState<"create" | "view" | "delete" | null>(null);
@@ -35,6 +36,10 @@ const MedicalResultsComponent = () => {
         limit: limit,
         search: searchQuery,
       };
+
+      if (statusFilter !== "all") {
+        filters.status = statusFilter as "pending" | "in_progress" | "completed" | "cancelled";
+      }
 
       const response = await labTestService.getAll(filters);
       
@@ -51,7 +56,7 @@ const MedicalResultsComponent = () => {
 
   useEffect(() => {
     fetchLabTests();
-  }, [currentPage, searchQuery, sortOrder]);
+  }, [currentPage, searchQuery, sortOrder, statusFilter]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -349,6 +354,87 @@ const MedicalResultsComponent = () => {
                 <span className="badge bg-danger ms-2">{totalCount}</span>
               </h6>
               <div className="d-flex align-items-center flex-wrap gap-2">
+                <div className="dropdown">
+                  <Link
+                    href="#"
+                    className="dropdown-toggle btn btn-md btn-outline-light d-inline-flex align-items-center"
+                    data-bs-toggle="dropdown"
+                    aria-label="Status filter menu"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
+                    <i className="ti ti-filter me-1" />
+                    <span className="me-1">Status : </span>
+                    {statusFilter === "all" && "All"}
+                    {statusFilter === "pending" && "Pending"}
+                    {statusFilter === "in_progress" && "In Progress"}
+                    {statusFilter === "completed" && "Completed"}
+                    {statusFilter === "cancelled" && "Cancelled"}
+                  </Link>
+                  <ul className="dropdown-menu dropdown-menu-end p-2">
+                    <li>
+                      <button
+                        onClick={() => {
+                          setStatusFilter("completed");
+                          setCurrentPage(1);
+                        }}
+                        className={`dropdown-item rounded-1 ${statusFilter === "completed" ? "active" : ""}`}
+                        type="button"
+                      >
+                        Completed
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          setStatusFilter("in_progress");
+                          setCurrentPage(1);
+                        }}
+                        className={`dropdown-item rounded-1 ${statusFilter === "in_progress" ? "active" : ""}`}
+                        type="button"
+                      >
+                        In Progress
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          setStatusFilter("pending");
+                          setCurrentPage(1);
+                        }}
+                        className={`dropdown-item rounded-1 ${statusFilter === "pending" ? "active" : ""}`}
+                        type="button"
+                      >
+                        Pending
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          setStatusFilter("cancelled");
+                          setCurrentPage(1);
+                        }}
+                        className={`dropdown-item rounded-1 ${statusFilter === "cancelled" ? "active" : ""}`}
+                        type="button"
+                      >
+                        Cancelled
+                      </button>
+                    </li>
+                    <li><hr className="dropdown-divider" /></li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          setStatusFilter("all");
+                          setCurrentPage(1);
+                        }}
+                        className={`dropdown-item rounded-1 ${statusFilter === "all" ? "active" : ""}`}
+                        type="button"
+                      >
+                        All Statuses
+                      </button>
+                    </li>
+                  </ul>
+                </div>
                 <div className="dropdown">
                   <Link
                     href="#"
