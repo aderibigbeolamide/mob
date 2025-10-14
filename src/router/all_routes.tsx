@@ -78,6 +78,7 @@ export const all_routes = {
   editBillingRecord: "/edit-billing-record",
   billingRecordDetails: "/billing-record-details",
   branchManagement: "/branch-management",
+  insuranceManagement: "/insurance-management",
   queueMonitoring: "/queue-monitoring",
   notifications: "/notifications",
   messages: "/messages",

@@ -36,8 +36,12 @@ export interface IPatient extends Document {
   notes?: string;
   chiefComplaint?: string;
   insurance?: {
-    provider: string;
-    policyNumber: string;
+    insuranceId?: mongoose.Types.ObjectId;
+    policyNumber?: string;
+    groupNumber?: string;
+    subscriberName?: string;
+    subscriberRelationship?: string;
+    validFrom?: Date;
     validUntil?: Date;
   };
   registeredBy: mongoose.Types.ObjectId;
@@ -205,8 +209,16 @@ const PatientSchema = new Schema<IPatient>({
     trim: true
   },
   insurance: {
-    provider: { type: String },
-    policyNumber: { type: String },
+    insuranceId: { type: Schema.Types.ObjectId, ref: 'Insurance' },
+    policyNumber: { type: String, trim: true },
+    groupNumber: { type: String, trim: true },
+    subscriberName: { type: String, trim: true },
+    subscriberRelationship: { 
+      type: String, 
+      enum: ['Self', 'Spouse', 'Child', 'Parent', 'Other'],
+      trim: true 
+    },
+    validFrom: { type: Date },
     validUntil: { type: Date }
   },
   registeredBy: { 

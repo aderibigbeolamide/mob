@@ -241,6 +241,14 @@ export const SidebarData = [
         allowedRoles: [UserRole.ADMIN],
       },
       {
+        label: "Insurance Management",
+        link: route.insuranceManagement,
+        submenu: false,
+        icon: "shield-check",
+        submenuItems: [],
+        allowedRoles: [UserRole.ADMIN],
+      },
+      {
         label: "Queue Monitoring",
         link: route.queueMonitoring,
         submenu: false,
