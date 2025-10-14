@@ -290,16 +290,32 @@ async function getNurseDashboardStats(userId: string, branchFilter: any, today: 
 }
 
 async function getLabDashboardStats(userId: string, branchFilter: any, today: Date, _lastMonth: Date, _calculatePercentageChange: (current: number, previous: number) => number) {
+  const visitsWithPendingTests = await LabTest.find({ 
+    status: 'pending',
+    ...branchFilter
+  }).distinct('visit');
+  
+  const labQueueQuery: any = {
+    ...branchFilter,
+    status: 'in_progress'
+  };
+  
+  if (visitsWithPendingTests.length > 0) {
+    labQueueQuery.$or = [
+      { currentStage: 'lab' },
+      { _id: { $in: visitsWithPendingTests } }
+    ];
+  } else {
+    labQueueQuery.currentStage = 'lab';
+  }
+  
   const [
-    pendingTests,
+    pendingInQueue,
     completedToday,
-    inProgress,
-    pendingTestsList,
+    inProgressTests,
+    pendingVisitsList,
   ] = await Promise.all([
-    LabTest.countDocuments({
-      ...branchFilter,
-      status: 'pending'
-    }),
+    PatientVisit.countDocuments(labQueueQuery),
     LabTest.countDocuments({
       ...branchFilter,
       status: 'completed',
@@ -309,21 +325,27 @@ async function getLabDashboardStats(userId: string, branchFilter: any, today: Da
       ...branchFilter,
       status: 'in_progress'
     }),
-    LabTest.find({
-      ...branchFilter,
-      status: 'pending'
-    })
+    PatientVisit.find(labQueueQuery)
       .populate('patient', 'firstName lastName profileImage patientId')
-      .populate('doctor', 'firstName lastName')
-      .sort({ priority: -1, requestedAt: 1 })
+      .populate('assignedDoctor', 'firstName lastName')
+      .sort({ visitDate: 1 })
       .limit(10)
       .lean(),
   ]);
 
+  const pendingAppointmentsFormatted = pendingVisitsList.map((visit: any) => ({
+    _id: visit._id,
+    patient: visit.patient,
+    doctor: visit.assignedDoctor,
+    testName: 'Lab Test',
+    priority: 'normal',
+    status: 'pending'
+  }));
+
   const stats = {
     role: UserRole.LAB,
     pendingTests: {
-      total: pendingTests,
+      total: pendingInQueue,
       change: 0,
       isIncrease: false
     },
@@ -333,12 +355,12 @@ async function getLabDashboardStats(userId: string, branchFilter: any, today: Da
       isIncrease: false
     },
     inProgress: {
-      total: inProgress,
+      total: inProgressTests,
       change: 0,
       isIncrease: false
     },
-    visitsToday: pendingTests + inProgress,
-    pendingAppointments: pendingTestsList,
+    visitsToday: pendingInQueue + inProgressTests,
+    pendingAppointments: pendingAppointmentsFormatted,
   };
 
   return NextResponse.json(stats);
