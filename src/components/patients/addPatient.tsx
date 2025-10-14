@@ -35,11 +35,20 @@ const stepKeys = [
   "v-pills-complaints",
 ];
 
+const SubscriberRelationship = [
+  { value: "Self", label: "Self" },
+  { value: "Spouse", label: "Spouse" },
+  { value: "Child", label: "Child" },
+  { value: "Parent", label: "Parent" },
+  { value: "Other", label: "Other" },
+];
+
 const AddPatientComponent = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [insuranceProviders, setInsuranceProviders] = useState<Array<{ value: string; label: string }>>([]);
 
   const [formData, setFormData] = useState({
     patientId: `PT${Date.now().toString().slice(-6)}`,
@@ -72,6 +81,13 @@ const AddPatientComponent = () => {
     chronicConditions: [] as string[],
     currentComplaints: "",
     branchId: "",
+    insuranceId: "",
+    policyNumber: "",
+    groupNumber: "",
+    subscriberName: "",
+    subscriberRelationship: "",
+    validFrom: "",
+    validUntil: "",
   });
 
   const goToStep = (idx: number) => setCurrentStep(idx);
@@ -83,6 +99,22 @@ const AddPatientComponent = () => {
     document.body.classList.remove('modal-open');
     const backdrops = document.querySelectorAll('.modal-backdrop');
     backdrops.forEach((el) => el.parentNode && el.parentNode.removeChild(el));
+
+    const fetchInsuranceProviders = async () => {
+      try {
+        const response: any = await apiClient.get("/api/insurance");
+        const activeInsurance = response.data.filter((ins: any) => ins.isActive);
+        const insuranceOptions = activeInsurance.map((ins: any) => ({
+          value: ins._id,
+          label: ins.name,
+        }));
+        setInsuranceProviders(insuranceOptions);
+      } catch (error) {
+        console.error("Failed to fetch insurance providers:", error);
+      }
+    };
+
+    fetchInsuranceProviders();
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -156,6 +188,15 @@ const AddPatientComponent = () => {
         notes: formData.notes,
         chiefComplaint: formData.currentComplaints,
         branchId: branchId,
+        insurance: formData.insuranceId ? {
+          insuranceId: formData.insuranceId,
+          policyNumber: formData.policyNumber,
+          groupNumber: formData.groupNumber,
+          subscriberName: formData.subscriberName || `${formData.firstName} ${formData.lastName}`,
+          subscriberRelationship: formData.subscriberRelationship || 'Self',
+          validFrom: formData.validFrom,
+          validUntil: formData.validUntil
+        } : undefined
       };
 
       await apiClient.post("/api/patients", patientData, {
@@ -507,6 +548,95 @@ const AddPatientComponent = () => {
                               name="pincode"
                               value={formData.pincode}
                               onChange={handleInputChange}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <div className="card-header">
+                      <h5 className="mb-0">Insurance Information</h5>
+                    </div>
+                    <div className="card-body pb-1">
+                      <div className="row">
+                        <div className="col-xl-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Insurance Provider</label>
+                            <CommonSelect
+                              options={insuranceProviders}
+                              className="select"
+                              onChange={(val: any) => handleSelectChange("insuranceId", val)}
+                              placeholder="Select Insurance Provider"
+                            />
+                          </div>
+                        </div>
+                        <div className="col-xl-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Policy/Insurance Number</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="policyNumber"
+                              value={formData.policyNumber}
+                              onChange={handleInputChange}
+                              placeholder="Enter policy number"
+                            />
+                          </div>
+                        </div>
+                        <div className="col-xl-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Group Number</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="groupNumber"
+                              value={formData.groupNumber}
+                              onChange={handleInputChange}
+                              placeholder="Enter group number (optional)"
+                            />
+                          </div>
+                        </div>
+                        <div className="col-xl-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Subscriber Name</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              name="subscriberName"
+                              value={formData.subscriberName}
+                              onChange={handleInputChange}
+                              placeholder="Defaults to patient name"
+                            />
+                          </div>
+                        </div>
+                        <div className="col-xl-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Subscriber Relationship</label>
+                            <CommonSelect
+                              options={SubscriberRelationship}
+                              className="select"
+                              onChange={(val: any) => handleSelectChange("subscriberRelationship", val)}
+                              placeholder="Select relationship"
+                            />
+                          </div>
+                        </div>
+                        <div className="col-xl-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Valid From</label>
+                            <CommonDatePicker
+                              placeholder="dd/mm/yyyy"
+                              onChange={(date) => handleDateChange("validFrom", date)}
+                            />
+                          </div>
+                        </div>
+                        <div className="col-xl-4 col-md-6">
+                          <div className="mb-3">
+                            <label className="form-label">Valid Until</label>
+                            <CommonDatePicker
+                              placeholder="dd/mm/yyyy"
+                              onChange={(date) => handleDateChange("validUntil", date)}
                             />
                           </div>
                         </div>
