@@ -113,9 +113,9 @@ const EditInvoiceComponent = () => {
                     <tr>
                       <th>Item</th>
                       <th>Quantity</th>
-                      <th>Unit Price ($)</th>
-                      <th>Discount ($)</th>
-                      <th>Amount($)</th>
+                      <th>Unit Price (₦)</th>
+                      <th>Discount (₦)</th>
+                      <th>Amount(₦)</th>
                     </tr>
                   </thead>
                   <tbody>

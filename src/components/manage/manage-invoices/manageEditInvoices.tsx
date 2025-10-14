@@ -35,8 +35,8 @@ const ManageEditInvoices = () => {
   return (
     <>
   {/* ========================
-			Start Page Content
-		========================= */}
+                        Start Page Content
+                ========================= */}
   <div className="page-wrapper">
     {/* Start Content */}
     <div className="content">
@@ -130,9 +130,9 @@ const ManageEditInvoices = () => {
                     <tr>
                       <th>Item</th>
                       <th>Quantity</th>
-                      <th>Unit Price ($)</th>
-                      <th>Discount ($)</th>
-                      <th>Amount($)</th>
+                      <th>Unit Price (₦)</th>
+                      <th>Discount (₦)</th>
+                      <th>Amount(₦)</th>
                       <th />
                     </tr>
                   </thead>
@@ -343,8 +343,8 @@ const ManageEditInvoices = () => {
     {/* End Footer */}
   </div>
   {/* ========================
-			End Page Content
-		========================= */}
+                        End Page Content
+                ========================= */}
 </>
 
   )

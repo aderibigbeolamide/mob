@@ -404,7 +404,7 @@ const InvoiceModal = ({ type, invoice, onClose, onSuccess }: InvoiceModalProps) 
                             <input
                               type="text"
                               className="form-control form-control-sm"
-                              value={`$${item.total.toFixed(2)}`}
+                              value={`₦${item.total.toFixed(2)}`}
                               readOnly
                             />
                           </td>
@@ -427,7 +427,7 @@ const InvoiceModal = ({ type, invoice, onClose, onSuccess }: InvoiceModalProps) 
 
               <div className="row">
                 <div className="col-md-4 mb-3">
-                  <label className="form-label">Tax ($)</label>
+                  <label className="form-label">Tax (₦)</label>
                   <input
                     type="number"
                     className="form-control"
@@ -439,7 +439,7 @@ const InvoiceModal = ({ type, invoice, onClose, onSuccess }: InvoiceModalProps) 
                   />
                 </div>
                 <div className="col-md-4 mb-3">
-                  <label className="form-label">Discount ($)</label>
+                  <label className="form-label">Discount (₦)</label>
                   <input
                     type="number"
                     className="form-control"
@@ -468,7 +468,7 @@ const InvoiceModal = ({ type, invoice, onClose, onSuccess }: InvoiceModalProps) 
                   <div className="card bg-light">
                     <div className="card-body py-2">
                       <p className="mb-0 text-muted">Subtotal</p>
-                      <h5 className="mb-0">${formData.subtotal.toFixed(2)}</h5>
+                      <h5 className="mb-0">₦{formData.subtotal.toFixed(2)}</h5>
                     </div>
                   </div>
                 </div>
@@ -476,7 +476,7 @@ const InvoiceModal = ({ type, invoice, onClose, onSuccess }: InvoiceModalProps) 
                   <div className="card bg-primary text-white">
                     <div className="card-body py-2">
                       <p className="mb-0">Grand Total</p>
-                      <h5 className="mb-0">${formData.grandTotal.toFixed(2)}</h5>
+                      <h5 className="mb-0">₦{formData.grandTotal.toFixed(2)}</h5>
                     </div>
                   </div>
                 </div>
@@ -524,7 +524,7 @@ const InvoiceModal = ({ type, invoice, onClose, onSuccess }: InvoiceModalProps) 
                         />
                       </div>
                       <div className="col-md-4 mb-3">
-                        <label className="form-label">Claim Amount ($)</label>
+                        <label className="form-label">Claim Amount (₦)</label>
                         <input
                           type="number"
                           className="form-control"

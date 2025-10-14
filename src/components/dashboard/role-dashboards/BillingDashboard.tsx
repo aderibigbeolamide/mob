@@ -209,7 +209,7 @@ const BillingDashboard = () => {
                   <div className="ms-2 overflow-hidden">
                     <p className="mb-1 text-truncate">Revenue Today</p>
                     <h5 className="mb-0">
-                      {loading ? '...' : `$${stats?.revenueToday?.total?.toFixed(2) || '0.00'}`}
+                      {loading ? '...' : `₦${stats?.revenueToday?.total?.toFixed(2) || '0.00'}`}
                     </h5>
                   </div>
                 </div>
@@ -280,7 +280,7 @@ const BillingDashboard = () => {
                                       </Link>
                                     </h6>
                                     <p className="mb-0 fs-13 text-muted">
-                                      Amount: ${invoice.grandTotal?.toFixed(2) || '0.00'}
+                                      Amount: ₦{invoice.grandTotal?.toFixed(2) || '0.00'}
                                     </p>
                                   </div>
                                 </div>

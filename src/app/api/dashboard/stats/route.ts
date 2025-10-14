@@ -433,14 +433,16 @@ async function getPharmacyDashboardStats(userId: string, branchFilter: any, toda
 
 async function getBillingDashboardStats(userId: string, branchFilter: any, today: Date, _lastMonth: Date, _calculatePercentageChange: (current: number, previous: number) => number) {
   const [
-    pendingInvoices,
+    pendingInQueue,
     processedToday,
     totalRevenueToday,
-    pendingInvoicesList,
+    pendingVisitsList,
+    totalPendingInvoices,
   ] = await Promise.all([
-    Invoice.countDocuments({
+    PatientVisit.countDocuments({
       ...branchFilter,
-      status: { $in: ['PENDING', 'PARTIALLY_PAID'] }
+      currentStage: 'billing',
+      status: 'in_progress'
     }),
     Payment.countDocuments({
       ...branchFilter,
@@ -450,20 +452,44 @@ async function getBillingDashboardStats(userId: string, branchFilter: any, today
       { $match: { ...branchFilter, createdAt: { $gte: today } } },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]),
-    Invoice.find({
+    PatientVisit.find({
       ...branchFilter,
-      status: { $in: ['PENDING', 'PARTIALLY_PAID'] }
+      currentStage: 'billing',
+      status: 'in_progress'
     })
-      .populate('patientId', 'firstName lastName profileImage patientId')
-      .sort({ createdAt: 1 })
+      .populate('patient', 'firstName lastName profileImage patientId')
+      .populate('assignedDoctor', 'firstName lastName')
+      .sort({ visitDate: 1 })
       .limit(10)
       .lean(),
+    Invoice.countDocuments({
+      ...branchFilter,
+      status: { $in: ['PENDING', 'PARTIALLY_PAID'] }
+    }),
   ]);
+
+  const pendingAppointmentsFormatted = await Promise.all(
+    pendingVisitsList.map(async (visit: any) => {
+      const invoice: any = await Invoice.findOne({
+        patientId: visit.patient?._id,
+        status: { $in: ['PENDING', 'PARTIALLY_PAID'] }
+      }).sort({ createdAt: -1 }).lean();
+
+      return {
+        _id: invoice?._id || visit._id,
+        visitId: visit._id,
+        patientId: visit.patient,
+        grandTotal: invoice?.grandTotal || 0,
+        status: invoice?.status || 'PENDING',
+        dueDate: invoice?.createdAt
+      };
+    })
+  );
 
   const stats = {
     role: UserRole.BILLING,
     pendingInvoices: {
-      total: pendingInvoices,
+      total: pendingInQueue,
       change: 0,
       isIncrease: false
     },
@@ -478,7 +504,7 @@ async function getBillingDashboardStats(userId: string, branchFilter: any, today
       isIncrease: false
     },
     visitsToday: processedToday,
-    pendingAppointments: pendingInvoicesList,
+    pendingAppointments: pendingAppointmentsFormatted,
   };
 
   return NextResponse.json(stats);

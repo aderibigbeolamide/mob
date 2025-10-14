@@ -113,7 +113,7 @@ const AccountingDashboard = () => {
               Welcome, {userName}
             </h4>
             <p className="mb-0">
-              Revenue Today: {loading ? '...' : `$${stats?.revenueToday?.total?.toFixed(2) || '0.00'}`}
+              Revenue Today: {loading ? '...' : `₦${stats?.revenueToday?.total?.toFixed(2) || '0.00'}`}
             </p>
           </div>
           <div className="d-flex align-items-center gap-2">
@@ -154,7 +154,7 @@ const AccountingDashboard = () => {
                   <div className="ms-2 overflow-hidden">
                     <p className="mb-1 text-truncate">Revenue Today</p>
                     <h5 className="mb-0">
-                      {loading ? '...' : `$${stats?.revenueToday?.total?.toFixed(2) || '0.00'}`}
+                      {loading ? '...' : `₦${stats?.revenueToday?.total?.toFixed(2) || '0.00'}`}
                     </h5>
                   </div>
                 </div>
@@ -182,7 +182,7 @@ const AccountingDashboard = () => {
                   <div className="ms-2 overflow-hidden">
                     <p className="mb-1 text-truncate">Revenue This Month</p>
                     <h5 className="mb-0">
-                      {loading ? '...' : `$${stats?.revenueThisMonth?.total?.toFixed(2) || '0.00'}`}
+                      {loading ? '...' : `₦${stats?.revenueThisMonth?.total?.toFixed(2) || '0.00'}`}
                     </h5>
                   </div>
                 </div>
@@ -275,7 +275,7 @@ const AccountingDashboard = () => {
                             </td>
                             <td>
                               <span className={transaction.type === 'income' ? 'text-success' : 'text-dark'}>
-                                ${transaction.amount?.toFixed(2) || '0.00'}
+                                ₦{transaction.amount?.toFixed(2) || '0.00'}
                               </span>
                             </td>
                             <td>
