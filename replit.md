@@ -5,6 +5,14 @@ Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR
 
 ## Recent Changes
 **Date: October 14, 2025**
+- **Lab Results & Medical Results Status Filtering**: Enhanced Lab Results and Medical Results pages with intelligent status filtering for improved record keeping:
+  - Added status filter defaulting to "completed" tests for both Lab Results and Medical Results pages
+  - Implemented status filter dropdown with options: Completed (default), In Progress, Pending, Cancelled, and All Statuses
+  - Users can now easily view completed lab tests as historical records while maintaining flexibility to view other statuses when needed
+  - Filter properly integrated with pagination, resetting to page 1 when status changes
+  - Components: `src/components/laboratory/lab-results/labResults.tsx`, `src/components/laboratory/medical-results/medicalResults.tsx`
+  - Purpose: Completed lab tests now serve as comprehensive record-keeping archives while still allowing lab staff to monitor pending and in-progress tests
+
 - **Lab Dashboard-Queue Data Synchronization Fix**: Resolved data mismatch between Laboratory Queue and Lab Dashboard:
   - Issue: Lab Queue showed 2 patients but Dashboard showed 0 pending tests because dashboard only counted LabTest records
   - Root Cause: Patients can be in lab queue (currentStage: 'lab') without having LabTest records created yet
