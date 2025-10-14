@@ -42,21 +42,7 @@ export async function GET(req: NextRequest) {
       }
 
       if (userRole === UserRole.LAB) {
-        const LabTest = (await import('@/models/LabTest')).default;
-        
-        const visitsWithPendingTests = await LabTest.find({ 
-          status: 'pending',
-          ...(userBranchId ? { branchId: userBranchId } : {})
-        }).distinct('visit');
-        
-        if (visitsWithPendingTests.length > 0) {
-          query.$or = [
-            { currentStage: 'lab' },
-            { _id: { $in: visitsWithPendingTests } }
-          ];
-        } else {
-          query.currentStage = 'lab';
-        }
+        query.currentStage = 'lab';
       } else if (userRole === UserRole.ADMIN) {
         const stageFilter = searchParams.get('stage');
         if (stageFilter) {

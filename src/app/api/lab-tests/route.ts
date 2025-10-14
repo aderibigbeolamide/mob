@@ -61,6 +61,14 @@ export async function POST(req: NextRequest) {
 
         const labTest = await LabTest.create(labTestData);
 
+        const PatientVisit = (await import('@/models/PatientVisit')).default;
+        const visit = await PatientVisit.findById(body.visit);
+        
+        if (visit && visit.status === 'in_progress' && visit.currentStage !== 'lab') {
+          visit.currentStage = 'lab';
+          await visit.save();
+        }
+
         const populatedLabTest = await LabTest.findById(labTest._id)
           .populate('patient', 'firstName lastName patientId phoneNumber')
           .populate('doctor', 'firstName lastName')
@@ -158,7 +166,7 @@ export async function GET(req: NextRequest) {
 
       const skip = (page - 1) * limit;
 
-      const [labTests, totalCount] = await Promise.all([
+      const [labTests, totalLabTestsCount] = await Promise.all([
         LabTest.find(query)
           .populate('patient', 'firstName lastName patientId phoneNumber gender profileImage')
           .populate('doctor', 'firstName lastName profileImage')
@@ -166,16 +174,73 @@ export async function GET(req: NextRequest) {
           .populate('requestedBy', 'firstName lastName')
           .populate('result.performedBy', 'firstName lastName')
           .sort({ requestedAt: -1 })
-          .skip(skip)
-          .limit(limit)
           .lean(),
         LabTest.countDocuments(query)
       ]);
 
+      const PatientVisit = (await import('@/models/PatientVisit')).default;
+      
+      const branchFilterForVisits: any = {};
+      const userBranchId = session.user.branch?._id || session.user.branch;
+      if (userBranchId) {
+        branchFilterForVisits.branchId = userBranchId;
+      }
+
+      const labQueueQuery: any = {
+        ...branchFilterForVisits,
+        status: 'in_progress',
+        currentStage: 'lab'
+      };
+
+      if (patientId) {
+        labQueueQuery.patient = patientId;
+      }
+
+      const visitsInQueue = await PatientVisit.find(labQueueQuery)
+        .populate('patient', 'firstName lastName patientId phoneNumber gender profileImage')
+        .populate('assignedDoctor', 'firstName lastName profileImage')
+        .populate('branchId', 'name')
+        .sort({ visitDate: 1 })
+        .lean();
+
+      const visitLabTestIds = new Set(labTests.map((test: any) => test.visit?.toString()));
+      const visitsWithoutLabTests = visitsInQueue.filter(
+        (visit: any) => !visitLabTestIds.has(visit._id.toString())
+      );
+
+      const formattedVisits = visitsWithoutLabTests.map((visit: any) => ({
+        _id: visit._id,
+        testNumber: `QUEUE-${visit.visitNumber || visit._id.toString().slice(-6)}`,
+        patient: visit.patient,
+        doctor: visit.assignedDoctor,
+        visit: visit._id,
+        branchId: visit.branchId,
+        testName: 'Lab Test Required',
+        testCategory: 'General',
+        description: 'Patient in lab queue - test not yet created',
+        priority: 'routine',
+        status: 'pending',
+        requestedAt: visit.visitDate || new Date(),
+        requestedBy: null,
+        result: null,
+        isQueuedVisit: true
+      }));
+
+      const combinedResults = [...labTests, ...formattedVisits];
+      const totalCount = totalLabTestsCount + visitsWithoutLabTests.length;
+
+      const paginatedResults = combinedResults
+        .sort((a: any, b: any) => {
+          const dateA = new Date(a.requestedAt || a.visitDate || 0).getTime();
+          const dateB = new Date(b.requestedAt || b.visitDate || 0).getTime();
+          return dateB - dateA;
+        })
+        .slice(skip, skip + limit);
+
       const pagination = buildPaginationResponse(page, totalCount, limit);
 
       return NextResponse.json({
-        labTests,
+        labTests: paginatedResults,
         pagination
       });
 
