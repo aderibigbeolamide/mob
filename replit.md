@@ -4,6 +4,14 @@
 Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR) system built with Next.js 15 and TypeScript. Its primary purpose is to streamline patient care, clinical workflows, billing, and inter-departmental communication within a medical center. The system supports branch-specific and role-based access, aiming to enhance efficiency and patient outcomes. Key capabilities include patient management, appointment scheduling, clinical workflow management, billing and payments, messaging, and staff attendance tracking.
 
 ## Recent Changes
+**Date: October 14, 2025**
+- **Lab Dashboard-Queue Data Synchronization Fix**: Resolved data mismatch between Laboratory Queue and Lab Dashboard:
+  - Issue: Lab Queue showed 2 patients but Dashboard showed 0 pending tests because dashboard only counted LabTest records
+  - Root Cause: Patients can be in lab queue (currentStage: 'lab') without having LabTest records created yet
+  - Solution: Updated `getLabDashboardStats` in `/api/dashboard/stats` to use same query logic as queue API
+  - Dashboard now counts PatientVisit records with currentStage: 'lab' OR visits with pending lab tests, matching queue exactly
+  - Pending lab tests count, completed today, and in-progress stats now accurately reflect actual patient queue status
+
 **Date: October 11, 2025**
 - **Real-Time Dashboard-Queue Synchronization**: Implemented comprehensive synchronization system ensuring "My Upcoming Appointments" on dashboards immediately reflects queue changes across all 8 departments:
   - Created global event system (`src/lib/utils/queue-events.ts`) using CustomEvent API for instant communication between queue and dashboards
