@@ -5,6 +5,22 @@ Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR
 
 ## Recent Changes
 **Date: October 14, 2025**
+- **Department Records - Prescribed Medications Display**: Enhanced Department Records modal to show prescribed medications in Doctor Consultation section for pharmacy staff:
+  - Added "Prescribed Medications" table in Doctor Consultation section with columns: Medication, Dosage, Frequency, Duration, Instructions
+  - Professional table format with pill icon for better visual identification
+  - Shows "N/A" for missing instructions to ensure completeness
+  - Prescription metadata (Rx number, status) displayed below table for cleaner presentation
+  - Component: `src/components/visits/queue/ViewDepartmentRecordModal.tsx`
+  - Purpose: Pharmacy staff can now see complete medication details when reviewing patient records before dispensing
+
+- **Pharmacy Dashboard-Queue Data Synchronization Fix**: Resolved data mismatch between Pharmacy Queue and Pharmacist Dashboard:
+  - Issue: Pharmacy Queue showed 2 patients but Dashboard showed different patients because dashboard counted Prescription records
+  - Root Cause: Patients can be in pharmacy queue (currentStage: 'pharmacy') without having Prescription records dispensed yet
+  - Solution: Updated `getPharmacyDashboardStats` in `/api/dashboard/stats` to count PatientVisit records with currentStage: 'pharmacy' for queue metrics
+  - Dashboard now shows same patients as Pharmacy Queue (e.g., Joy Ola PT158961, Ibrahim Balogun PT647358)
+  - Pending prescriptions count, dispensed today, and active prescriptions stats now accurately reflect actual patient queue status
+  - Follows same synchronization pattern as Lab Dashboard-Queue fix
+
 - **Lab Results & Medical Results Status Filtering**: Enhanced Lab Results and Medical Results pages with intelligent status filtering for improved record keeping:
   - Added status filter defaulting to "completed" tests for both Lab Results and Medical Results pages
   - Implemented status filter dropdown with options: Completed (default), In Progress, Pending, Cancelled, and All Statuses
