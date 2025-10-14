@@ -294,28 +294,46 @@ export default function ViewDepartmentRecordModal({
 
           {prescriptions.length > 0 && (
             <div className="mt-3">
-              <h6 className="mb-2">Prescriptions</h6>
-              {prescriptions.map((prescription) => (
-                <div key={prescription._id} className="border rounded p-2 mb-2">
-                  <div className="d-flex justify-content-between align-items-start mb-2">
+              <h6 className="mb-2">
+                <i className="ti ti-pill me-2"></i>
+                Prescribed Medications
+              </h6>
+              <div className="table-responsive">
+                <table className="table table-sm table-bordered mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>Medication</th>
+                      <th>Dosage</th>
+                      <th>Frequency</th>
+                      <th>Duration</th>
+                      <th>Instructions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {prescriptions.map((prescription) =>
+                      prescription.medications.map((med, index) => (
+                        <tr key={`${prescription._id}-${index}`}>
+                          <td><strong>{med.name}</strong></td>
+                          <td>{med.dosage}</td>
+                          <td>{med.frequency}</td>
+                          <td>{med.duration}</td>
+                          <td>{med.instructions || 'N/A'}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-2">
+                {prescriptions.map((prescription) => (
+                  <div key={prescription._id} className="d-inline-flex align-items-center me-3">
                     <small className="text-muted">Rx #{prescription.prescriptionNumber}</small>
-                    <span className={`badge ${prescription.status === 'dispensed' ? 'bg-success' : 'bg-warning'}`}>
+                    <span className={`badge ${prescription.status === 'dispensed' ? 'bg-success' : 'bg-warning'} ms-2`}>
                       {prescription.status}
                     </span>
                   </div>
-                  <div className="mb-2">
-                    <strong>Medications:</strong>
-                    <ul className="mb-0 mt-1">
-                      {prescription.medications.map((med, index) => (
-                        <li key={index}>
-                          <strong>{med.name}</strong> - {med.dosage}, {med.frequency} for {med.duration}
-                          {med.instructions && <div className="text-muted small">Instructions: {med.instructions}</div>}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 

@@ -368,14 +368,15 @@ async function getLabDashboardStats(userId: string, branchFilter: any, today: Da
 
 async function getPharmacyDashboardStats(userId: string, branchFilter: any, today: Date, _lastMonth: Date, _calculatePercentageChange: (current: number, previous: number) => number) {
   const [
-    pendingPrescriptions,
+    pendingInQueue,
     dispensedToday,
     activePrescriptions,
-    pendingPrescriptionsList,
+    pendingVisitsList,
   ] = await Promise.all([
-    Prescription.countDocuments({
+    PatientVisit.countDocuments({
       ...branchFilter,
-      status: 'active'
+      currentStage: 'pharmacy',
+      status: 'in_progress'
     }),
     Prescription.countDocuments({
       ...branchFilter,
@@ -386,21 +387,30 @@ async function getPharmacyDashboardStats(userId: string, branchFilter: any, toda
       ...branchFilter,
       status: 'active'
     }),
-    Prescription.find({
+    PatientVisit.find({
       ...branchFilter,
-      status: 'active'
+      currentStage: 'pharmacy',
+      status: 'in_progress'
     })
       .populate('patient', 'firstName lastName profileImage patientId')
-      .populate('doctor', 'firstName lastName')
-      .sort({ createdAt: 1 })
+      .populate('assignedDoctor', 'firstName lastName')
+      .sort({ visitDate: 1 })
       .limit(10)
       .lean(),
   ]);
 
+  const pendingAppointmentsFormatted = pendingVisitsList.map((visit: any) => ({
+    _id: visit._id,
+    patient: visit.patient,
+    doctor: visit.assignedDoctor,
+    medications: [],
+    status: 'active'
+  }));
+
   const stats = {
     role: UserRole.PHARMACY,
     pendingPrescriptions: {
-      total: pendingPrescriptions,
+      total: pendingInQueue,
       change: 0,
       isIncrease: false
     },
@@ -414,8 +424,8 @@ async function getPharmacyDashboardStats(userId: string, branchFilter: any, toda
       change: 0,
       isIncrease: false
     },
-    visitsToday: pendingPrescriptions,
-    pendingAppointments: pendingPrescriptionsList,
+    visitsToday: pendingInQueue,
+    pendingAppointments: pendingAppointmentsFormatted,
   };
 
   return NextResponse.json(stats);
