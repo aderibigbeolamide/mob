@@ -9,11 +9,12 @@ import { generateInvoiceFromVisit, checkExistingInvoice } from '@/lib/services/i
 
 const DEFAULT_STAGE_WORKFLOW: Record<string, string> = {
   'front_desk': 'nurse',
-  'nurse': 'front_desk',
+  'nurse': 'returned_to_front_desk',
   'doctor': 'lab',
   'lab': 'pharmacy',
   'pharmacy': 'billing',
-  'billing': 'returned_to_front_desk'
+  'billing': 'returned_to_front_desk',
+  'returned_to_front_desk': 'doctor'
 };
 
 const ROLE_TO_STAGE: Record<string, string> = {
@@ -37,11 +38,12 @@ const STAGE_TO_ROLE: Record<string, UserRole> = {
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   'front_desk': ['nurse', 'doctor', 'lab', 'pharmacy', 'billing', 'completed'],
-  'nurse': ['front_desk', 'completed'],
+  'nurse': ['returned_to_front_desk', 'completed'],
   'doctor': ['nurse', 'lab', 'pharmacy', 'billing', 'completed'],
   'lab': ['doctor', 'pharmacy', 'billing', 'completed'],
   'pharmacy': ['billing', 'completed'],
-  'billing': ['returned_to_front_desk', 'completed']
+  'billing': ['returned_to_front_desk', 'completed'],
+  'returned_to_front_desk': ['doctor', 'nurse', 'lab', 'pharmacy', 'billing', 'completed']
 };
 
 function getStageFieldName(stage: string): string {
@@ -90,7 +92,7 @@ export async function POST(req: NextRequest) {
 
       const userRole = session.user.role as UserRole;
 
-      if (visit.currentStage === 'returned_to_front_desk' && userRole === UserRole.FRONT_DESK) {
+      if (visit.currentStage === 'returned_to_front_desk' && userRole === UserRole.FRONT_DESK && body.targetStage === 'completed') {
         return NextResponse.json(
           { 
             error: 'Patient has been returned to Front Desk. Please use the clock-out endpoint to complete the visit.',

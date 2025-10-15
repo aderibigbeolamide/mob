@@ -48,6 +48,9 @@ export async function GET(req: NextRequest) {
         if (stageFilter) {
           query.currentStage = stageFilter;
         }
+      } else if (userRole === UserRole.FRONT_DESK) {
+        // Frontdesk should see both new patients and patients returned from other departments
+        query.currentStage = { $in: ['front_desk', 'returned_to_front_desk'] };
       } else {
         query.currentStage = userStage;
       }

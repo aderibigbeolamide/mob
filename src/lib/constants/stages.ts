@@ -47,12 +47,13 @@ export const ROLE_TO_STAGE: Record<string, string> = {
 };
 
 export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  'front_desk': ['nurse', 'doctor', 'completed'],
-  'nurse': ['doctor', 'lab', 'pharmacy', 'billing', 'completed'],
+  'front_desk': ['nurse', 'doctor', 'lab', 'pharmacy', 'billing', 'completed'],
+  'nurse': ['returned_to_front_desk', 'completed'],
   'doctor': ['nurse', 'lab', 'pharmacy', 'billing', 'completed'],
   'lab': ['doctor', 'pharmacy', 'billing', 'completed'],
   'pharmacy': ['billing', 'completed'],
-  'billing': ['returned_to_front_desk', 'completed']
+  'billing': ['returned_to_front_desk', 'completed'],
+  'returned_to_front_desk': ['doctor', 'nurse', 'lab', 'pharmacy', 'billing', 'completed']
 };
 
 export function getNextStage(currentStage: string): string | null {
