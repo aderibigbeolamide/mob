@@ -284,17 +284,13 @@ const Header = () => {
   // Initialize Bootstrap dropdowns
   useEffect(() => {
     const initializeDropdowns = () => {
-      // @ts-ignore
       if (typeof window !== 'undefined' && window.bootstrap) {
         const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-        // @ts-ignore
         dropdownElementList.forEach(dropdownToggleEl => {
           try {
-            // @ts-ignore
-            const existingDropdown = window.bootstrap.Dropdown.getInstance(dropdownToggleEl);
+            const existingDropdown = window.bootstrap!.Dropdown.getInstance(dropdownToggleEl as HTMLElement);
             if (!existingDropdown) {
-              // @ts-ignore
-              new window.bootstrap.Dropdown(dropdownToggleEl);
+              new window.bootstrap!.Dropdown(dropdownToggleEl as HTMLElement);
             }
           } catch (error) {
             console.error('Error initializing dropdown:', error);

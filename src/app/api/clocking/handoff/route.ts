@@ -9,7 +9,7 @@ import { generateInvoiceFromVisit, checkExistingInvoice } from '@/lib/services/i
 
 const DEFAULT_STAGE_WORKFLOW: Record<string, string> = {
   'front_desk': 'nurse',
-  'nurse': 'doctor',
+  'nurse': 'front_desk',
   'doctor': 'lab',
   'lab': 'pharmacy',
   'pharmacy': 'billing',
@@ -26,6 +26,7 @@ const ROLE_TO_STAGE: Record<string, string> = {
 };
 
 const STAGE_TO_ROLE: Record<string, UserRole> = {
+  'front_desk': UserRole.FRONT_DESK,
   'nurse': UserRole.NURSE,
   'doctor': UserRole.DOCTOR,
   'lab': UserRole.LAB,
@@ -35,8 +36,8 @@ const STAGE_TO_ROLE: Record<string, UserRole> = {
 };
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  'front_desk': ['nurse', 'doctor', 'completed'],
-  'nurse': ['doctor', 'lab', 'pharmacy', 'billing', 'completed'],
+  'front_desk': ['nurse', 'doctor', 'lab', 'pharmacy', 'billing', 'completed'],
+  'nurse': ['front_desk', 'completed'],
   'doctor': ['nurse', 'lab', 'pharmacy', 'billing', 'completed'],
   'lab': ['doctor', 'pharmacy', 'billing', 'completed'],
   'pharmacy': ['billing', 'completed'],

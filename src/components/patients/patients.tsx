@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { all_routes } from "@/router/all_routes";
 import ImageWithBasePath from "@/core/common-components/image-with-base-path";
@@ -8,6 +9,7 @@ import CommonFooter from "@/core/common-components/common-footer/commonFooter";
 import { apiClient } from "@/lib/services/api-client";
 import { Patient, PaginationInfo } from "@/types/emr";
 import { usePermissions } from "@/hooks/usePermissions";
+import { emitHandoffEvent } from "@/lib/utils/queue-events";
 
 interface PatientsResponse {
   patients: Patient[];
@@ -16,6 +18,7 @@ interface PatientsResponse {
 
 const PatientsComponent = () => {
   const { data: session } = useSession();
+  const router = useRouter();
   const { can } = usePermissions();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +33,7 @@ const PatientsComponent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [clockingInPatient, setClockingInPatient] = useState<string | null>(null);
 
   const fetchPatients = useCallback(async () => {
     setLoading(true);
@@ -74,6 +78,39 @@ const PatientsComponent = () => {
       fetchPatients();
     } catch (error) {
       console.error("Failed to delete patient:", error);
+    }
+  };
+
+  const handleClockIn = async (patientId: string) => {
+    try {
+      setClockingInPatient(patientId);
+      
+      const branchId = typeof session?.user?.branch === 'object' 
+        ? session.user.branch._id 
+        : session?.user?.branch;
+
+      if (!branchId) {
+        throw new Error("Branch information not found");
+      }
+
+      const response: any = await apiClient.post("/api/clocking/clock-in", {
+        patientId,
+        branchId,
+      }, {
+        successMessage: "Patient clocked in successfully",
+      });
+
+      if (response?.visit) {
+        emitHandoffEvent(response.visit._id, '', 'front_desk');
+        router.push(all_routes.visits);
+      }
+    } catch (error: any) {
+      console.error("Failed to clock in patient:", error);
+      if (error.status === 409) {
+        router.push(all_routes.visits);
+      }
+    } finally {
+      setClockingInPatient(null);
     }
   };
 
@@ -303,12 +340,20 @@ const PatientsComponent = () => {
                           </div>
                         </div>
                       </div>
-                      <Link
-                        href={`${all_routes.appointments}?patientId=${patient._id}`}
+                      <button
+                        onClick={() => patient._id && handleClockIn(patient._id)}
                         className="btn btn-dark w-100"
+                        disabled={clockingInPatient === patient._id || !patient._id}
                       >
-                        clockin
-                      </Link>
+                        {clockingInPatient === patient._id ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Clocking In...
+                          </>
+                        ) : (
+                          'Clock-In'
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
