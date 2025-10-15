@@ -12,7 +12,9 @@ export async function GET(
     try {
       await dbConnect();
 
-      const branch = await Branch.findById((await params).id)
+      const { id } = await params;
+
+      const branch = await Branch.findById(id)
         .populate('manager', 'firstName lastName email phoneNumber')
         .lean() as any;
 
@@ -41,10 +43,12 @@ export async function PUT(
       try {
         await dbConnect();
 
+        const { id } = await params;
+
         const body = await req.json();
         const { name, code, address, city, state, country, phone, email, manager, isActive } = body;
 
-        const branch = await Branch.findById((await params).id);
+        const branch = await Branch.findById(id);
         if (!branch) {
           return NextResponse.json({ error: 'Branch not found' }, { status: 404 });
         }
@@ -52,7 +56,7 @@ export async function PUT(
         if (code && code.toUpperCase() !== branch.code) {
           const existingBranch = await Branch.findOne({ 
             code: code.toUpperCase(),
-            _id: { $ne: (await params).id }
+            _id: { $ne: id }
           });
           if (existingBranch) {
             return NextResponse.json(
@@ -75,7 +79,7 @@ export async function PUT(
         if (isActive !== undefined) updateData.isActive = isActive;
 
         const updatedBranch = await Branch.findByIdAndUpdate(
-          (await params).id,
+          id,
           updateData,
           { new: true, runValidators: true }
         ).populate('manager', 'firstName lastName email phoneNumber').lean() as any;
@@ -102,7 +106,9 @@ export async function DELETE(
       try {
         await dbConnect();
 
-        const branch = await Branch.findByIdAndDelete((await params).id);
+        const { id } = await params;
+
+        const branch = await Branch.findByIdAndDelete(id);
 
         if (!branch) {
           return NextResponse.json({ error: 'Branch not found' }, { status: 404 });
