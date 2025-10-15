@@ -34,18 +34,13 @@ export async function POST(
         }
 
         // Update visit status to completed (if not already)
-        if (visit.status !== 'completed') {
-          visit.status = 'completed';
-        }
-
-        // Add checkout information
+        visit.status = 'completed';
         visit.currentStage = 'completed';
-        visit.stages = {
-          ...visit.stages,
-          checkout: {
-            clockedOutBy: session.user.id,
-            clockedOutAt: new Date()
-          }
+
+        // Add final checkout information
+        visit.finalClockOut = {
+          clockedOutBy: session.user.id,
+          clockedOutAt: new Date()
         };
 
         await visit.save();
