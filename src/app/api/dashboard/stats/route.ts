@@ -575,6 +575,7 @@ async function getFrontDeskDashboardStats(userId: string, branchFilter: any, tod
     appointmentsToday,
     newPatientsToday,
     todayAppointments,
+    patientsReturnedToFrontDesk,
   ] = await Promise.all([
     Appointment.countDocuments({
       ...branchFilter,
@@ -593,6 +594,16 @@ async function getFrontDeskDashboardStats(userId: string, branchFilter: any, tod
       .populate('doctorId', 'firstName lastName')
       .sort({ appointmentTime: 1 })
       .limit(20)
+      .lean(),
+    PatientVisit.find({
+      ...branchFilter,
+      currentStage: 'returned_to_front_desk',
+      status: 'in_progress'
+    })
+      .populate('patient', 'firstName lastName profileImage patientId')
+      .populate('assignedDoctor', 'firstName lastName')
+      .sort({ visitDate: 1 })
+      .limit(10)
       .lean(),
   ]);
 
@@ -622,6 +633,24 @@ async function getFrontDeskDashboardStats(userId: string, branchFilter: any, tod
     };
   });
 
+  // Format patients returned to front desk
+  const returnedPatientsFormatted = patientsReturnedToFrontDesk.map((visit: any) => ({
+    _id: visit._id,
+    patientId: visit.patient,
+    doctorId: visit.assignedDoctor,
+    appointmentNumber: visit.visitNumber,
+    appointmentDate: visit.visitDate,
+    appointmentTime: visit.visitDate,
+    status: 'RETURNED',
+    visit: visit,
+    currentStage: visit.currentStage,
+    visitStatus: visit.status,
+    isReturnedPatient: true
+  }));
+
+  // Combine appointments with returned patients
+  const allPendingItems = [...enhancedAppointments, ...returnedPatientsFormatted];
+
   const pendingCheckIns = enhancedAppointments.filter((apt: any) => 
     apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED'
   ).length;
@@ -643,8 +672,13 @@ async function getFrontDeskDashboardStats(userId: string, branchFilter: any, tod
       change: 0,
       isIncrease: false
     },
+    patientsReturnedToFrontDesk: {
+      total: patientsReturnedToFrontDesk.length,
+      change: 0,
+      isIncrease: false
+    },
     visitsToday: appointmentsToday,
-    pendingAppointments: enhancedAppointments,
+    pendingAppointments: allPendingItems,
   };
 
   return NextResponse.json(stats);
