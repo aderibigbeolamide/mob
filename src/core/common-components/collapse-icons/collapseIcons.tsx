@@ -8,14 +8,12 @@ const CollapseIcons = () => {
 
   useEffect(() => {
     // Initialize Bootstrap tooltips
-    // @ts-ignore
     if (window.bootstrap) {
-      const tooltipTriggerList = [].slice.call(
+      const tooltipTriggerList = Array.from(
         document.querySelectorAll('[data-bs-toggle="tooltip"]')
       );
       tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-        // @ts-ignore
-        new window.bootstrap.Tooltip(tooltipTriggerEl);
+        new window.bootstrap!.Tooltip(tooltipTriggerEl as HTMLElement);
       });
     }
   }, []);
