@@ -588,7 +588,7 @@ async function getFrontDeskDashboardStats(userId: string, branchFilter: any, tod
     Appointment.find({
       ...branchFilter,
       appointmentDate: { $gte: today, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) },
-      status: { $in: ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'] }
+      status: { $in: ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS'] }
     })
       .populate('patientId', 'firstName lastName profileImage patientId')
       .populate('doctorId', 'firstName lastName')
@@ -611,7 +611,7 @@ async function getFrontDeskDashboardStats(userId: string, branchFilter: any, tod
   const appointmentIds = todayAppointments.map(apt => apt._id);
   const visits = await PatientVisit.find({
     appointment: { $in: appointmentIds },
-    status: { $in: ['in_progress', 'completed'] }
+    status: 'in_progress'
   }).lean();
 
   // Create a map of appointment ID to visit
