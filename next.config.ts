@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['mongoose', 'bcryptjs'],
   productionBrowserSourceMaps: false,
   devIndicators: {
-    buildActivityPosition: 'bottom-right',
+    position: 'bottom-right',
   },
   experimental: {
     serverActions: {
@@ -29,12 +29,6 @@ const nextConfig: NextConfig = {
     serverSourceMaps: false,
     webpackMemoryOptimizations: true,
   },
-  transpilePackages: [
-    'antd',
-    'rc-util',
-    'rc-pagination',
-    'rc-picker',
-  ],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

@@ -307,7 +307,7 @@ const PatientsComponent = () => {
                         href={`${all_routes.appointments}?patientId=${patient._id}`}
                         className="btn btn-dark w-100"
                       >
-                        Add Appointment
+                        clockin
                       </Link>
                     </div>
                   </div>
