@@ -3,6 +3,10 @@
 ## Overview
 Life Point Medical Centre EMR is a comprehensive Electronic Medical Records (EMR) system built with Next.js 15 and TypeScript. Its primary purpose is to streamline patient care, clinical workflows, billing, and inter-departmental communication within a medical center. The system supports branch-specific and role-based access, aiming to enhance efficiency and patient outcomes. Key capabilities include patient management, appointment scheduling, clinical workflow management, billing and payments, messaging, and staff attendance tracking. The system integrates insurance management into patient registration to streamline verification and billing processes.
 
+## Recent Changes (October 15, 2025)
+- **Vital Signs RBAC Enhancement**: Restricted "Record Vital Signs" button to Nurse and Admin roles only. Front desk users can no longer record vital signs directly.
+- **Improved Handoff Workflow**: Updated patient handoff flow so nurses now hand patients back to front desk after recording vitals (instead of directly to doctor). The workflow is now: Front Desk → Nurse → Front Desk → Doctor/Lab/Pharmacy/etc. This allows front desk to coordinate the next appropriate department after vitals are recorded.
+
 ## User Preferences
 The user prefers a development approach that emphasizes:
 - **Clarity**: Simple, clear explanations for any proposed changes or issues.
