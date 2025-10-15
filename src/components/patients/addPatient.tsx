@@ -99,11 +99,15 @@ const AddPatientComponent = () => {
     document.body.classList.remove('modal-open');
     const backdrops = document.querySelectorAll('.modal-backdrop');
     backdrops.forEach((el) => el.parentNode && el.parentNode.removeChild(el));
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
 
     const fetchInsuranceProviders = async () => {
       try {
-        const response: any = await apiClient.get("/api/insurance");
-        const activeInsurance = response.data.filter((ins: any) => ins.isActive);
+        const insurances: any = await apiClient.get("/api/insurance");
+        const activeInsurance = insurances.filter((ins: any) => ins.isActive);
         const insuranceOptions = activeInsurance.map((ins: any) => ({
           value: ins._id,
           label: ins.name,
@@ -115,7 +119,7 @@ const AddPatientComponent = () => {
     };
 
     fetchInsuranceProviders();
-  }, []);
+  }, [session]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

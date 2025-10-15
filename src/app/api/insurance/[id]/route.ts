@@ -7,7 +7,7 @@ import { UserRole } from "@/types/emr";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -21,12 +21,14 @@ export async function GET(
 
     await dbConnect();
 
+    const { id } = await params;
+
     const branchId = typeof session.user.branch === 'object' 
       ? session.user.branch._id 
       : session.user.branch;
 
     const insurance = await Insurance.findOne({ 
-      _id: params.id,
+      _id: id,
       branchId 
     }).populate('createdBy', 'firstName lastName');
 
@@ -49,7 +51,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -70,6 +72,8 @@ export async function PUT(
 
     await dbConnect();
 
+    const { id } = await params;
+
     const data = await req.json();
 
     const branchId = typeof session.user.branch === 'object' 
@@ -77,7 +81,7 @@ export async function PUT(
       : session.user.branch;
 
     const insurance = await Insurance.findOneAndUpdate(
-      { _id: params.id, branchId },
+      { _id: id, branchId },
       { $set: data },
       { new: true, runValidators: true }
     ).populate('createdBy', 'firstName lastName');
@@ -109,7 +113,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -130,12 +134,14 @@ export async function DELETE(
 
     await dbConnect();
 
+    const { id } = await params;
+
     const branchId = typeof session.user.branch === 'object' 
       ? session.user.branch._id 
       : session.user.branch;
 
     const insurance = await Insurance.findOneAndUpdate(
-      { _id: params.id, branchId },
+      { _id: id, branchId },
       { $set: { isActive: false } },
       { new: true }
     );
