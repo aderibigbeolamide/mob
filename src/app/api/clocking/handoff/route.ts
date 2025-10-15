@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
 
       const userRole = session.user.role as UserRole;
 
-      if (visit.currentStage === 'returned_to_front_desk' && userRole === UserRole.FRONT_DESK) {
+      if (visit.currentStage === 'returned_to_front_desk' && userRole === UserRole.FRONT_DESK && body.targetStage === 'completed') {
         return NextResponse.json(
           { 
             error: 'Patient has been returned to Front Desk. Please use the clock-out endpoint to complete the visit.',

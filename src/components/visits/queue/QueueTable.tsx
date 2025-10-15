@@ -12,6 +12,7 @@ import PharmacyClockInModal from './PharmacyClockInModal';
 import BillingClockInModal from './BillingClockInModal';
 import AdmitPatientModal from '@/components/visits/modal/AdmitPatientModal';
 import ViewDepartmentRecordModal from './ViewDepartmentRecordModal';
+import SelectDoctorAndHandoffModal from './SelectDoctorAndHandoffModal';
 import AssignedDoctorCell from '../AssignedDoctorCell';
 import { all_routes } from '@/router/all_routes';
 import { formatDistanceToNow } from 'date-fns';
@@ -40,6 +41,8 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
   const [selectedVisitForAdmission, setSelectedVisitForAdmission] = useState<PatientVisit | null>(null);
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [selectedVisitForRecord, setSelectedVisitForRecord] = useState<PatientVisit | null>(null);
+  const [showSelectDoctorModal, setShowSelectDoctorModal] = useState(false);
+  const [selectedVisitForDoctorSelection, setSelectedVisitForDoctorSelection] = useState<PatientVisit | null>(null);
   const formatTimeWaiting = (clockedInAt?: Date) => {
     if (!clockedInAt) return 'N/A';
     try {
@@ -201,6 +204,23 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
     setSelectedVisitForRecord(null);
   };
 
+  const handleOpenSelectDoctorModal = (visit: PatientVisit) => {
+    setSelectedVisitForDoctorSelection(visit);
+    setShowSelectDoctorModal(true);
+  };
+
+  const handleCloseSelectDoctorModal = () => {
+    setShowSelectDoctorModal(false);
+    setSelectedVisitForDoctorSelection(null);
+  };
+
+  const handleSelectDoctorSuccess = () => {
+    if (onHandoffSuccess && selectedVisitForDoctorSelection) {
+      onHandoffSuccess(selectedVisitForDoctorSelection._id!);
+    }
+    handleCloseSelectDoctorModal();
+  };
+
   const renderActionButtons = (visit: PatientVisit) => {
     const patient = visit.patient;
     const isNurse = userRole === UserRole.NURSE;
@@ -208,6 +228,7 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
     const isLab = userRole === UserRole.LAB;
     const isPharmacy = userRole === UserRole.PHARMACY;
     const isBilling = userRole === UserRole.BILLING;
+    const isFrontDesk = userRole === UserRole.FRONT_DESK;
     const hasNurseClockedIn = !!visit.stages.nurse?.clockedInAt;
     const hasDoctorClockedIn = !!visit.stages.doctor?.clockedInAt;
     const hasLabClockedIn = !!visit.stages.lab?.clockedInAt;
@@ -420,6 +441,27 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
             currentStage={visit.currentStage}
             onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
           />
+        </>
+      );
+    }
+
+    if (isFrontDesk && visit.currentStage === 'returned_to_front_desk') {
+      return (
+        <>
+          <button
+            className="btn btn-sm btn-outline-info"
+            onClick={() => handleOpenRecordModal(visit)}
+          >
+            <i className="ti ti-file-text me-1"></i>
+            View Record
+          </button>
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => handleOpenSelectDoctorModal(visit)}
+          >
+            <i className="ti ti-user-check me-1"></i>
+            Select Doctor & Handoff
+          </button>
         </>
       );
     }
@@ -697,6 +739,19 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
           }}
           show={showRecordModal}
           onHide={handleCloseRecordModal}
+        />
+      )}
+
+      {showSelectDoctorModal && selectedVisitForDoctorSelection && (
+        <SelectDoctorAndHandoffModal
+          visitId={selectedVisitForDoctorSelection._id!}
+          currentDoctor={
+            typeof selectedVisitForDoctorSelection.assignedDoctor === 'string'
+              ? null
+              : selectedVisitForDoctorSelection.assignedDoctor
+          }
+          onSuccess={handleSelectDoctorSuccess}
+          onClose={handleCloseSelectDoctorModal}
         />
       )}
     </>
