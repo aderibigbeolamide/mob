@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import PatientDetailsHeader from "./PatientDetailsHeader";
 import { all_routes } from "@/router/all_routes";
@@ -9,10 +10,12 @@ import { vitalSignService, VitalSignRecord } from "@/lib/services/vitalSignServi
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import VitalSignsModal from "./modals/vitalSignsModal";
+import { UserRole } from "@/types/emr";
 
 const PatientDetailsVitalSignsComponent = () => {
   const searchParams = useSearchParams();
   const patientId = searchParams.get("id");
+  const { data: session } = useSession();
 
   const [vitalSigns, setVitalSigns] = useState<VitalSignRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +24,9 @@ const PatientDetailsVitalSignsComponent = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState<any | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  const userRole = session?.user?.role as UserRole;
+  const canRecordVitals = userRole === UserRole.NURSE || userRole === UserRole.ADMIN;
 
   const fetchVitalSigns = async () => {
     if (!patientId) {
@@ -156,13 +162,15 @@ const PatientDetailsVitalSignsComponent = () => {
                     </li>
                   </ul>
                 </div>
-                <button
-                  className="btn btn-md btn-primary d-inline-flex align-items-center"
-                  onClick={handleRecordVitalSigns}
-                >
-                  <i className="ti ti-plus me-1" />
-                  Record Vital Signs
-                </button>
+                {canRecordVitals && (
+                  <button
+                    className="btn btn-md btn-primary d-inline-flex align-items-center"
+                    onClick={handleRecordVitalSigns}
+                  >
+                    <i className="ti ti-plus me-1" />
+                    Record Vital Signs
+                  </button>
+                )}
               </div>
             </div>
 
@@ -186,13 +194,15 @@ const PatientDetailsVitalSignsComponent = () => {
                   <p className="text-muted mb-3">
                     No vital signs have been recorded for this patient yet.
                   </p>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleRecordVitalSigns}
-                  >
-                    <i className="ti ti-plus me-1" />
-                    Record First Vital Signs
-                  </button>
+                  {canRecordVitals && (
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleRecordVitalSigns}
+                    >
+                      <i className="ti ti-plus me-1" />
+                      Record First Vital Signs
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="table-responsive table-nowrap">
