@@ -38,6 +38,10 @@ const STAGE_OPTIONS: Record<string, { label: string; nextStages: string[] }> = {
   'billing': { 
     label: 'Billing', 
     nextStages: ['returned_to_front_desk', 'completed'] 
+  },
+  'returned_to_front_desk': { 
+    label: 'Returned to Front Desk', 
+    nextStages: ['nurse', 'doctor', 'lab', 'pharmacy', 'billing', 'completed'] 
   }
 };
 

@@ -14,6 +14,7 @@ import { all_routes } from "@/router/all_routes";
 import PredefinedDatePicker from "@/core/common-components/common-date-range-picker/PredefinedDatePicker";
 import ImageWithBasePath from "@/core/common-components/image-with-base-path";
 import CreateLabVisitModal from "../CreateLabVisitModal";
+import HandoffButton from "@/components/visits/handoff/HandoffButton";
 
 interface PatientInfo {
   _id: string;
@@ -178,6 +179,45 @@ const FrontDeskDashboard = () => {
 
   const getAppointmentActionButton = (appointment: PendingCheckIn) => {
     const isLoading = startingVisit === appointment._id;
+    const patient = appointment.patient || appointment.patientId;
+
+    // RETURNED TO FRONT DESK - Show Handoff button
+    if (appointment.currentStage === 'returned_to_front_desk' && appointment.visitStatus === 'in_progress') {
+      return (
+        <HandoffButton
+          visitId={appointment.visit?._id}
+          currentStage="returned_to_front_desk"
+          patientName={patient ? `${patient.firstName} ${patient.lastName}` : 'Patient'}
+          onSuccess={fetchDashboardStats}
+          variant="primary"
+          size="sm"
+        />
+      );
+    }
+
+    // VISIT COMPLETED (but appointment not checked out yet) - Show Check Out button
+    if (appointment.visitStatus === 'completed' && appointment.status !== 'COMPLETED') {
+      return (
+        <button
+          onClick={() => handleCheckOut(appointment)}
+          className="btn btn-sm"
+          style={{ backgroundColor: '#CC0000', color: 'white', borderColor: '#CC0000' }}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              Checking Out...
+            </>
+          ) : (
+            <>
+              <i className="ti ti-check me-1"></i>
+              Check Out Patient
+            </>
+          )}
+        </button>
+      );
+    }
 
     // SCHEDULED or CONFIRMED - Show Check In button
     if (appointment.status === 'SCHEDULED' || appointment.status === 'CONFIRMED') {
@@ -217,29 +257,6 @@ const FrontDeskDashboard = () => {
           <i className="ti ti-activity me-1"></i>
           {stageLabel}
         </span>
-      );
-    }
-
-    // COMPLETED - Show Check Out button
-    if (appointment.status === 'COMPLETED' || appointment.visitStatus === 'completed') {
-      return (
-        <button
-          onClick={() => handleCheckOut(appointment)}
-          className="btn btn-sm btn-success"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              Checking Out...
-            </>
-          ) : (
-            <>
-              <i className="ti ti-check me-1"></i>
-              Check Out Patient
-            </>
-          )}
-        </button>
       );
     }
 
@@ -438,7 +455,11 @@ const FrontDeskDashboard = () => {
                         {stats.pendingAppointments.filter(appointment => appointment.patient || appointment.patientId).map((appointment) => {
                           const patient = appointment.patient || appointment.patientId;
                           return (
-                            <tr key={appointment._id}>
+                            <tr key={appointment._id} style={{
+                              backgroundColor: 
+                                appointment.currentStage === 'returned_to_front_desk' ? '#FFF3CD' : 
+                                appointment.visitStatus === 'completed' ? '#D4EDDA' : 'transparent'
+                            }}>
                               <td>
                                 <div className="d-flex align-items-center">
                                   <Link
@@ -463,7 +484,7 @@ const FrontDeskDashboard = () => {
                                         {patient.firstName} {patient.lastName}
                                       </Link>
                                     </h6>
-                                    <div className="d-flex align-items-center">
+                                    <div className="d-flex align-items-center flex-wrap gap-1">
                                       <p className="mb-0 fs-13 d-inline-flex align-items-center text-body">
                                         <i className="ti ti-calendar me-1" />
                                         {formatAppointmentDate(appointment.appointmentDate)}
@@ -475,6 +496,18 @@ const FrontDeskDashboard = () => {
                                         <i className="ti ti-clock-hour-7 me-1" />
                                         {appointment.appointmentTime}
                                       </p>
+                                      {appointment.currentStage === 'returned_to_front_desk' && (
+                                        <span className="badge ms-2" style={{ backgroundColor: '#FFC107', color: '#000' }}>
+                                          <i className="ti ti-arrow-back-up me-1"></i>
+                                          Returned
+                                        </span>
+                                      )}
+                                      {appointment.visitStatus === 'completed' && appointment.status !== 'COMPLETED' && (
+                                        <span className="badge ms-2" style={{ backgroundColor: '#28A745', color: 'white' }}>
+                                          <i className="ti ti-circle-check me-1"></i>
+                                          Ready for Checkout
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
