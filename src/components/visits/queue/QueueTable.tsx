@@ -1,54 +1,63 @@
 "use client";
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { PatientVisit, Patient, UserRole } from '@/types/emr';
 import { getStageBadgeClass, getStageLabel } from '@/lib/constants/stages';
-import HandoffButton from './HandoffButton';
-import NurseClockInModal from './NurseClockInModal';
-import DoctorConsultationModal from './DoctorConsultationModal';
-import LabClockInModal from './LabClockInModal';
-import PharmacyClockInModal from './PharmacyClockInModal';
-import BillingClockInModal from './BillingClockInModal';
-import AdmitPatientModal from '@/components/visits/modal/AdmitPatientModal';
-import ViewDepartmentRecordModal from './ViewDepartmentRecordModal';
-import SelectDoctorAndHandoffModal from './SelectDoctorAndHandoffModal';
 import AssignedDoctorCell from '../AssignedDoctorCell';
 import { all_routes } from '@/router/all_routes';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, differenceInMinutes } from 'date-fns';
 
 interface QueueTableProps {
   queue: PatientVisit[];
   loading: boolean;
   onHandoffSuccess: (visitId: string) => void;
   onClockInSuccess?: () => void;
+  onOpenClockInModal?: (visit: PatientVisit) => void;
+  onOpenDoctorModal?: (visit: PatientVisit) => void;
+  onOpenLabModal?: (visit: PatientVisit) => void;
+  onOpenPharmacyModal?: (visit: PatientVisit) => void;
+  onOpenBillingModal?: (visit: PatientVisit) => void;
+  onOpenAdmitModal?: (visit: PatientVisit) => void;
+  onOpenRecordModal?: (visit: PatientVisit) => void;
+  onOpenHandoffModal?: (visit: PatientVisit) => void;
 }
 
-export default function QueueTable({ queue, loading, onHandoffSuccess, onClockInSuccess }: QueueTableProps) {
+export default function QueueTable({ 
+  queue, 
+  loading, 
+  onHandoffSuccess, 
+  onClockInSuccess,
+  onOpenClockInModal,
+  onOpenDoctorModal,
+  onOpenLabModal,
+  onOpenPharmacyModal,
+  onOpenBillingModal,
+  onOpenAdmitModal,
+  onOpenRecordModal,
+  onOpenHandoffModal
+}: QueueTableProps) {
   const { data: session } = useSession();
   const userRole = session?.user?.role as UserRole | undefined;
-  const [showClockInModal, setShowClockInModal] = useState(false);
-  const [selectedVisit, setSelectedVisit] = useState<PatientVisit | null>(null);
-  const [showDoctorModal, setShowDoctorModal] = useState(false);
-  const [selectedDoctorVisit, setSelectedDoctorVisit] = useState<PatientVisit | null>(null);
-  const [showLabModal, setShowLabModal] = useState(false);
-  const [selectedLabVisit, setSelectedLabVisit] = useState<PatientVisit | null>(null);
-  const [showPharmacyModal, setShowPharmacyModal] = useState(false);
-  const [selectedPharmacyVisit, setSelectedPharmacyVisit] = useState<PatientVisit | null>(null);
-  const [showBillingModal, setShowBillingModal] = useState(false);
-  const [selectedBillingVisit, setSelectedBillingVisit] = useState<PatientVisit | null>(null);
-  const [showAdmitModal, setShowAdmitModal] = useState(false);
-  const [selectedVisitForAdmission, setSelectedVisitForAdmission] = useState<PatientVisit | null>(null);
-  const [showRecordModal, setShowRecordModal] = useState(false);
-  const [selectedVisitForRecord, setSelectedVisitForRecord] = useState<PatientVisit | null>(null);
-  const [showSelectDoctorModal, setShowSelectDoctorModal] = useState(false);
-  const [selectedVisitForDoctorSelection, setSelectedVisitForDoctorSelection] = useState<PatientVisit | null>(null);
+  
   const formatTimeWaiting = (clockedInAt?: Date) => {
     if (!clockedInAt) return 'N/A';
     try {
       return formatDistanceToNow(new Date(clockedInAt), { addSuffix: true });
     } catch {
       return 'N/A';
+    }
+  };
+
+  const getWaitingTimeAlertClass = (clockedInAt?: Date): string => {
+    if (!clockedInAt) return '';
+    try {
+      const minutes = differenceInMinutes(new Date(), new Date(clockedInAt));
+      if (minutes > 60) return 'text-danger';
+      if (minutes > 30) return 'text-warning';
+      return '';
+    } catch {
+      return '';
     }
   };
 
@@ -92,134 +101,6 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
     }
   };
 
-  const handleOpenClockInModal = (visit: PatientVisit) => {
-    setSelectedVisit(visit);
-    setShowClockInModal(true);
-  };
-
-  const handleCloseClockInModal = () => {
-    setShowClockInModal(false);
-    setSelectedVisit(null);
-  };
-
-  const handleClockInSuccess = () => {
-    if (onClockInSuccess) {
-      onClockInSuccess();
-    }
-    handleCloseClockInModal();
-  };
-
-  const handleOpenAdmitModal = (visit: PatientVisit) => {
-    setSelectedVisitForAdmission(visit);
-    setShowAdmitModal(true);
-  };
-
-  const handleCloseAdmitModal = () => {
-    setShowAdmitModal(false);
-    setSelectedVisitForAdmission(null);
-  };
-
-  const handleAdmitSuccess = () => {
-    if (onClockInSuccess) {
-      onClockInSuccess();
-    }
-    handleCloseAdmitModal();
-  };
-
-  const handleOpenDoctorModal = (visit: PatientVisit) => {
-    setSelectedDoctorVisit(visit);
-    setShowDoctorModal(true);
-  };
-
-  const handleCloseDoctorModal = () => {
-    setShowDoctorModal(false);
-    setSelectedDoctorVisit(null);
-  };
-
-  const handleDoctorClockInSuccess = () => {
-    if (onClockInSuccess) {
-      onClockInSuccess();
-    }
-    handleCloseDoctorModal();
-  };
-
-  const handleOpenLabModal = (visit: PatientVisit) => {
-    setSelectedLabVisit(visit);
-    setShowLabModal(true);
-  };
-
-  const handleCloseLabModal = () => {
-    setShowLabModal(false);
-    setSelectedLabVisit(null);
-  };
-
-  const handleLabClockInSuccess = () => {
-    if (onClockInSuccess) {
-      onClockInSuccess();
-    }
-    handleCloseLabModal();
-  };
-
-  const handleOpenPharmacyModal = (visit: PatientVisit) => {
-    setSelectedPharmacyVisit(visit);
-    setShowPharmacyModal(true);
-  };
-
-  const handleClosePharmacyModal = () => {
-    setShowPharmacyModal(false);
-    setSelectedPharmacyVisit(null);
-  };
-
-  const handlePharmacyClockInSuccess = () => {
-    if (onClockInSuccess) {
-      onClockInSuccess();
-    }
-    handleClosePharmacyModal();
-  };
-
-  const handleOpenBillingModal = (visit: PatientVisit) => {
-    setSelectedBillingVisit(visit);
-    setShowBillingModal(true);
-  };
-
-  const handleCloseBillingModal = () => {
-    setShowBillingModal(false);
-    setSelectedBillingVisit(null);
-  };
-
-  const handleBillingClockInSuccess = () => {
-    if (onClockInSuccess) {
-      onClockInSuccess();
-    }
-    handleCloseBillingModal();
-  };
-
-  const handleOpenRecordModal = (visit: PatientVisit) => {
-    setSelectedVisitForRecord(visit);
-    setShowRecordModal(true);
-  };
-
-  const handleCloseRecordModal = () => {
-    setShowRecordModal(false);
-    setSelectedVisitForRecord(null);
-  };
-
-  const handleOpenSelectDoctorModal = (visit: PatientVisit) => {
-    setSelectedVisitForDoctorSelection(visit);
-    setShowSelectDoctorModal(true);
-  };
-
-  const handleCloseSelectDoctorModal = () => {
-    setShowSelectDoctorModal(false);
-    setSelectedVisitForDoctorSelection(null);
-  };
-
-  const handleSelectDoctorSuccess = () => {
-    if (onHandoffSuccess && selectedVisitForDoctorSelection) {
-      onHandoffSuccess(selectedVisitForDoctorSelection._id!);
-    }
-    handleCloseSelectDoctorModal();
-  };
 
   const renderActionButtons = (visit: PatientVisit) => {
     const patient = visit.patient;
@@ -240,14 +121,14 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
           <button
             className="btn btn-sm btn-success"
-            onClick={() => handleOpenClockInModal(visit)}
+            onClick={() => onOpenClockInModal?.(visit)}
           >
             <i className="ti ti-stethoscope me-1"></i>
             Clock In & Record Vitals
@@ -261,14 +142,14 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
           <button
             className="btn btn-sm btn-success"
-            onClick={() => handleOpenDoctorModal(visit)}
+            onClick={() => onOpenDoctorModal?.(visit)}
           >
             <i className="ti ti-stethoscope me-1"></i>
             Clock In & Start Consultation
@@ -282,14 +163,14 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
           <button
             className="btn btn-sm btn-success"
-            onClick={() => handleOpenLabModal(visit)}
+            onClick={() => onOpenLabModal?.(visit)}
             style={{ backgroundColor: '#6F42C1', borderColor: '#6F42C1' }}
           >
             <i className="ti ti-test-pipe-2 me-1"></i>
@@ -304,14 +185,14 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
           <button
             className="btn btn-sm btn-success"
-            onClick={() => handleOpenPharmacyModal(visit)}
+            onClick={() => onOpenPharmacyModal?.(visit)}
             style={{ backgroundColor: '#8B5CF6', borderColor: '#8B5CF6' }}
           >
             <i className="ti ti-pill me-1"></i>
@@ -326,14 +207,14 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
           <button
             className="btn btn-sm btn-success"
-            onClick={() => handleOpenBillingModal(visit)}
+            onClick={() => onOpenBillingModal?.(visit)}
             style={{ backgroundColor: '#F59E0B', borderColor: '#F59E0B' }}
           >
             <i className="ti ti-receipt me-1"></i>
@@ -348,23 +229,25 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
           <button
             className="btn btn-sm btn-info"
-            onClick={() => handleOpenAdmitModal(visit)}
+            onClick={() => onOpenAdmitModal?.(visit)}
           >
             <i className="ti ti-bed me-1"></i>
             Admit Patient
           </button>
-          <HandoffButton
-            visitId={visit._id!}
-            currentStage={visit.currentStage}
-            onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
-          />
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => onOpenHandoffModal?.(visit)}
+          >
+            <i className="ti ti-arrow-right me-1"></i>
+            Transfer Patient
+          </button>
         </>
       );
     }
@@ -374,16 +257,18 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
-          <HandoffButton
-            visitId={visit._id!}
-            currentStage={visit.currentStage}
-            onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
-          />
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => onOpenHandoffModal?.(visit)}
+          >
+            <i className="ti ti-arrow-right me-1"></i>
+            Transfer Patient
+          </button>
         </>
       );
     }
@@ -393,16 +278,18 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
-          <HandoffButton
-            visitId={visit._id!}
-            currentStage={visit.currentStage}
-            onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
-          />
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => onOpenHandoffModal?.(visit)}
+          >
+            <i className="ti ti-arrow-right me-1"></i>
+            Transfer Patient
+          </button>
         </>
       );
     }
@@ -412,16 +299,18 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
-          <HandoffButton
-            visitId={visit._id!}
-            currentStage={visit.currentStage}
-            onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
-          />
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => onOpenHandoffModal?.(visit)}
+          >
+            <i className="ti ti-arrow-right me-1"></i>
+            Transfer Patient
+          </button>
         </>
       );
     }
@@ -431,16 +320,18 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
-          <HandoffButton
-            visitId={visit._id!}
-            currentStage={visit.currentStage}
-            onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
-          />
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => onOpenHandoffModal?.(visit)}
+          >
+            <i className="ti ti-arrow-right me-1"></i>
+            Transfer Patient
+          </button>
         </>
       );
     }
@@ -450,17 +341,17 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         <>
           <button
             className="btn btn-sm btn-outline-info"
-            onClick={() => handleOpenRecordModal(visit)}
+            onClick={() => onOpenRecordModal?.(visit)}
           >
             <i className="ti ti-file-text me-1"></i>
             View Record
           </button>
           <button
             className="btn btn-sm btn-primary"
-            onClick={() => handleOpenSelectDoctorModal(visit)}
+            onClick={() => onOpenHandoffModal?.(visit)}
           >
-            <i className="ti ti-user-check me-1"></i>
-            Select Doctor & Handoff
+            <i className="ti ti-arrow-right me-1"></i>
+            Transfer Patient
           </button>
         </>
       );
@@ -470,16 +361,18 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
       <>
         <button
           className="btn btn-sm btn-outline-info"
-          onClick={() => handleOpenRecordModal(visit)}
+          onClick={() => onOpenRecordModal?.(visit)}
         >
           <i className="ti ti-file-text me-1"></i>
           View Record
         </button>
-        <HandoffButton
-          visitId={visit._id!}
-          currentStage={visit.currentStage}
-          onHandoffSuccess={() => onHandoffSuccess(visit._id!)}
-        />
+        <button
+          className="btn btn-sm btn-primary"
+          onClick={() => onOpenHandoffModal?.(visit)}
+        >
+          <i className="ti ti-arrow-right me-1"></i>
+          Transfer Patient
+        </button>
       </>
     );
   };
@@ -653,107 +546,6 @@ export default function QueueTable({ queue, loading, onHandoffSuccess, onClockIn
         )}
       </div>
 
-      {selectedVisit && (
-        <NurseClockInModal
-          visitId={selectedVisit._id!}
-          patientInfo={{
-            name: getPatientName(selectedVisit.patient),
-            patientId: getPatientId(selectedVisit.patient),
-          }}
-          onSuccess={handleClockInSuccess}
-          show={showClockInModal}
-          onHide={handleCloseClockInModal}
-        />
-      )}
-
-      {selectedDoctorVisit && (
-        <DoctorConsultationModal
-          visit={selectedDoctorVisit}
-          patientInfo={{
-            name: getPatientName(selectedDoctorVisit.patient),
-            patientId: getPatientId(selectedDoctorVisit.patient),
-          }}
-          onSuccess={handleDoctorClockInSuccess}
-          show={showDoctorModal}
-          onHide={handleCloseDoctorModal}
-        />
-      )}
-
-      {selectedLabVisit && (
-        <LabClockInModal
-          visit={selectedLabVisit}
-          patientInfo={{
-            name: getPatientName(selectedLabVisit.patient),
-            patientId: getPatientId(selectedLabVisit.patient),
-          }}
-          onSuccess={handleLabClockInSuccess}
-          show={showLabModal}
-          onHide={handleCloseLabModal}
-        />
-      )}
-
-      {selectedVisitForAdmission && (
-        <AdmitPatientModal
-          show={showAdmitModal}
-          onHide={handleCloseAdmitModal}
-          visitId={selectedVisitForAdmission._id!}
-          patientId={typeof selectedVisitForAdmission.patient === 'string' ? selectedVisitForAdmission.patient : selectedVisitForAdmission.patient._id!}
-          patientName={getPatientName(selectedVisitForAdmission.patient)}
-          assignedDoctorId={typeof selectedVisitForAdmission.assignedDoctor === 'string' ? selectedVisitForAdmission.assignedDoctor : selectedVisitForAdmission.assignedDoctor?._id}
-          onSuccess={handleAdmitSuccess}
-        />
-      )}
-
-      {selectedPharmacyVisit && (
-        <PharmacyClockInModal
-          visit={selectedPharmacyVisit}
-          patientInfo={{
-            name: getPatientName(selectedPharmacyVisit.patient),
-            patientId: getPatientId(selectedPharmacyVisit.patient),
-          }}
-          onSuccess={handlePharmacyClockInSuccess}
-          show={showPharmacyModal}
-          onHide={handleClosePharmacyModal}
-        />
-      )}
-
-      {selectedBillingVisit && (
-        <BillingClockInModal
-          visit={selectedBillingVisit}
-          patientInfo={{
-            name: getPatientName(selectedBillingVisit.patient),
-            patientId: getPatientId(selectedBillingVisit.patient),
-          }}
-          onSuccess={handleBillingClockInSuccess}
-          show={showBillingModal}
-          onHide={handleCloseBillingModal}
-        />
-      )}
-
-      {selectedVisitForRecord && (
-        <ViewDepartmentRecordModal
-          visitId={selectedVisitForRecord._id!}
-          patientInfo={{
-            name: getPatientName(selectedVisitForRecord.patient),
-            patientId: getPatientId(selectedVisitForRecord.patient),
-          }}
-          show={showRecordModal}
-          onHide={handleCloseRecordModal}
-        />
-      )}
-
-      {showSelectDoctorModal && selectedVisitForDoctorSelection && (
-        <SelectDoctorAndHandoffModal
-          visitId={selectedVisitForDoctorSelection._id!}
-          currentDoctor={
-            typeof selectedVisitForDoctorSelection.assignedDoctor === 'string'
-              ? null
-              : selectedVisitForDoctorSelection.assignedDoctor
-          }
-          onSuccess={handleSelectDoctorSuccess}
-          onClose={handleCloseSelectDoctorModal}
-        />
-      )}
     </>
   );
 }

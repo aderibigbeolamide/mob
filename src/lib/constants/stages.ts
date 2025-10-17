@@ -19,13 +19,13 @@ export const STAGE_LABELS: Record<string, string> = {
 };
 
 export const STAGE_BADGE_COLORS: Record<string, string> = {
-  'front_desk': 'badge-soft-secondary',
-  'nurse': 'badge-soft-info',
+  'front_desk': 'badge-soft-info',
+  'nurse': 'badge-soft-primary',
   'doctor': 'badge-soft-primary',
-  'lab': 'badge-soft-warning',
-  'pharmacy': 'badge-soft-purple',
-  'billing': 'badge-soft-danger',
-  'returned_to_front_desk': 'badge-soft-secondary',
+  'lab': 'badge-soft-info',
+  'pharmacy': 'badge-soft-info',
+  'billing': 'badge-soft-warning',
+  'returned_to_front_desk': 'badge-soft-info',
   'completed': 'badge-soft-success'
 };
 

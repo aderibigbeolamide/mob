@@ -24,6 +24,22 @@ export function useHandoff() {
     setError(null);
 
     try {
+      const getSuccessMessage = () => {
+        if (targetStage === 'completed') {
+          return '✓ Visit completed successfully';
+        }
+        const stageLabels: Record<string, string> = {
+          'nurse': 'Nurse',
+          'doctor': 'Doctor',
+          'lab': 'Laboratory',
+          'pharmacy': 'Pharmacy',
+          'billing': 'Billing',
+          'returned_to_front_desk': 'Front Desk'
+        };
+        const targetLabel = stageLabels[targetStage || ''] || targetStage;
+        return `✓ Patient transferred to ${targetLabel} successfully`;
+      };
+
       const response = await apiClient.post(
         '/api/clocking/handoff',
         {
@@ -33,7 +49,7 @@ export function useHandoff() {
           nextAction,
         },
         {
-          successMessage: 'Patient transferred successfully',
+          successMessage: getSuccessMessage(),
           showErrorToast: true,
         }
       );

@@ -1,12 +1,25 @@
 "use client";
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { all_routes } from '@/router/all_routes';
 import { useQueue } from './useQueue';
 import QueueTable from './QueueTable';
-import { canAccessStage, getStageLabel, ROLE_TO_STAGE } from '@/lib/constants/stages';
+import QueueOverviewMetrics from './QueueOverviewMetrics';
+import QueueFilterBar from './QueueFilterBar';
+import QueuePatientCard from './QueuePatientCard';
+import NurseClockInModal from './NurseClockInModal';
+import DoctorConsultationModal from './DoctorConsultationModal';
+import LabClockInModal from './LabClockInModal';
+import PharmacyClockInModal from './PharmacyClockInModal';
+import BillingClockInModal from './BillingClockInModal';
+import AdmitPatientModal from '@/components/visits/modal/AdmitPatientModal';
+import ViewDepartmentRecordModal from './ViewDepartmentRecordModal';
+import EnhancedHandoffModal from './EnhancedHandoffModal';
+import { canAccessStage } from '@/lib/constants/stages';
+import { PatientVisit, Patient, UserRole } from '@/types/emr';
+import { differenceInMinutes } from 'date-fns';
 
 interface QueuePageProps {
   requiredRole: string;
@@ -17,6 +30,8 @@ interface QueuePageProps {
 export default function QueuePage({ requiredRole, pageTitle, stageName }: QueuePageProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const userRole = session?.user?.role as UserRole | undefined;
+  
   const {
     queue,
     loading,
@@ -31,6 +46,27 @@ export default function QueuePage({ requiredRole, pageTitle, stageName }: QueueP
     countdown,
     toggleAutoRefresh,
   } = useQueue();
+
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [sortBy, setSortBy] = useState<'waitTime' | 'arrival' | 'name'>('waitTime');
+  const [urgencyFilter, setUrgencyFilter] = useState<'all' | 'overdue' | 'atRisk' | 'normal'>('all');
+
+  const [showClockInModal, setShowClockInModal] = useState(false);
+  const [selectedVisit, setSelectedVisit] = useState<PatientVisit | null>(null);
+  const [showDoctorModal, setShowDoctorModal] = useState(false);
+  const [selectedDoctorVisit, setSelectedDoctorVisit] = useState<PatientVisit | null>(null);
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [selectedLabVisit, setSelectedLabVisit] = useState<PatientVisit | null>(null);
+  const [showPharmacyModal, setShowPharmacyModal] = useState(false);
+  const [selectedPharmacyVisit, setSelectedPharmacyVisit] = useState<PatientVisit | null>(null);
+  const [showBillingModal, setShowBillingModal] = useState(false);
+  const [selectedBillingVisit, setSelectedBillingVisit] = useState<PatientVisit | null>(null);
+  const [showAdmitModal, setShowAdmitModal] = useState(false);
+  const [selectedVisitForAdmission, setSelectedVisitForAdmission] = useState<PatientVisit | null>(null);
+  const [showRecordModal, setShowRecordModal] = useState(false);
+  const [selectedVisitForRecord, setSelectedVisitForRecord] = useState<PatientVisit | null>(null);
+  const [showEnhancedHandoffModal, setShowEnhancedHandoffModal] = useState(false);
+  const [selectedVisitForHandoff, setSelectedVisitForHandoff] = useState<PatientVisit | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -48,8 +84,209 @@ export default function QueuePage({ requiredRole, pageTitle, stageName }: QueueP
     }
   }, [status, session, router, requiredRole, stageName]);
 
-  const handleHandoffSuccess = (visitId: string) => {
-    removeFromQueue(visitId);
+  const getWaitingMinutes = (visit: PatientVisit) => {
+    const stage = visit.currentStage;
+    let clockInTime: Date | undefined;
+
+    switch (stage) {
+      case 'front_desk':
+        clockInTime = visit.stages.frontDesk?.clockedInAt;
+        break;
+      case 'nurse':
+        clockInTime = visit.stages.nurse?.clockedInAt || visit.stages.frontDesk?.clockedOutAt;
+        break;
+      case 'doctor':
+        clockInTime = visit.stages.doctor?.clockedInAt || visit.stages.nurse?.clockedOutAt;
+        break;
+      case 'lab':
+        clockInTime = visit.stages.lab?.clockedInAt || visit.stages.doctor?.clockedOutAt;
+        break;
+      case 'pharmacy':
+        clockInTime = visit.stages.pharmacy?.clockedInAt || visit.stages.lab?.clockedOutAt;
+        break;
+      case 'billing':
+        clockInTime = visit.stages.billing?.clockedInAt || visit.stages.pharmacy?.clockedOutAt;
+        break;
+      case 'returned_to_front_desk':
+        clockInTime = visit.stages.returnedToFrontDesk?.clockedInAt || visit.stages.billing?.clockedOutAt;
+        break;
+    }
+
+    if (!clockInTime) return 0;
+    return differenceInMinutes(new Date(), new Date(clockInTime));
+  };
+
+  const getPatientName = (patient: string | Patient) => {
+    if (typeof patient === 'string') return 'Unknown';
+    return `${patient.firstName} ${patient.lastName}`;
+  };
+
+  const getPatientId = (patient: string | Patient) => {
+    if (typeof patient === 'string') return 'N/A';
+    return patient.patientId || 'N/A';
+  };
+
+  const getFilteredAndSortedQueue = () => {
+    let filtered = [...queue];
+
+    if (urgencyFilter !== 'all') {
+      filtered = filtered.filter(visit => {
+        const waitingMinutes = getWaitingMinutes(visit);
+        
+        switch (urgencyFilter) {
+          case 'overdue':
+            return waitingMinutes > 60;
+          case 'atRisk':
+            return waitingMinutes > 30 && waitingMinutes <= 60;
+          case 'normal':
+            return waitingMinutes <= 30;
+          default:
+            return true;
+        }
+      });
+    }
+
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'waitTime':
+          return getWaitingMinutes(b) - getWaitingMinutes(a);
+        case 'arrival': {
+          const aTime = a.stages.frontDesk?.clockedInAt || a.createdAt || new Date();
+          const bTime = b.stages.frontDesk?.clockedInAt || b.createdAt || new Date();
+          return new Date(aTime).getTime() - new Date(bTime).getTime();
+        }
+        case 'name': {
+          const aName = getPatientName(a.patient);
+          const bName = getPatientName(b.patient);
+          return aName.localeCompare(bName);
+        }
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  };
+
+  const handleOpenClockInModal = (visit: PatientVisit) => {
+    setSelectedVisit(visit);
+    setShowClockInModal(true);
+  };
+
+  const handleCloseClockInModal = () => {
+    setShowClockInModal(false);
+    setSelectedVisit(null);
+  };
+
+  const handleClockInSuccess = () => {
+    fetchQueue();
+    handleCloseClockInModal();
+  };
+
+  const handleOpenAdmitModal = (visit: PatientVisit) => {
+    setSelectedVisitForAdmission(visit);
+    setShowAdmitModal(true);
+  };
+
+  const handleCloseAdmitModal = () => {
+    setShowAdmitModal(false);
+    setSelectedVisitForAdmission(null);
+  };
+
+  const handleAdmitSuccess = () => {
+    fetchQueue();
+    handleCloseAdmitModal();
+  };
+
+  const handleOpenDoctorModal = (visit: PatientVisit) => {
+    setSelectedDoctorVisit(visit);
+    setShowDoctorModal(true);
+  };
+
+  const handleCloseDoctorModal = () => {
+    setShowDoctorModal(false);
+    setSelectedDoctorVisit(null);
+  };
+
+  const handleDoctorClockInSuccess = () => {
+    fetchQueue();
+    handleCloseDoctorModal();
+  };
+
+  const handleOpenLabModal = (visit: PatientVisit) => {
+    setSelectedLabVisit(visit);
+    setShowLabModal(true);
+  };
+
+  const handleCloseLabModal = () => {
+    setShowLabModal(false);
+    setSelectedLabVisit(null);
+  };
+
+  const handleLabClockInSuccess = () => {
+    fetchQueue();
+    handleCloseLabModal();
+  };
+
+  const handleOpenPharmacyModal = (visit: PatientVisit) => {
+    setSelectedPharmacyVisit(visit);
+    setShowPharmacyModal(true);
+  };
+
+  const handleClosePharmacyModal = () => {
+    setShowPharmacyModal(false);
+    setSelectedPharmacyVisit(null);
+  };
+
+  const handlePharmacyClockInSuccess = () => {
+    fetchQueue();
+    handleClosePharmacyModal();
+  };
+
+  const handleOpenBillingModal = (visit: PatientVisit) => {
+    setSelectedBillingVisit(visit);
+    setShowBillingModal(true);
+  };
+
+  const handleCloseBillingModal = () => {
+    setShowBillingModal(false);
+    setSelectedBillingVisit(null);
+  };
+
+  const handleBillingClockInSuccess = () => {
+    fetchQueue();
+    handleCloseBillingModal();
+  };
+
+  const handleOpenRecordModal = (visit: PatientVisit) => {
+    setSelectedVisitForRecord(visit);
+    setShowRecordModal(true);
+  };
+
+  const handleCloseRecordModal = () => {
+    setShowRecordModal(false);
+    setSelectedVisitForRecord(null);
+  };
+
+  const handleOpenEnhancedHandoffModal = (visit: PatientVisit) => {
+    setSelectedVisitForHandoff(visit);
+    setShowEnhancedHandoffModal(true);
+  };
+
+  const handleCloseEnhancedHandoffModal = () => {
+    setShowEnhancedHandoffModal(false);
+    setSelectedVisitForHandoff(null);
+  };
+
+  const handleEnhancedHandoffSuccess = () => {
+    if (selectedVisitForHandoff) {
+      removeFromQueue(selectedVisitForHandoff._id!);
+    }
+    handleCloseEnhancedHandoffModal();
+  };
+
+  const handleUpdateDoctor = () => {
+    fetchQueue();
   };
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -136,6 +373,59 @@ export default function QueuePage({ requiredRole, pageTitle, stageName }: QueueP
     );
   };
 
+  const getActionCapabilities = (visit: PatientVisit) => {
+    const isNurse = userRole === UserRole.NURSE;
+    const isDoctor = userRole === UserRole.DOCTOR;
+    const isLab = userRole === UserRole.LAB;
+    const isPharmacy = userRole === UserRole.PHARMACY;
+    const isBilling = userRole === UserRole.BILLING;
+    const isFrontDesk = userRole === UserRole.FRONT_DESK;
+    
+    const hasNurseClockedIn = !!visit.stages.nurse?.clockedInAt;
+    const hasDoctorClockedIn = !!visit.stages.doctor?.clockedInAt;
+    const hasLabClockedIn = !!visit.stages.lab?.clockedInAt;
+    const hasPharmacyClockedIn = !!visit.stages.pharmacy?.clockedInAt;
+    const hasBillingClockedIn = !!visit.stages.billing?.clockedInAt;
+
+    let canClockIn = false;
+    let hasClocked = false;
+    let canHandoff = false;
+    let onClockIn: (() => void) | undefined;
+
+    if (isNurse && visit.currentStage === 'nurse') {
+      canClockIn = !hasNurseClockedIn;
+      hasClocked = hasNurseClockedIn;
+      canHandoff = hasNurseClockedIn;
+      onClockIn = () => handleOpenClockInModal(visit);
+    } else if (isDoctor && visit.currentStage === 'doctor') {
+      canClockIn = !hasDoctorClockedIn;
+      hasClocked = hasDoctorClockedIn;
+      canHandoff = hasDoctorClockedIn;
+      onClockIn = () => handleOpenDoctorModal(visit);
+    } else if (isLab && visit.currentStage === 'lab') {
+      canClockIn = !hasLabClockedIn;
+      hasClocked = hasLabClockedIn;
+      canHandoff = hasLabClockedIn;
+      onClockIn = () => handleOpenLabModal(visit);
+    } else if (isPharmacy && visit.currentStage === 'pharmacy') {
+      canClockIn = !hasPharmacyClockedIn;
+      hasClocked = hasPharmacyClockedIn;
+      canHandoff = hasPharmacyClockedIn;
+      onClockIn = () => handleOpenPharmacyModal(visit);
+    } else if (isBilling && visit.currentStage === 'billing') {
+      canClockIn = !hasBillingClockedIn;
+      hasClocked = hasBillingClockedIn;
+      canHandoff = hasBillingClockedIn;
+      onClockIn = () => handleOpenBillingModal(visit);
+    } else if (isFrontDesk && visit.currentStage === 'returned_to_front_desk') {
+      canHandoff = true;
+    }
+
+    return { canClockIn, hasClocked, canHandoff, onClockIn };
+  };
+
+  const filteredAndSortedQueue = getFilteredAndSortedQueue();
+
   if (status === 'loading') {
     return (
       <div className="page-wrapper">
@@ -212,52 +502,189 @@ export default function QueuePage({ requiredRole, pageTitle, stageName }: QueueP
           </div>
         </div>
 
-        <div className="card mb-4">
-          <div className="card-body">
-            <form onSubmit={handleSearchSubmit}>
-              <div className="row align-items-center">
-                <div className="col-md-6">
-                  <h5 className="d-inline-flex align-items-center mb-0">
-                    Patients in Queue
-                    <span className="badge bg-primary ms-2">{pagination.totalCount}</span>
-                  </h5>
-                </div>
-                <div className="col-md-6">
-                  <div className="input-group">
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Search by patient name, ID, visit number..."
-                      value={searchTerm}
-                      onChange={(e) => handleSearch(e.target.value)}
-                    />
-                    <button type="submit" className="btn btn-primary">
-                      <i className="ti ti-search" />
-                    </button>
+        <QueueOverviewMetrics queue={queue} currentStage={stageName} />
+
+        <QueueFilterBar
+          searchTerm={searchTerm}
+          onSearchChange={handleSearch}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          urgencyFilter={urgencyFilter}
+          onUrgencyFilterChange={setUrgencyFilter}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
+
+        {viewMode === 'cards' ? (
+          <div className="card mb-4">
+            <div className="card-body">
+              {loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
                   </div>
                 </div>
-              </div>
-            </form>
-          </div>
-        </div>
+              ) : filteredAndSortedQueue.length === 0 ? (
+                <div className="text-center py-5">
+                  <i className="ti ti-inbox fs-1 text-muted d-block mb-2"></i>
+                  <p className="text-muted mb-0">No patients in queue</p>
+                </div>
+              ) : (
+                <div className="row g-3">
+                  {filteredAndSortedQueue.map((visit) => {
+                    const waitingMinutes = getWaitingMinutes(visit);
+                    const { canClockIn, hasClocked, canHandoff, onClockIn } = getActionCapabilities(visit);
 
-        <div className="card mb-4">
-          <div className="card-body">
-            <QueueTable
-              queue={queue}
-              loading={loading}
-              onHandoffSuccess={handleHandoffSuccess}
-              onClockInSuccess={fetchQueue}
-            />
-          </div>
-        </div>
-
-        {pagination.totalPages > 1 && (
-          <div className="card">
-            <div className="card-body">
-              {renderPagination()}
+                    return (
+                      <div key={visit._id} className="col-12 col-md-6 col-xl-4">
+                        <QueuePatientCard
+                          visit={visit}
+                          waitingMinutes={waitingMinutes}
+                          userRole={userRole}
+                          onViewRecord={() => handleOpenRecordModal(visit)}
+                          onClockIn={onClockIn}
+                          onHandoff={() => handleOpenEnhancedHandoffModal(visit)}
+                          onAdmit={hasClocked && userRole === UserRole.DOCTOR ? () => handleOpenAdmitModal(visit) : undefined}
+                          onSelectDoctor={visit.currentStage === 'returned_to_front_desk' ? () => handleOpenEnhancedHandoffModal(visit) : undefined}
+                          onUpdateDoctor={handleUpdateDoctor}
+                          hasClocked={hasClocked}
+                          canClockIn={canClockIn}
+                          canHandoff={canHandoff}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
+        ) : (
+          <>
+            <div className="card mb-4">
+              <div className="card-body">
+                <QueueTable
+                  queue={filteredAndSortedQueue}
+                  loading={loading}
+                  onHandoffSuccess={removeFromQueue}
+                  onClockInSuccess={fetchQueue}
+                  onOpenClockInModal={handleOpenClockInModal}
+                  onOpenDoctorModal={handleOpenDoctorModal}
+                  onOpenLabModal={handleOpenLabModal}
+                  onOpenPharmacyModal={handleOpenPharmacyModal}
+                  onOpenBillingModal={handleOpenBillingModal}
+                  onOpenAdmitModal={handleOpenAdmitModal}
+                  onOpenRecordModal={handleOpenRecordModal}
+                  onOpenHandoffModal={handleOpenEnhancedHandoffModal}
+                />
+              </div>
+            </div>
+
+            {pagination.totalPages > 1 && (
+              <div className="card">
+                <div className="card-body">
+                  {renderPagination()}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {selectedVisit && (
+          <NurseClockInModal
+            visitId={selectedVisit._id!}
+            patientInfo={{
+              name: getPatientName(selectedVisit.patient),
+              patientId: getPatientId(selectedVisit.patient),
+            }}
+            onSuccess={handleClockInSuccess}
+            show={showClockInModal}
+            onHide={handleCloseClockInModal}
+          />
+        )}
+
+        {selectedDoctorVisit && (
+          <DoctorConsultationModal
+            visit={selectedDoctorVisit}
+            patientInfo={{
+              name: getPatientName(selectedDoctorVisit.patient),
+              patientId: getPatientId(selectedDoctorVisit.patient),
+            }}
+            onSuccess={handleDoctorClockInSuccess}
+            show={showDoctorModal}
+            onHide={handleCloseDoctorModal}
+          />
+        )}
+
+        {selectedLabVisit && (
+          <LabClockInModal
+            visit={selectedLabVisit}
+            patientInfo={{
+              name: getPatientName(selectedLabVisit.patient),
+              patientId: getPatientId(selectedLabVisit.patient),
+            }}
+            onSuccess={handleLabClockInSuccess}
+            show={showLabModal}
+            onHide={handleCloseLabModal}
+          />
+        )}
+
+        {selectedVisitForAdmission && (
+          <AdmitPatientModal
+            show={showAdmitModal}
+            onHide={handleCloseAdmitModal}
+            visitId={selectedVisitForAdmission._id!}
+            patientId={typeof selectedVisitForAdmission.patient === 'string' ? selectedVisitForAdmission.patient : selectedVisitForAdmission.patient._id!}
+            patientName={getPatientName(selectedVisitForAdmission.patient)}
+            assignedDoctorId={typeof selectedVisitForAdmission.assignedDoctor === 'string' ? selectedVisitForAdmission.assignedDoctor : selectedVisitForAdmission.assignedDoctor?._id}
+            onSuccess={handleAdmitSuccess}
+          />
+        )}
+
+        {selectedPharmacyVisit && (
+          <PharmacyClockInModal
+            visit={selectedPharmacyVisit}
+            patientInfo={{
+              name: getPatientName(selectedPharmacyVisit.patient),
+              patientId: getPatientId(selectedPharmacyVisit.patient),
+            }}
+            onSuccess={handlePharmacyClockInSuccess}
+            show={showPharmacyModal}
+            onHide={handleClosePharmacyModal}
+          />
+        )}
+
+        {selectedBillingVisit && (
+          <BillingClockInModal
+            visit={selectedBillingVisit}
+            patientInfo={{
+              name: getPatientName(selectedBillingVisit.patient),
+              patientId: getPatientId(selectedBillingVisit.patient),
+            }}
+            onSuccess={handleBillingClockInSuccess}
+            show={showBillingModal}
+            onHide={handleCloseBillingModal}
+          />
+        )}
+
+        {selectedVisitForRecord && (
+          <ViewDepartmentRecordModal
+            visitId={selectedVisitForRecord._id!}
+            patientInfo={{
+              name: getPatientName(selectedVisitForRecord.patient),
+              patientId: getPatientId(selectedVisitForRecord.patient),
+            }}
+            show={showRecordModal}
+            onHide={handleCloseRecordModal}
+          />
+        )}
+
+        {showEnhancedHandoffModal && selectedVisitForHandoff && (
+          <EnhancedHandoffModal
+            visit={selectedVisitForHandoff}
+            currentStage={selectedVisitForHandoff.currentStage}
+            onSuccess={handleEnhancedHandoffSuccess}
+            onClose={handleCloseEnhancedHandoffModal}
+          />
         )}
       </div>
     </div>
